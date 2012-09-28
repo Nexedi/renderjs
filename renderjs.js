@@ -10,6 +10,10 @@
 // still it's possible to override this and use explicit gadget rendering
 var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
 
+// by default RenderJs will examin and bind all interaction gadgets
+// available 
+var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
+
 if (typeof require !== 'undefined') {
   // example of how we can use requirejs to load external libraries
   //require(["../../../../lib/jstorage/jstorage.js"], function (util) {
@@ -543,5 +547,15 @@ var RenderJs = (function () {
 $(document).ready(function () {
     if (RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING) {
         RenderJs.bootstrap($('body'));
+    }
+    if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
+      RenderJs.GadgetIndex.getRootGadget().getDom().bind("ready",
+        function () {
+          // examine all Intaction Gadgets and bind accordingly
+          $("div[data-gadget-connection]").each( function(index, element) {
+            RenderJs.InteractionGadget.bind($(element));
+          })
+        }
+      );
     }
 });

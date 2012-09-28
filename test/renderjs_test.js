@@ -2,6 +2,9 @@
  * RenderJs tests
  */
 counter = 0;
+// in tests we need to call function manually rather than rely
+// on implicit calling
+RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND=false;
 
 function cleanUp () {
   /*
