@@ -478,7 +478,8 @@ var RenderJs = (function () {
                                 source_gadget_id)[original_source_method_id].
                                 apply(null, arguments);
                             RenderJs.GadgetIndex.getGadgetById(
-                                destination_gadget_id)[destination_method_id]();
+                                destination_gadget_id)[destination_method_id].
+                                apply(null, arguments);
                         };
                         return interaction;
                     },
