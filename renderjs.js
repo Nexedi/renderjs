@@ -149,6 +149,13 @@ var RenderJs = (function () {
             is_ready = value;
         },
 
+        bindReady: function (ready_function) {
+            /*
+             * Bind a function on ready gadget loading.
+             */
+            $("body").one("ready", ready_function);
+        },
+
         checkAndTriggerReady: function () {
             /*
              * Trigger "ready" event only if all gadgets were marked as "ready"
@@ -157,8 +164,11 @@ var RenderJs = (function () {
             is_gadget_list_loaded = RenderJs.GadgetIndex.isGadgetListLoaded();
             if (is_gadget_list_loaded) {
                 if (!RenderJs.isReady()) {
+                    // backwards compatability with already written code
                     RenderJs.GadgetIndex.getRootGadget().getDom().
                         trigger("ready");
+                    // trigger ready on root body element
+                    $("body").trigger("ready");
                     RenderJs.setReady(true);
                 }
             }
@@ -555,14 +565,13 @@ $(document).ready(function () {
       // Be careful, right now we can be in this case because
       // asynchronous gadget loading is not finished
       if (root_gadget !== undefined) {
-        root_gadget.getDom().bind("ready",
-          function () {
-            // examine all Intaction Gadgets and bind accordingly
-            $("div[data-gadget-connection]").each( function(index, element) {
-              RenderJs.InteractionGadget.bind($(element));
-            })
-          }
-        );
+        RenderJs.bindReady(
+           function () {
+             // examine all Intaction Gadgets and bind accordingly
+             $("div[data-gadget-connection]").each( function(index, element) {
+               RenderJs.InteractionGadget.bind($(element));
+             })
+           });
       }
     }
 });
