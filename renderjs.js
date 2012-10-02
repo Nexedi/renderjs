@@ -549,13 +549,19 @@ $(document).ready(function () {
         RenderJs.bootstrap($('body'));
     }
     if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
-      RenderJs.GadgetIndex.getRootGadget().getDom().bind("ready",
-        function () {
-          // examine all Intaction Gadgets and bind accordingly
-          $("div[data-gadget-connection]").each( function(index, element) {
-            RenderJs.InteractionGadget.bind($(element));
-          })
-        }
-      );
+      var root_gadget = RenderJs.GadgetIndex.getRootGadget();
+      // We might have a page without gadgets.
+      // Be careful, right now we can be in this case because
+      // asynchronous gadget loading is not finished
+      if (root_gadget !== undefined) {
+        root_gadget.getDom().bind("ready",
+          function () {
+            // examine all Intaction Gadgets and bind accordingly
+            $("div[data-gadget-connection]").each( function(index, element) {
+              RenderJs.InteractionGadget.bind($(element));
+            })
+          }
+        );
+      }
     }
 });
