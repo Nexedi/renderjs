@@ -44,8 +44,18 @@ var RenderJs = (function () {
 
         load: function (root) {
             /* Load gadget layout by traversing DOM */
-            var gadget_list;
+            var gadget_list, gadget, gadget_id, gadget_js;
             gadget_list = root.find("[data-gadget]");
+
+            // register all gadget in advance so checkAndTriggerReady
+            // can have accurate information for list of all gadgets
+            gadget_list.each(function () {
+              gadget = $(this);
+              gadget_id = gadget.attr("id");
+              gadget_js = new RenderJs.Gadget(gadget_id, gadget);
+              RenderJs.GadgetIndex.registerGadget(gadget_js);
+            });
+
             // Load chilren
             gadget_list.each(function () {
                 RenderJs.loadGadgetFromUrl($(this));
@@ -65,9 +75,12 @@ var RenderJs = (function () {
                 app_cache, data, gadget_js;
             url = gadget.attr("data-gadget");
             gadget_id = gadget.attr("id");
-            // register gadget in javascript namespace
-            gadget_js = new RenderJs.Gadget(gadget_id, gadget);
-            RenderJs.GadgetIndex.registerGadget(gadget_js);
+            gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+            if (gadget_js===undefined) {
+              // register gadget in javascript namespace if not already registered
+              gadget_js = new RenderJs.Gadget(gadget_id, gadget);
+              RenderJs.GadgetIndex.registerGadget(gadget_js);
+            }
 
             // update Gadget's instance with contents of "data-gadget-property"
             gadget_property = gadget.attr("data-gadget-property");
