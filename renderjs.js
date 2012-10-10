@@ -10,11 +10,12 @@
 // still it's possible to override this and use explicit gadget rendering
 var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
 
-// by default RenderJs will examin and bind all interaction gadgets
+// by default RenderJs will examine and bind all interaction gadgets
 // available 
 var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 
 if (typeof require !== 'undefined') {
+  // XXX: think how to use requirejs to load jquery upfront (and if it's possible)
   // example of how we can use requirejs to load external libraries
   //require(["../../../../lib/jstorage/jstorage.js"], function (util) {
   //});
