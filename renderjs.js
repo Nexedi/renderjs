@@ -32,6 +32,30 @@ var RenderJs = (function () {
     var is_ready = false;
 
     return {
+        init: function () {
+          /*
+           * Do all initialization
+           */
+          if (RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING) {
+              RenderJs.bootstrap($('body'));
+          }
+          if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
+            var root_gadget = RenderJs.GadgetIndex.getRootGadget();
+            // We might have a page without gadgets.
+            // Be careful, right now we can be in this case because
+            // asynchronous gadget loading is not finished
+            if (root_gadget !== undefined) {
+              RenderJs.bindReady(
+                function () {
+                  // examine all Intaction Gadgets and bind accordingly
+                  $("div[data-gadget-connection]").each( function(index, element) {
+                    RenderJs.InteractionGadget.bind($(element));
+                  })
+                });
+            }
+          };
+        },
+
         bootstrap: function (root) {
             /* initial load application gadget */
             var gadget_id;
@@ -570,22 +594,5 @@ var RenderJs = (function () {
 
 // impliticly call RenderJs bootstrap
 $(document).ready(function () {
-    if (RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING) {
-        RenderJs.bootstrap($('body'));
-    }
-    if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
-      var root_gadget = RenderJs.GadgetIndex.getRootGadget();
-      // We might have a page without gadgets.
-      // Be careful, right now we can be in this case because
-      // asynchronous gadget loading is not finished
-      if (root_gadget !== undefined) {
-        RenderJs.bindReady(
-           function () {
-             // examine all Intaction Gadgets and bind accordingly
-             $("div[data-gadget-connection]").each( function(index, element) {
-               RenderJs.InteractionGadget.bind($(element));
-             })
-           });
-      }
-    }
+    RenderJs.init();
 });
