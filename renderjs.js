@@ -14,13 +14,6 @@ var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
 // available 
 var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 
-if (typeof require !== 'undefined') {
-  // XXX: think how to use requirejs to load jquery upfront (and if it's possible)
-  // example of how we can use requirejs to load external libraries
-  //require(["../../../../lib/jstorage/jstorage.js"], function (util) {
-  //});
-}
-
 // fallback for IE
 if (typeof console === "undefined" || typeof console.log === "undefined") {
   console = {};
@@ -262,18 +255,9 @@ var RenderJs = (function () {
             tab_container.append(html_string);
             tab_gadget = tab_container.find(".gadget");
             // render new gadget
-            RenderJs.setReady(false);
             RenderJs.loadGadgetFromUrl(tab_gadget);
-            // clear previous events
-            RenderJs.GadgetIndex.getRootGadget().getDom().bind(
-                "ready",
-                function () {
-                    if (!is_ready) {
-                        RenderJs.updateGadgetData(tab_gadget);
-                        is_ready = true;
-                    }
-                }
-            );
+            // this will make RenderJs fire "ready" event when all gadgets are loaded.
+            RenderJs.setReady(false);
             return tab_gadget;
         },
 

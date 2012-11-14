@@ -81,10 +81,9 @@ function setupRenderJSTest(){
     stop();
 
     // we need to wait for all gadgets loading ...
-    RenderJs.GadgetIndex.getRootGadget().getDom().bind("ready", function () {
+    RenderJs.GadgetIndex.getRootGadget().getDom().one("ready", function () {
       start();
       equal(true, RenderJs.GadgetIndex.isGadgetListLoaded());
-      equal(true, RenderJs.isReady());
     });
    });
 
@@ -96,6 +95,7 @@ function setupRenderJSTest(){
 
     // we need to wait for all gadgets loading ...
     RenderJs.GadgetIndex.getRootGadget().getDom().bind("ready", function () {
+      RenderJs.InteractionGadget.bind($("#main-interactor"));
       start();
       equal(0, counter);
       // A.inc will call B.inc, both will increase counter by 1
