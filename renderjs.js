@@ -522,12 +522,13 @@ var RenderJs = (function () {
                         source_method_id, destination_gadget_id,
                         destination_method_id) {
                         var interaction = function () {
+                            // execute source method
                             RenderJs.GadgetIndex.getGadgetById(
                                 source_gadget_id)[original_source_method_id].
                                 apply(null, arguments);
+                            // call trigger so bind can be asynchronously called
                             RenderJs.GadgetIndex.getGadgetById(
-                                destination_gadget_id)[destination_method_id].
-                                apply(null, arguments);
+                                destination_gadget_id).dom.trigger(source_method_id);
                         };
                         return interaction;
                     },
@@ -574,6 +575,14 @@ var RenderJs = (function () {
                                     destination_gadget_id,
                                     destination_method_id
                                 );
+                            // we use html custom events for asyncronous method call so
+                            // bind destination_gadget to respective event
+                            destination_gadget.dom.bind(
+                                source_method_id,
+                                createTriggerInteraction(
+                                    destination_gadget_id, destination_method_id
+                                )
+                            );
                         }
                         else {
                             // this is a custom event attached to HTML gadget
