@@ -171,8 +171,12 @@ var RenderJs = (function () {
                         }
                     });
                 }
-            } else {
-                // gadget is an inline one so no need to load it from network
+            }
+            else {
+                // gadget is an inline (InteractorGadget or one using
+                // data-gadget-source / data-gadget-handler) so no need
+                // to load it from network
+                RenderJs.updateGadgetData(gadget);
                 gadget_js.setReady();
                 RenderJs.checkAndTriggerReady();
             }
