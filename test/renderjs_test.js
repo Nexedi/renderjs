@@ -38,7 +38,6 @@ function setupRenderJSTest(){
     stop();
 
     RenderJs.bindReady(function (){
-      RenderJs.update($("#qunit-fixture"));
       start();
       equal(RenderJs.GadgetIndex.getGadgetList().length, 1);
       equal(true, RenderJs.GadgetIndex.isGadgetListLoaded());
@@ -72,9 +71,6 @@ function setupRenderJSTest(){
     cleanUp();
     $("#qunit-fixture").append('<div data-gadget="" id="new-init" data-gadget-property="{&quot;name&quot;: &quot;Ivan&quot;, &quot;age&quot;: 33}">X</div>');
     RenderJs.bootstrap($("#qunit-fixture"));
-    RenderJs.bindReady(function (){
-      RenderJs.update($("#qunit-fixture"));
-    });
 
     // test that gadget get a proper initialization from data-gadget-property
     equal('Ivan', RenderJs.GadgetIndex.getGadgetById("new-init").name);

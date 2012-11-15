@@ -25,6 +25,7 @@ var RenderJs = (function () {
     var is_ready = false;
 
     return {
+
         init: function () {
           /*
            * Do all initialization
@@ -50,19 +51,24 @@ var RenderJs = (function () {
         },
 
         bootstrap: function (root) {
-            /* initial load application gadget */
+            /*
+             * Load all gadgets for this DOM element
+             * (including recursively contained ones)
+             */
             var gadget_id, is_gadget;
             gadget_id = root.attr("id");
             is_gadget = root.attr("data-gadget")!==undefined;
             if (is_gadget && gadget_id!==undefined ) {
               // bootstart root gadget only if it is indeed a gadget
-              RenderJs.loadGadgetFromUrl(root);
+              RenderJs.loadGadget(root);
             }
-            RenderJs.load(root);
+            RenderJs.loadRecursiveGadget(root);
         },
 
-        load: function (root) {
-            /* Load gadget layout by traversing DOM */
+        loadRecursiveGadget: function (root) {
+            /*
+             * Load all contained gadgets inside passed DOM element.
+             */
             var gadget_list, gadget, gadget_id, gadget_js;
             gadget_list = root.find("[data-gadget]");
 
@@ -77,19 +83,24 @@ var RenderJs = (function () {
 
             // Load chilren
             gadget_list.each(function () {
-                RenderJs.loadGadgetFromUrl($(this));
+                RenderJs.loadGadget($(this));
             });
         },
 
-        updateAndRecurse: function (gadget, data) {
-            /* Update current gadget and recurse down */
+        setGadgetAndRecurse: function (gadget, data) {
+            /*
+             * Set gadget data and recursively load it in case it holds another
+             * gadgets.
+             */
             gadget.append(data);
             // a gadget may contain sub gadgets
-            this.load(gadget);
+            RenderJs.loadRecursiveGadget(gadget);
         },
 
-        loadGadgetFromUrl: function (gadget) {
-            /* Load gadget's SPECs from URL */
+        loadGadget: function (gadget) {
+            /*
+             * Load gadget's SPECs from URL
+             */
             var url, gadget_id, gadget_property, cacheable, cache_id,
                 app_cache, data, gadget_js;
             url = gadget.attr("data-gadget");
@@ -135,7 +146,7 @@ var RenderJs = (function () {
                                 RenderJs.Cache.set(cache_id, data);
                                 RenderJs.GadgetIndex.getGadgetById(gadget_id).
                                     setReady();
-                                RenderJs.updateAndRecurse(gadget, data);
+                                RenderJs.setGadgetAndRecurse(gadget, data);
                                 RenderJs.checkAndTriggerReady();
                             }
                         });
@@ -143,7 +154,7 @@ var RenderJs = (function () {
                         // get from cache
                         data = app_cache;
                         gadget_js.setReady();
-                        this.updateAndRecurse(gadget, data);
+                        this.setGadgetAndRecurse(gadget, data);
                         this.checkAndTriggerReady();
                     }
                 } else {
@@ -155,7 +166,7 @@ var RenderJs = (function () {
                             gadget_id = this.yourCustomData.gadget_id;
                             RenderJs.GadgetIndex.getGadgetById(gadget_id).
                                 setReady();
-                            RenderJs.updateAndRecurse(gadget, data);
+                            RenderJs.setGadgetAndRecurse(gadget, data);
                             RenderJs.checkAndTriggerReady();
                         }
                     });
@@ -207,23 +218,11 @@ var RenderJs = (function () {
             return is_gadget_list_loaded;
         },
 
-        update: function (root) {
-            /* update gadget with data from remote source */
-            root.find("[gadget]").each(function (i, v) {
-                RenderJs.updateGadgetData($(this));
-            });
-        },
-
-        updateGadgetWithDataHandler: function (result) {
-            var data_handler;
-            data_handler = this.yourCustomData.data_handler;
-            if (data_handler !== undefined) {
-                eval(data_handler + "(result)");
-            }
-        },
-
         updateGadgetData: function (gadget) {
-            /* Do real gagdet update here */
+            /*
+             * Gadget can be updated from "data-gadget-source" (i.e. a json)
+             * and "data-gadget-handler" attributes (i.e. a namespace Javascript) 
+             */
             var data_source, data_handler;
             data_source = gadget.attr("data-gadget-source");
             data_handler = gadget.attr("data-gadget-handler");
@@ -233,7 +232,12 @@ var RenderJs = (function () {
                     url: data_source,
                     dataType: "json",
                     yourCustomData: {"data_handler": data_handler},
-                    success: RenderJs.updateGadgetWithDataHandler
+                    success: function (result) {
+                              var data_handler;
+                              data_handler = this.yourCustomData.data_handler;
+                              if (data_handler !== undefined) {
+                                  eval(data_handler + "(result)");}
+                             }
                 });
             }
         },
