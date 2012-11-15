@@ -51,9 +51,10 @@ var RenderJs = (function () {
 
         bootstrap: function (root) {
             /* initial load application gadget */
-            var gadget_id;
+            var gadget_id, is_gadget;
             gadget_id = root.attr("id");
-            if (gadget_id!==undefined) {
+            is_gadget = root.attr("data-gadget")!==undefined;
+            if (is_gadget && gadget_id!==undefined ) {
               // bootstart root gadget only if it is indeed a gadget
               RenderJs.loadGadgetFromUrl(root);
             }
@@ -254,8 +255,10 @@ var RenderJs = (function () {
 
             tab_container.append(html_string);
             tab_gadget = tab_container.find(".gadget");
+
             // render new gadget
-            RenderJs.loadGadgetFromUrl(tab_gadget);
+            RenderJs.bootstrap(tab_container);
+
             // this will make RenderJs fire "ready" event when all gadgets are loaded.
             RenderJs.setReady(false);
             return tab_gadget;
