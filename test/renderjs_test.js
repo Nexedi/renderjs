@@ -69,8 +69,9 @@ function setupRenderJSTest(){
 
     RenderJs.bindReady(function (){
       start();
-      equal($("#qunit-fixture").children(".gadget").length, 1);
+      equal($("#qunit-fixture").children("#new_added").length, 1);
       equal(RenderJs.GadgetIndex.getGadgetList().length, 1);
+      equal(RenderJs.GadgetIndex.getRootGadget().getDom().attr("id"), "new_added");
     });
    });
 
@@ -123,7 +124,6 @@ function setupRenderJSTest(){
   test('GadgetDataHandler', function () {
     cleanUp();
     $("#qunit-fixture").append('<div data-gadget="" id="json-gadget" data-gadget-source = "json/json_file.json" data-gadget-handler="parseJSONAndUpdateNameSpace"></div>');
-    RenderJs.setReady(false);
     RenderJs.bootstrap($("#qunit-fixture"));
     equal('', first_name);
     equal('', last_name);

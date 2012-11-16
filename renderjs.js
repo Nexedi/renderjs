@@ -58,6 +58,8 @@ var RenderJs = (function () {
             var gadget_id, is_gadget;
             gadget_id = root.attr("id");
             is_gadget = root.attr("data-gadget")!==undefined;
+            // this will make RenderJs fire "ready" event when all gadgets are loaded.
+            RenderJs.setReady(false);
             if (is_gadget && gadget_id!==undefined ) {
               // bootstart root gadget only if it is indeed a gadget
               RenderJs.loadGadget(root);
@@ -272,8 +274,7 @@ var RenderJs = (function () {
             tab_container = $('#' + dom_id);
             tab_container.empty();
             html_string = [
-                '<div class="gadget" ',
-                'id="' + gadget_id + '"',
+                '<div  id="' + gadget_id + '"',
                 'data-gadget="' + gadget + '"',
                 'data-gadget-handler="' + gadget_data_handler + '" ',
                 'data-gadget-source="' + gadget_data_source + '"></div>'
@@ -285,8 +286,6 @@ var RenderJs = (function () {
             // render new gadget
             RenderJs.bootstrap(tab_container);
 
-            // this will make RenderJs fire "ready" event when all gadgets are loaded.
-            RenderJs.setReady(false);
             return tab_gadget;
         },
 
