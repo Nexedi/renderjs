@@ -1,7 +1,7 @@
 /*
  * RenderJs tests
  */
-counter = 0;
+
 // in tests we need to call function manually rather than rely
 // on implicit calling
 RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND=false;
@@ -11,9 +11,17 @@ function cleanUp () {
    * Clean up namespace between tests
    */
   // re-init GadgetIndex
-  $.each(RenderJs.GadgetIndex.getGadgetList(), function () {
-    RenderJs.GadgetIndex.unregisterGadget(this);
-  });
+  RenderJs.GadgetIndex.setGadgetList([]);
+  equal(0, RenderJs.GadgetIndex.getGadgetList().length);
+}
+
+// used by tests namespace variables
+counter = 0;
+first_name=''
+last_name=''
+function parseJSONAndUpdateNameSpace(result) {
+  first_name=result['first_name'];
+  last_name=result['last_name'];
 }
 
 function setupRenderJSTest(){
@@ -56,7 +64,7 @@ function setupRenderJSTest(){
   test('addGadget', function () {
     cleanUp();
     equal(RenderJs.GadgetIndex.getGadgetList().length, 0);
-    RenderJs.addGadget("qunit-fixture", "loading/test-gadget.html", "", "");
+    RenderJs.addGadget("qunit-fixture", "new_added", "loading/test-gadget.html", "", "");
     stop();
 
     RenderJs.bindReady(function (){
@@ -81,7 +89,7 @@ function setupRenderJSTest(){
   module("GadgetReadyEvent");
   test('GadgetReadyEvent', function () {
     cleanUp();
-    RenderJs.addGadget("qunit-fixture", "interactions/index.html", "", "");
+    RenderJs.addGadget("qunit-fixture", "new_added", "interactions/index.html", "", "");
     stop();
 
     // we need to wait for all gadgets loading ...
@@ -94,7 +102,7 @@ function setupRenderJSTest(){
   module("InteractionGadget");
   test('InteractionGadget', function () {
     cleanUp();
-    RenderJs.addGadget("qunit-fixture", "interactions/index.html", "", "");
+    RenderJs.addGadget("qunit-fixture", "new_add", "interactions/index.html", "", "");
     stop();
 
     // we need to wait for all gadgets loading ...
@@ -110,5 +118,24 @@ function setupRenderJSTest(){
       equal(3, counter);
     });
    });
+
+  module("GadgetDataHandler");
+  test('GadgetDataHandler', function () {
+    cleanUp();
+    $("#qunit-fixture").append('<div data-gadget="" id="json-gadget" data-gadget-source = "json/json_file.json" data-gadget-handler="parseJSONAndUpdateNameSpace"></div>');
+    RenderJs.setReady(false);
+    RenderJs.bootstrap($("#qunit-fixture"));
+    equal('', first_name);
+    equal('', last_name);
+    stop();
+
+    // we need to wait for all gadgets loading ...
+    RenderJs.bindReady(function () {
+      start();
+      equal('John', first_name);
+      equal('Doh', last_name);
+    });
+  });
+
 };
 

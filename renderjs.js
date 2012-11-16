@@ -102,7 +102,7 @@ var RenderJs = (function () {
              * Load gadget's SPECs from URL
              */
             var url, gadget_id, gadget_property, cacheable, cache_id,
-                app_cache, data, gadget_js;
+                app_cache, data, gadget_js, is_update_gadget_data_running;
             url = gadget.attr("data-gadget");
             gadget_id = gadget.attr("id");
             gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget_id);
@@ -176,8 +176,12 @@ var RenderJs = (function () {
                 // gadget is an inline (InteractorGadget or one using
                 // data-gadget-source / data-gadget-handler) so no need
                 // to load it from network
-                RenderJs.updateGadgetData(gadget);
-                gadget_js.setReady();
+                is_update_gadget_data_running = RenderJs.updateGadgetData(gadget);
+                if (!is_update_gadget_data_running){
+                  // no update is running so gadget is basically ready
+                  // if update is running then it should take care and set status
+                  gadget_js.setReady();
+                }
                 RenderJs.checkAndTriggerReady();
             }
         },
@@ -216,6 +220,7 @@ var RenderJs = (function () {
                         trigger("ready");
                     // trigger ready on root body element
                     $("body").trigger("ready");
+                    // this set will make sure we fire this event only once
                     RenderJs.setReady(true);
                 }
             }
@@ -235,18 +240,30 @@ var RenderJs = (function () {
                 $.ajax({
                     url: data_source,
                     dataType: "json",
-                    yourCustomData: {"data_handler": data_handler},
+                    yourCustomData: {"data_handler": data_handler,
+                                     "gadget_id": gadget.attr("id")},
                     success: function (result) {
-                              var data_handler;
+                              var data_handler, gadget_id;
                               data_handler = this.yourCustomData.data_handler;
+                              gadget_id = this.yourCustomData.gadget_id;
                               if (data_handler !== undefined) {
-                                  eval(data_handler + "(result)");}
+                                  // eval is not nice to use
+                                  eval(data_handler + "(result)");
+                                  gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+                                  // mark gadget as loaded and fire a check
+                                  // to see if all gadgets are loaded
+                                  gadget.setReady();
+                                  RenderJs.checkAndTriggerReady();
+                              }
                              }
                 });
+                // asynchronous update happens and respective thread will update status
+                return true;
             }
+            return false;
         },
 
-        addGadget: function (dom_id, gadget, gadget_data_handler,
+        addGadget: function (dom_id, gadget_id, gadget, gadget_data_handler,
                             gadget_data_source) {
             /*
              * add new gadget and render it
@@ -256,6 +273,7 @@ var RenderJs = (function () {
             tab_container.empty();
             html_string = [
                 '<div class="gadget" ',
+                'id="' + gadget_id + '"',
                 'data-gadget="' + gadget + '"',
                 'data-gadget-handler="' + gadget_data_handler + '" ',
                 'data-gadget-source="' + gadget_data_source + '"></div>'
@@ -436,6 +454,13 @@ var RenderJs = (function () {
             var gadget_list = [];
 
             return {
+                setGadgetList: function (gadget_list_value) {
+                    /*
+                     * Set list of registered gadgets
+                     */
+                    gadget_list = gadget_list_value;
+                },
+
                 getGadgetList: function () {
                     /*
                      * Return list of registered gadgets
