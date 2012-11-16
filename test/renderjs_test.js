@@ -51,12 +51,34 @@ function setupRenderJSTest(){
       equal(true, RenderJs.GadgetIndex.isGadgetListLoaded());
       equal("new", RenderJs.GadgetIndex.getRootGadget().getDom().attr("id"));
       equal(RenderJs.GadgetIndex.getGadgetById("new"), RenderJs.GadgetIndex.getRootGadget());
+      dom = $("#qunit-fixture");
+      deepEqual(["new"], RenderJs.GadgetIndex.getGadgetIdListFromDom(dom));
 
-      // unregister gadget all gadgets from this test not to mess with rest of tests
+      // test unregister gadget
       equal(RenderJs.GadgetIndex.getGadgetList().length, 1);
       equal(RenderJs.GadgetIndex.getGadgetById("new"), RenderJs.GadgetIndex.getRootGadget());
       RenderJs.GadgetIndex.unregisterGadget(RenderJs.GadgetIndex.getGadgetById("new"));
       equal(RenderJs.GadgetIndex.getGadgetList().length, 0);
+    });
+   });
+
+  module("GadgetObject");
+  test('GadgetObject', function () {
+    cleanUp();
+    $("#qunit-fixture").append('<div data-gadget="loading/test-gadget.html" id="new-gadget">X</div>');
+    RenderJs.bootstrap($("#qunit-fixture"));
+    stop();
+
+    RenderJs.bindReady(function (){
+      start();
+      equal(RenderJs.GadgetIndex.getGadgetList().length, 1);
+      root_gadget = RenderJs.GadgetIndex.getRootGadget();
+      equal("new-gadget", root_gadget.getDom().attr("id"));
+
+      // test remove gadget
+      root_gadget.remove();
+      equal(RenderJs.GadgetIndex.getGadgetList().length, 0);
+      equal(0, $("#new-gadget").length);
     });
    });
 

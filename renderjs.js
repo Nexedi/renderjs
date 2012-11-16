@@ -42,7 +42,7 @@ var RenderJs = (function () {
               RenderJs.bindReady(
                 function () {
                   // examine all Intaction Gadgets and bind accordingly
-                  $("div[data-gadget-connection]").each( function(index, element) {
+                  $("div[data-gadget-connection]").each( function (index, element) {
                     RenderJs.InteractionGadget.bind($(element));
                   })
                 });
@@ -57,10 +57,10 @@ var RenderJs = (function () {
              */
             var gadget_id, is_gadget;
             gadget_id = root.attr("id");
-            is_gadget = root.attr("data-gadget")!==undefined;
+            is_gadget = root.attr("data-gadget") !== undefined;
             // this will make RenderJs fire "ready" event when all gadgets are loaded.
             RenderJs.setReady(false);
-            if (is_gadget && gadget_id!==undefined ) {
+            if (is_gadget && gadget_id !== undefined ) {
               // bootstart root gadget only if it is indeed a gadget
               RenderJs.loadGadget(root);
             }
@@ -108,7 +108,7 @@ var RenderJs = (function () {
             url = gadget.attr("data-gadget");
             gadget_id = gadget.attr("id");
             gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-            if (gadget_js===undefined) {
+            if (gadget_js === undefined) {
               // register gadget in javascript namespace if not already registered
               gadget_js = new RenderJs.Gadget(gadget_id, gadget);
               RenderJs.GadgetIndex.registerGadget(gadget_js);
@@ -179,7 +179,7 @@ var RenderJs = (function () {
                 // data-gadget-source / data-gadget-handler) so no need
                 // to load it from network
                 is_update_gadget_data_running = RenderJs.updateGadgetData(gadget);
-                if (!is_update_gadget_data_running){
+                if (!is_update_gadget_data_running) {
                   // no update is running so gadget is basically ready
                   // if update is running then it should take care and set status
                   gadget_js.setReady();
@@ -415,6 +415,16 @@ var RenderJs = (function () {
                  */
                 this.is_ready = true;
             };
+
+            this.remove = function () {
+                /*
+                 * Remove gadget (including its DOM element).
+                 */
+                // unregister from GadgetIndex
+                RenderJs.GadgetIndex.unregisterGadget(this);
+                // remove its DOM element
+                $(this.getDom()).remove();
+            };
         }),
 
         TabbularGadget: (function () {
@@ -453,6 +463,19 @@ var RenderJs = (function () {
             var gadget_list = [];
 
             return {
+
+                getGadgetIdListFromDom: function (dom) {
+                  /*
+                   * Get list of all gadget's ID from DOM
+                   */
+                  var gadget_id_list = [];
+                  $.each(dom.find('[data-gadget]'),
+                         function (index, value) {
+                           gadget_id_list.push($(value).attr("id"));}
+                    );
+                  return gadget_id_list;
+                },
+
                 setGadgetList: function (gadget_list_value) {
                     /*
                      * Set list of registered gadgets
