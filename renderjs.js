@@ -188,7 +188,7 @@ var RenderJs = (function () {
             }
         },
 
-        isReady: function (value) {
+        isReady: function () {
             /*
              * Get rendering status
              */
