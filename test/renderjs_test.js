@@ -139,6 +139,11 @@ function setupRenderJSTest(){
       // fire pure HTML event on A and test it calls respective B method
       $('#A').trigger('htmlEvent1');
       equal(3, counter);
+      // fire pure HTML event that calls multiple destinations methods
+      // On its side these methods themself can call each other like now
+      // when A.inc calls B.inc thus result is 6 NOT 5!
+      $('#main-interactor').trigger('multiEvent');
+      equal(6, counter);
     });
    });
 
