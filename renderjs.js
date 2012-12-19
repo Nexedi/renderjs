@@ -644,6 +644,6 @@ var RenderJs = (function () {
 }());
 
 // impliticly call RenderJs bootstrap
-$(document).ready(function () {
-    RenderJs.init();
-});
+//  $(document).ready(function () {
+//      RenderJs.init();
+//  });
