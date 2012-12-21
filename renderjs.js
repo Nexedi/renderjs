@@ -549,6 +549,53 @@ var RenderJs = (function () {
             };
         }()),
 
+        GadgetCatalog : (function () {
+            /*
+             * Gadget catalog provides API to get list of gadgets from a repository
+             */
+            return {
+                updateGadgetIndexFromURL: function (url) {
+                  /*
+                   * Update gadget index from a remote repository.
+                   */
+                },
+
+                setGadgetIndexUrlList: function (url_list) {
+                  /*
+                   * Set list of Gadget Index repositories.
+                   */
+                  // store in Cache (html5 storage)
+                  var cache_id = "setGadgetIndexUrlList";
+                  RenderJs.Cache.set(cache_id, url_list)
+                },
+
+                getGadgetIndexUrlList: function () {
+                  /*
+                   * Get list of Gadget Index repositories.
+                   */
+                  // get from Cache (html5 storage)
+                  var cache_id = "setGadgetIndexUrlList";
+                  return RenderJs.Cache.get(cache_id, undefined)
+                },
+
+                getGadgetListThatProvide: function (service_list) {
+                  /*
+                   * Return list of all gadgets that providen a given service.
+                   * Read this list from data structure created in HTML5 local
+                   * storage by updateGadgetIndexFromURL
+                   */
+                  // XXX: get from Cache stored index and itterate over it
+                  // to find matching ones
+                },
+
+                registerServiceList: function (gadget, service_list) {
+                  /*
+                   * Register a service provided by a gadget.
+                   */
+                },
+            };
+        }()),
+
         InteractionGadget : (function () {
             /*
              * Basic gadget interaction gadget implementation.

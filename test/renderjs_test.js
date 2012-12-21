@@ -164,5 +164,13 @@ function setupRenderJSTest(){
     });
   });
 
+  module("GadgetCatalog");
+  test('GadgetCatalog', function () {
+    cleanUp();
+    var url_list = new Array('gadget_index/gagdet_index.json');
+    RenderJs.GadgetCatalog.setGadgetIndexUrlList(url_list)
+    deepEqual(url_list, RenderJs.GadgetCatalog.getGadgetIndexUrlList());
+  });
+  
 };
 
