@@ -150,6 +150,7 @@ var RenderJs = (function () {
                                     setReady();
                                 RenderJs.setGadgetAndRecurse(gadget, data);
                                 RenderJs.checkAndTriggerReady();
+                                RenderJs.updateGadgetData(gadget);
                             }
                         });
                     } else {
@@ -158,6 +159,7 @@ var RenderJs = (function () {
                         gadget_js.setReady();
                         this.setGadgetAndRecurse(gadget, data);
                         this.checkAndTriggerReady();
+                        RenderJs.updateGadgetData(gadget);
                     }
                 } else {
                     // not to be cached
@@ -170,6 +172,7 @@ var RenderJs = (function () {
                                 setReady();
                             RenderJs.setGadgetAndRecurse(gadget, data);
                             RenderJs.checkAndTriggerReady();
+                            RenderJs.updateGadgetData(gadget);
                         }
                     });
                 }
@@ -442,14 +445,14 @@ var RenderJs = (function () {
                     visible_dom.removeClass("not_selected");
                 },
 
-                addNewTabGadget: function (dom_id, gadget, gadget_data_handler,
+                addNewTabGadget: function (dom_id, gadget_id, gadget, gadget_data_handler,
                                           gadget_data_source) {
                     /*
                      * add new gadget and render it
                      */
                     var tab_gadget;
                     tab_gadget = RenderJs.addGadget(
-                        dom_id, gadget, gadget_data_handler, gadget_data_source
+                        dom_id, gadget_id, gadget, gadget_data_handler, gadget_data_source
                     );
                     // XXX: we should unregister all gadgets (if any we replace now in DOM)
                 }
