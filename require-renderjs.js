@@ -1,11 +1,16 @@
 // JavaScript file that is used to load RenderJs depenencies
+require.config({
+  paths: {
+    jquery: "lib/jquery/jquery",
+    "jquery.json": "lib/json/jquery.json.min",
+    renderjs: "renderjs"
+  },
+  shim: {
+    "jquery.json": [ "jquery" ],
+    renderjs: [ "jquery", "jquery.json" ]
+  }
+});
 
-require(["../../lib/jquery/jquery.js",
-         "../../renderjs.js"],
-        function (domReady) {
-          // Place code to be executed when libraries are loaded
-          // impliticly call RenderJs bootstrap
-          RenderJs.init();
-        });
-
-
+require([ "jquery", "jquery.json", "renderjs" ], function(domReady) {
+  RenderJs.init();
+});
