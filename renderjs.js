@@ -556,11 +556,29 @@ var RenderJs = (function () {
             /*
              * Gadget catalog provides API to get list of gadgets from a repository
              */
+            var cache_id = "setGadgetIndexUrlList";
+
+            function updateGadgetIndexFromURL(url) {
+              $.ajax({url:url,
+                      async:   false, // To simplify update
+                      dataType: "json",
+                      success:  function(data) {
+                                  // Store remote JSON as it is in local html5 cache
+                                  // as we don't need to reinvent another structure yet!
+                                  RenderJs.Cache.set(url, data)
+                                }
+                    });
+            };
+
             return {
-                updateGadgetIndexFromURL: function (url) {
+                updateGadgetIndex: function () {
                   /*
-                   * Update gadget index from a remote repository.
+                   * Update gadget index from all configured remote repositories.
                    */
+                  $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
+                         function(index, value) {
+                          updateGadgetIndexFromURL(value);
+                         });
                 },
 
                 setGadgetIndexUrlList: function (url_list) {
@@ -568,7 +586,6 @@ var RenderJs = (function () {
                    * Set list of Gadget Index repositories.
                    */
                   // store in Cache (html5 storage)
-                  var cache_id = "setGadgetIndexUrlList";
                   RenderJs.Cache.set(cache_id, url_list)
                 },
 
@@ -577,11 +594,10 @@ var RenderJs = (function () {
                    * Get list of Gadget Index repositories.
                    */
                   // get from Cache (html5 storage)
-                  var cache_id = "setGadgetIndexUrlList";
                   return RenderJs.Cache.get(cache_id, undefined)
                 },
 
-                getGadgetListThatProvide: function (service_list) {
+                getGadgetListThatProvide: function (service) {
                   /*
                    * Return list of all gadgets that providen a given service.
                    * Read this list from data structure created in HTML5 local
@@ -589,6 +605,21 @@ var RenderJs = (function () {
                    */
                   // XXX: get from Cache stored index and itterate over it
                   // to find matching ones
+                  var gadget_list = new Array();
+                  $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
+                         function(index, url) {
+                           // get repos from cache
+                           var cached_repo = RenderJs.Cache.get(url)
+                           $.each(cached_repo['gadget_list'],
+                                   function(index, gadget) {
+                                     if (jQuery.inArray(service, gadget["service_list"]) > -1) {
+                                       // gadget provides a service, add to list
+                                       gadget_list.push(gadget);
+                                     }
+                                  }
+                                 )
+                         });
+                  return gadget_list;
                 },
 
                 registerServiceList: function (gadget, service_list) {

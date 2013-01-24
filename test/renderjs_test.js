@@ -24,6 +24,14 @@ function parseJSONAndUpdateNameSpace(result) {
   last_name=result['last_name'];
 }
 
+function makeid() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for( var i=0; i < 5; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return text;
+}
+
 function setupRenderJSTest(){
   /*
   * Main RenderJS test entry point
@@ -167,10 +175,31 @@ function setupRenderJSTest(){
   module("GadgetCatalog");
   test('GadgetCatalog', function () {
     cleanUp();
-    var url_list = new Array('gadget_index/gagdet_index.json');
+    // generate random argument to test always with new cache id
+    var url_list = new Array('gadget_index/gadget_index.json?t='+makeid());
     RenderJs.GadgetCatalog.setGadgetIndexUrlList(url_list)
     deepEqual(url_list, RenderJs.GadgetCatalog.getGadgetIndexUrlList());
+    RenderJs.GadgetCatalog.updateGadgetIndex();
+    cached = RenderJs.Cache.get(url_list[0]);
+    equal("HTML WYSIWYG", cached["gadget_list"][0]["title"]);
+    deepEqual(["edit_html", "view_html"], cached["gadget_list"][0]["service_list"]);
+
+    // check that we can find gadgets that provide some service_list
+    gadget_list = RenderJs.GadgetCatalog.getGadgetListThatProvide("edit_html");
+    equal("HTML WYSIWYG", gadget_list[0]["title"]);
+    deepEqual(["edit_html", "view_html"], gadget_list[0]["service_list"]);
+    gadget_list = RenderJs.GadgetCatalog.getGadgetListThatProvide("view_html");
+    equal("HTML WYSIWYG", gadget_list[0]["title"]);
+    deepEqual(["edit_html", "view_html"], gadget_list[0]["service_list"]);
+
+    gadget_list = RenderJs.GadgetCatalog.getGadgetListThatProvide("edit_svg");
+    equal("SVG WYSIWYG", gadget_list[0]["title"]);
+    deepEqual(["edit_svg", "view_svg"], gadget_list[0]["service_list"]);
+
+    // no such service is provided by gadget repos
+    equal(0, RenderJs.GadgetCatalog.getGadgetListThatProvide("edit_html1"));
+
   });
-  
+
 };
 
