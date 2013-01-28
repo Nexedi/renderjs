@@ -11,6 +11,6 @@ require.config({
   }
 });
 
-require([ "jquery", "jquery.json", "renderjs" ], function(domReady) {
+require([ "renderjs" ], function(domReady) {
   RenderJs.init();
 });
