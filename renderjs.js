@@ -44,10 +44,10 @@ var RenderJs = (function () {
                   // examine all Intaction Gadgets and bind accordingly
                   $("div[data-gadget-connection]").each( function (index, element) {
                     RenderJs.InteractionGadget.bind($(element));
-                  })
+                  });
                 });
             }
-          };
+          }
         },
 
         bootstrap: function (root) {
