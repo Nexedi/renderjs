@@ -559,15 +559,20 @@ var RenderJs = (function () {
             var cache_id = "setGadgetIndexUrlList";
 
             function updateGadgetIndexFromURL(url) {
-              $.ajax({url:url,
-                      async:   false, // To simplify update
-                      dataType: "json",
-                      success:  function(data) {
-                                  // Store remote JSON as it is in local html5 cache
-                                  // as we don't need to reinvent another structure yet!
-                                  RenderJs.Cache.set(url, data)
-                                }
-                    });
+              // split to base and document url
+              var url_list = url.split('/'),
+                  document_url = url_list[url_list.length-1];
+              url_list.splice($.inArray(document_url, url_list), 1);
+              var base_url = url_list.join('/'),
+                  web_dav = jIO.newJio({
+                      "type": "dav",
+                      "username": "",
+                      "password": "",
+                      "url": base_url});
+              web_dav.get(document_url,
+                          function (err, response) {
+                            RenderJs.Cache.set(url, response);
+              });
             };
 
             return {
@@ -609,7 +614,7 @@ var RenderJs = (function () {
                   $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
                          function(index, url) {
                            // get repos from cache
-                           var cached_repo = RenderJs.Cache.get(url)
+                           var cached_repo = RenderJs.Cache.get(url);
                            $.each(cached_repo['gadget_list'],
                                    function(index, gadget) {
                                      if (jQuery.inArray(service, gadget["service_list"]) > -1) {
