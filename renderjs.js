@@ -552,6 +552,89 @@ var RenderJs = (function () {
             };
         }()),
 
+        GadgetCatalog : (function () {
+            /*
+             * Gadget catalog provides API to get list of gadgets from a repository
+             */
+            var cache_id = "setGadgetIndexUrlList";
+
+            function updateGadgetIndexFromURL(url) {
+              // split to base and document url
+              var url_list = url.split('/'),
+                  document_url = url_list[url_list.length-1];
+              url_list.splice($.inArray(document_url, url_list), 1);
+              var base_url = url_list.join('/'),
+                  web_dav = jIO.newJio({
+                      "type": "dav",
+                      "username": "",
+                      "password": "",
+                      "url": base_url});
+              web_dav.get(document_url,
+                          function (err, response) {
+                            RenderJs.Cache.set(url, response);
+              });
+            };
+
+            return {
+                updateGadgetIndex: function () {
+                  /*
+                   * Update gadget index from all configured remote repositories.
+                   */
+                  $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
+                         function(index, value) {
+                          updateGadgetIndexFromURL(value);
+                         });
+                },
+
+                setGadgetIndexUrlList: function (url_list) {
+                  /*
+                   * Set list of Gadget Index repositories.
+                   */
+                  // store in Cache (html5 storage)
+                  RenderJs.Cache.set(cache_id, url_list)
+                },
+
+                getGadgetIndexUrlList: function () {
+                  /*
+                   * Get list of Gadget Index repositories.
+                   */
+                  // get from Cache (html5 storage)
+                  return RenderJs.Cache.get(cache_id, undefined)
+                },
+
+                getGadgetListThatProvide: function (service) {
+                  /*
+                   * Return list of all gadgets that providen a given service.
+                   * Read this list from data structure created in HTML5 local
+                   * storage by updateGadgetIndexFromURL
+                   */
+                  // XXX: get from Cache stored index and itterate over it
+                  // to find matching ones
+                  var gadget_list = new Array();
+                  $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
+                         function(index, url) {
+                           // get repos from cache
+                           var cached_repo = RenderJs.Cache.get(url);
+                           $.each(cached_repo['gadget_list'],
+                                   function(index, gadget) {
+                                     if (jQuery.inArray(service, gadget["service_list"]) > -1) {
+                                       // gadget provides a service, add to list
+                                       gadget_list.push(gadget);
+                                     }
+                                  }
+                                 )
+                         });
+                  return gadget_list;
+                },
+
+                registerServiceList: function (gadget, service_list) {
+                  /*
+                   * Register a service provided by a gadget.
+                   */
+                },
+            };
+        }()),
+
         InteractionGadget : (function () {
             /*
              * Basic gadget interaction gadget implementation.

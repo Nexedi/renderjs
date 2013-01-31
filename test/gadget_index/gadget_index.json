@@ -1,0 +1,11 @@
+{
+  "gadget_list":[ {"title": "HTML WYSIWYG",
+                   "description": "A simple HTML editor",
+                   "url": "http://example.com/html-editor.html",
+                   "service_list": ["edit_html", "view_html"]},
+                  {"title": "SVG WYSIWYG",
+                   "description": "A simple SVG editor",
+                   "url": "http://example.com/svg-editor.html",
+                   "service_list": ["edit_svg", "view_svg"]}
+                ]
+}
