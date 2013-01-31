@@ -208,7 +208,7 @@ function setupRenderJSTest(){
       // no such service is provided by gadget repos
       equal(0, RenderJs.GadgetCatalog.getGadgetListThatProvide("edit_html1"));
 
-    }, 1000)
+    }, 3000)
 
 
   });
