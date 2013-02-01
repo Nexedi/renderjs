@@ -1,3 +1,4 @@
+/*! RenderJs v0.2  */
 /*global console, require, $, localStorage, document */
 "use strict";
 
