@@ -609,7 +609,7 @@ var RenderJs = (function () {
                    * Read this list from data structure created in HTML5 local
                    * storage by updateGadgetIndexFromURL
                    */
-                  // XXX: get from Cache stored index and itterate over it
+                  // get from Cache stored index and itterate over it
                   // to find matching ones
                   var gadget_list = [];
                   $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
@@ -729,8 +729,3 @@ var RenderJs = (function () {
         }())
     };
 }());
-
-// impliticly call RenderJs bootstrap
-//  $(document).ready(function () {
-//      RenderJs.init();
-//  });

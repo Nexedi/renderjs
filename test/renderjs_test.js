@@ -105,6 +105,21 @@ function setupRenderJSTest(){
     });
    });
 
+  module("TabularGadget");
+  test('addTabularGadget', function () {
+    cleanUp();
+    equal(RenderJs.GadgetIndex.getGadgetList().length, 0);
+    RenderJs.TabbularGadget.addNewTabGadget("qunit-fixture", "new_added", "loading/test-gadget.html", "", "");
+    stop();
+
+    RenderJs.bindReady(function (){
+      start();
+      equal($("#qunit-fixture").children("#new_added").length, 1);
+      equal(RenderJs.GadgetIndex.getGadgetList().length, 1);
+      equal(RenderJs.GadgetIndex.getRootGadget().getDom().attr("id"), "new_added");
+    });
+   });
+
   module("GadgetInitialization");
   test('GadgetInitialization', function () {
     cleanUp();
