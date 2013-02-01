@@ -13,4 +13,5 @@ uglify:
 
 clean:
 	find -name '*~' -delete
+	find -name 'renderjs.min.js' -delete
 
