@@ -1,5 +1,7 @@
 /*! RenderJs v0.2  */
-/*global console, require, $, localStorage, document */
+/*global console, require, $, localStorage, document, jIO */
+/*jslint evil: true, white: true */
+
 "use strict";
 
 /*
@@ -17,8 +19,8 @@ var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 
 // fallback for IE
 if (typeof console === "undefined" || typeof console.log === "undefined") {
-  console = {};
-  console.log = function () {};
+    var console = {};
+    console.log = function () {};
 }
 
 var RenderJs = (function () {
@@ -43,7 +45,7 @@ var RenderJs = (function () {
               RenderJs.bindReady(
                 function () {
                   // examine all Intaction Gadgets and bind accordingly
-                  $("div[data-gadget-connection]").each( function (index, element) {
+                  $("div[data-gadget-connection]").each(function (index, element) {
                     RenderJs.InteractionGadget.bind($(element));
                   });
                 });
@@ -354,12 +356,10 @@ var RenderJs = (function () {
                     return {
                         get: function (cache_id, default_value) {
                             /* Get cache key value */
-                            if (cache_id in localStorage) {
+                            if (localStorage.getItem(cache_id) !== null) {
                               return JSON.parse(localStorage.getItem(cache_id));
                             }
-                            else {
-                              return default_value;
-                            }
+                            return default_value;
                         },
 
                         set: function (cache_id, data) {
@@ -390,7 +390,7 @@ var RenderJs = (function () {
             };
         }()),
 
-        Gadget: (function (gadget_id, dom) {
+        Gadget: function (gadget_id, dom) {
             /*
              * Javascript Gadget representation
              */
@@ -429,7 +429,7 @@ var RenderJs = (function () {
                 // remove its DOM element
                 $(this.getDom()).remove();
             };
-        }),
+        },
 
         TabbularGadget: (function () {
             /*
@@ -562,9 +562,9 @@ var RenderJs = (function () {
             function updateGadgetIndexFromURL(url) {
               // split to base and document url
               var url_list = url.split('/'),
-                  document_url = url_list[url_list.length-1];
-              url_list.splice($.inArray(document_url, url_list), 1);
-              var base_url = url_list.join('/'),
+                  document_url = url_list[url_list.length-1],
+                  d = url_list.splice($.inArray(document_url, url_list), 1),
+                  base_url = url_list.join('/'),
                   web_dav = jIO.newJio({
                       "type": "dav",
                       "username": "",
@@ -574,7 +574,7 @@ var RenderJs = (function () {
                           function (err, response) {
                             RenderJs.Cache.set(url, response);
               });
-            };
+            }
 
             return {
                 updateGadgetIndex: function () {
@@ -592,7 +592,7 @@ var RenderJs = (function () {
                    * Set list of Gadget Index repositories.
                    */
                   // store in Cache (html5 storage)
-                  RenderJs.Cache.set(cache_id, url_list)
+                  RenderJs.Cache.set(cache_id, url_list);
                 },
 
                 getGadgetIndexUrlList: function () {
@@ -600,7 +600,7 @@ var RenderJs = (function () {
                    * Get list of Gadget Index repositories.
                    */
                   // get from Cache (html5 storage)
-                  return RenderJs.Cache.get(cache_id, undefined)
+                  return RenderJs.Cache.get(cache_id, undefined);
                 },
 
                 getGadgetListThatProvide: function (service) {
@@ -611,19 +611,19 @@ var RenderJs = (function () {
                    */
                   // XXX: get from Cache stored index and itterate over it
                   // to find matching ones
-                  var gadget_list = new Array();
+                  var gadget_list = [];
                   $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
                          function(index, url) {
                            // get repos from cache
                            var cached_repo = RenderJs.Cache.get(url);
-                           $.each(cached_repo['gadget_list'],
+                           $.each(cached_repo.gadget_list,
                                    function(index, gadget) {
-                                     if (jQuery.inArray(service, gadget["service_list"]) > -1) {
+                                     if ($.inArray(service, gadget.service_list) > -1) {
                                        // gadget provides a service, add to list
                                        gadget_list.push(gadget);
                                      }
                                   }
-                                 )
+                                 );
                          });
                   return gadget_list;
                 },
