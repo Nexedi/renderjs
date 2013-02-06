@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <title>My Page</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.0-rc.1/jquery.mobile-1.3.0-rc.1.min.css" />
+        <link rel="stylesheet" href="jqm-gadget.css" />
+        <script src="http://code.jquery.com/jquery-1.9.0.min.js"></script>
+        <script src="http://code.jquery.com/mobile/1.3.0-rc.1/jquery.mobile-1.3.0-rc.1.min.js"></script>
+
+        <script src="../../renderjs.js"></script>
+        <!-- XXX:Using requirejs is not working with JQM -->
+        <!--    <script data-main="require-renderjs.js"
+            type="text/javascript"
+            src="../../lib/require/require.js"></script>-->
+
+
+</head>
+<body>
+
+  <div data-role="page">
+
+          <div data-role="header">
+                  <h1>Jquery mobile and RenderJs test</h1>
+          </div>
+
+          <div data-role="content">
+
+            <div id="jqm-gadget"
+                data-gadget="jqm-gadget.html"></div>
+            <div id="jqm-details-gadget"
+                data-gadget="jqm-details-gadget.html"></div>
+
+          </div>
+
+  </div>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      // explicitly call required as requirejs call not working
+      RenderJs.init();
+      // when all gadgets are loaded make sure JQM renders them
+      RenderJs.bindReady(
+                  function () {
+                    $("[data-gadget]").trigger('create');
+                  });
+    });
+  </script>
+
+
+</body>
+</html>
