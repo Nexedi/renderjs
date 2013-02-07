@@ -8,9 +8,7 @@
     //<![CDATA[
       $(document).ready(function() {
           gadget = RenderJs.GadgetIndex.getGadgetById("jqm-details-gadget");
-          console.log("init");
           gadget.updateCountry = function (country) {
-            console.log(country);
             $("#country").html(country);
           };
       });
