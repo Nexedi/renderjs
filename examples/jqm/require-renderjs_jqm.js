@@ -4,9 +4,6 @@ require.config({
   paths: {
     jqm: "lib/jqm/jquery.mobile-1.3.0-rc.1.min"
   },
-  shim: {
-    jqm: [ "jquery" ]
-  }
 });
 
 require([ "require-renderjs", "renderjs", "jqm" ], function(domReady) {
