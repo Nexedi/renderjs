@@ -8,24 +8,29 @@ define([], function () {
   var start = function () {
     require(['overrides', 'jquery', 'jqm', 'jquery.json', 'renderjs'],
       function () {
-        console.log("done loading");
-        console.log( $ );
-        console.log( $.mobile );
-        console.log( $.mobile.autoInitializePage );
-        // START
-        if ($.mobile.autoInitializePage === false) {
-          // initialize JQM
-          $.mobile.initializePage();
-          console.log("init JQM");
-          // initialize renderJS
+
+        $(document).on('pagebeforeshow','div:jqmData(role="page")', function () {
+
+          // renderJS handler
           RenderJs.init();
- 
-          // when all gadgets are loaded make sure JQM renders them
           RenderJs.bindReady(
             function () {
-              console.log("bindReady called, trigger create");
-              $("[data-gadget]").trigger('create');
-            });
+              $("[data-gadget]").filter(
+                function() {
+                  return $(this).jqmData("bound") !== true;
+                }
+              ).each(
+                function () {
+                  $(this).jqmData("bound",true).trigger('create');
+                }
+              )
+            }
+          );
+        });
+
+        // initialize JQM
+        if ($.mobile.autoInitializePage === false) {
+          $.mobile.initializePage();
         }
       });
   };
