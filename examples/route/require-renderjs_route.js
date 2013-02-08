@@ -21,13 +21,16 @@ require([ "require-renderjs", "jquery", "route", "url" ], function(domReady) {
                 $.url.redirect('/color/');
               });
 
-            // add gadget based application
+            // add gadgets who use route (history)
             body
-              .route("add", "/gadget", 1)
+              .route("add", "/gadget-one/", 1)
               .done(function () {
-                // Default route. Redirect to color subapp
-                //$.url.redirect('/color/');
-                console.log("add gadget");
+                RenderJs.addGadget('container', "gadget-one", "gadget-one.html", "", "");
+              });
+            body
+              .route("add", "/gadget-two/", 1)
+              .done(function () {
+                RenderJs.addGadget('container', "gadget-two", "gadget-two.html", "", "");
               });
 
             // /color app. Create subroutes and initialize DOM
@@ -52,7 +55,10 @@ require([ "require-renderjs", "jquery", "route", "url" ], function(domReady) {
                 page += "<li style='text-align: center;'><a style='text-decoration: none; display: block; width: 2em;' href='" +
                   $.url.generateUrl("/color/X/X/X") + "'>XXX<a><\/li>";
                 page += "<\/ul>";
-                page += "<div style='display: block;'><\/div>";
+                page += "<div style='display: block;'><\/div>"
+                page += "<a href='" +  $.url.generateUrl("/gadget-one/") + "'>Gadget 1</a>";
+                page += "&nbsp;<a href='" +  $.url.generateUrl("/gadget-two/") + "'>Gadget 2</a>";
+                page += "<div id='container'></div>";
                 $(this).html(page);
 
                 // Create sub routed in the container
