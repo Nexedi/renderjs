@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.0-rc.1/jquery.mobile-1.3.0-rc.1.min.css" />
+        <script data-main="require-renderjs.js" type="text/javascript" src="../../lib/require/require.js"></script>
+        <title>My own example</title>
+</head>
+<body>
+
+  <div data-role="page">
+    <div data-role="header">
+      <h1>Example 1</h1>
+    </div>
+
+    <div data-role="content">
+      <p>Load a gadget.</p>
+      <p>I'm testing the following:</p>
+      <ul>
+        <li>Load gadget OK</li>
+        <li>JQM widget in gadget should be enhanced OK</li>
+        <li>Gadget inline-CSS executed (red button 1) OK</li>
+        <li>Gadget inline-JS executed (yellow button 2) FAIL = Javascript is
+            executed but before JQM enhances the widget, so you cannot access
+            any elements, JQM adds/removes during enhancement</li>
+        <li>Add a link (3rd button) to page2. On page 2 another gadget should
+        be loaded = FAIL: in JQM, when you go from page A to page B you stay on page A 
+        and page B is loaded via Ajax and appended to the DOM (The url should
+        be pageA.html#page2_id, but with pushState enabled this is not visible).
+        <br /><b>Question:</b> Is there a method to trigger loading gadgets into an existing page?
+        </li>
+      </ul>
+      <div id="jqm-gadget" data-gadget="jqm-gadget.html"></div>
+    </div>
+
+  </div>
+
+</body>
+</html>

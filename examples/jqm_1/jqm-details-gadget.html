@@ -1,0 +1,20 @@
+<html>
+  <head></head>
+  <body>
+
+  Country of origin:<span id="country">   ...</span>
+
+  <script type="text/javascript" language="javascript">
+    //<![CDATA[
+      $(document).ready(function() {
+          gadget = RenderJs.GadgetIndex.getGadgetById("jqm-details-gadget");
+          gadget.updateCountry = function (country) {
+            $("#country").html(country);
+          };
+      });
+    //]]>
+  </script>
+
+
+  </body>
+</html>
