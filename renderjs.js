@@ -58,16 +58,19 @@ var RenderJs = (function () {
              * Load all gadgets for this DOM element
              * (including recursively contained ones)
              */
-            var gadget_id, is_gadget;
-            gadget_id = root.attr("id");
-            is_gadget = root.attr("data-gadget") !== undefined;
+            var all_gadgets_on_root = root.find("[data-gadget]"), i,
+              gadget_id, gadget;
+
             // this will make RenderJs fire "ready" event when all gadgets are loaded.
             RenderJs.setReady(false);
-            if (is_gadget && gadget_id !== undefined ) {
-              // bootstart root gadget only if it is indeed a gadget
-              RenderJs.loadGadget(root);
+            for (i = 0; i < all_gadgets_on_root.length; i += 1) {
+              gadget = $(all_gadgets_on_root[i]);
+              gadget_id = gadget.attr("id");
+              if (gadget_id !== undefined) {
+                // bootstart root gadget only if it is indeed a gadget
+                RenderJs.loadGadget(gadget);
+              }
             }
-            RenderJs.loadRecursiveGadget(root);
         },
 
         loadRecursiveGadget: function (root) {
@@ -106,11 +109,26 @@ var RenderJs = (function () {
             /*
              * Load gadget's SPECs from URL
              */
-            var url, gadget_id, gadget_property, cacheable, cache_id,
+            var url, gadget_id, gadget_property, cacheable, cache_id, i,
+                gadget_index, gadget_index_id,
                 app_cache, data, gadget_js, is_update_gadget_data_running;
+
             url = gadget.attr("data-gadget");
             gadget_id = gadget.attr("id");
             gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+            gadget_index = RenderJs.GadgetIndex.getGadgetList();
+
+            for (i = 0; i < gadget_index.length; i += 1) {
+              gadget_index_id = gadget_index[i].id;
+              // stop here, if the gadget_id is already on the gadgetIndex
+              // but not when the gadget on the page has no childNodes
+              // (because it's back to unenhanced status = page reload)
+              if (gadget_index_id === gadget_id && 
+                document.getElementById(gadget_index_id).hasChildNodes()
+                ) {
+                  return;
+              }
+            }
             if (gadget_js === undefined) {
               // register gadget in javascript namespace if not already registered
               gadget_js = new RenderJs.Gadget(gadget_id, gadget);
@@ -179,6 +197,8 @@ var RenderJs = (function () {
                         }
                     });
                 }
+                // labelled
+                gadget_js.status = "rendered";
             }
             else {
                 // gadget is an inline (InteractorGadget or one using

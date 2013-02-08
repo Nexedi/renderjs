@@ -11,7 +11,6 @@ define([], function () {
 
         $(document).on('pagebeforeshow','div:jqmData(role="page")', function () {
 
-          // renderJS handler
           RenderJs.init();
           RenderJs.bindReady(
             function () {
