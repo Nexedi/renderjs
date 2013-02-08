@@ -5,12 +5,6 @@
     <style type="text/css">
       div.ui-btn {border:2px solid red !important;}
     </style>
-    <script type="text/javascript">
-      // this is problematic, because when this code is run, the widget 
-      // has not initialized, meaning, the input parent div.ui-btn has not
-      // been created yet!
-      $('#but2').closest('div').css("border","2px solid yellow");
-    </script>
   </head>
   <body>
 
@@ -19,6 +13,11 @@
       <input type="button" id="but2" data-icon="delete" data-iconpos="left" data-theme="e" value="click me 2" />
       <a href="page2.html" data-role="button" data-icon="arrow-l" data-iconpos="left" data-theme="c">Link</a>
     </div>
-
+    <script type="text/javascript">
+      // this is problematic, because when this code is run, the widget 
+      // has not initialized, meaning, the input parent div.ui-btn has not
+      // been created yet!
+      $('#but2').closest('div').css("border","2px solid yellow");
+    </script>
   </body>
 </html>

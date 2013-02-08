@@ -8,7 +8,7 @@
         controller:   'controller'
       , overrides:    'overrides'
       , jquery:       '../../../lib/jquery/jquery'
-      , jqm:          'http://code.jquery.com/mobile/1.3.0-rc.1/jquery.mobile-1.3.0-rc.1.min'
+      , jqm:          'jqm'
       , 'jquery.json':'../../../lib/json/jquery.json.min'
       , renderjs:     '../../../renderjs'
     }

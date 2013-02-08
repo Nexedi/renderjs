@@ -9,6 +9,9 @@ define([], function () {
     require(['overrides', 'jquery', 'jqm', 'jquery.json', 'renderjs'],
       function () {
         console.log("done loading");
+        console.log( $ );
+        console.log( $.mobile );
+        console.log( $.mobile.autoInitializePage );
         // START
         if ($.mobile.autoInitializePage === false) {
           // initialize JQM

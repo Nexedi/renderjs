@@ -24,6 +24,10 @@ define([], function () {
           .each(
             function () {
               // trigger gadget loading
+              RenderJs.bindReady(
+                function () {
+                  $("[data-gadget]").trigger('create');
+                });
             }
           );
         });
