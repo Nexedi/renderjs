@@ -62,12 +62,16 @@ function setupRenderJSTest(){
       dom = $("#qunit-fixture");
       deepEqual(["new"], RenderJs.GadgetIndex.getGadgetIdListFromDom(dom));
 
+      // try register gadget twice and check it's registered once only
+      RenderJs.GadgetIndex.registerGadget(RenderJs.GadgetIndex.getGadgetById("new"));
+
       // test unregister gadget
       equal(RenderJs.GadgetIndex.getGadgetList().length, 1);
       equal(RenderJs.GadgetIndex.getGadgetById("new"), RenderJs.GadgetIndex.getRootGadget());
       RenderJs.GadgetIndex.unregisterGadget(RenderJs.GadgetIndex.getGadgetById("new"));
-      equal(RenderJs.GadgetIndex.getGadgetList().length, 0);
+      equal(RenderJs.GadgetIndex.getGadgetList().length, 0); 
     });
+
    });
 
   module("GadgetObject");

@@ -498,7 +498,10 @@ var RenderJs = (function () {
                     /*
                      * Register gadget
                      */
-                    gadget_list.push(gadget);
+                    if (RenderJs.GadgetIndex.getGadgetById(gadget.id) === undefined) {
+                      // register only if not already added
+                      gadget_list.push(gadget);
+                    }
                 },
 
                 unregisterGadget: function (gadget) {
