@@ -55,23 +55,23 @@ require([ "require-renderjs", "jquery", "route", "url" ], function(domReady) {
                 page += "<li style='text-align: center;'><a style='text-decoration: none; display: block; width: 2em;' href='" +
                   $.url.generateUrl("/color/X/X/X") + "'>XXX<a><\/li>";
                 page += "<\/ul>";
-                page += "<div style='display: block;'><\/div>"
+                page += "<div style='display: block;' id='select-color'><\/div>"
                 page += "<a href='" +  $.url.generateUrl("/gadget-one/") + "'>Gadget 1</a>";
                 page += "&nbsp;<a href='" +  $.url.generateUrl("/gadget-two/") + "'>Gadget 2</a>";
                 page += "<div id='container'></div>";
-                $(this).html(page);
+                $('#body').html(page);
 
                 // Create sub routed in the container
                 container = $(this).find("div");
                 container
                   .route("add", "/color/", 2)
                   .done(function () {
-                    $(this).text("Please select a color");
+                    $('#select-color').text("Please select a color");
                   });
                 container
                   .route("add", "/color/<int:red>/<int:green>/<int:blue>/", 2)
                   .done(function (red, green, blue) {
-                    $(this).html(
+                    $('#select-color').html(
                       "<div style='background-color:rgb(" + red + "," + green + "," + blue + ");'>&nbsp;<\/div>" +
                         "<p>Color (" + red + "," + green + "," + blue + ") selected at " + new Date() + "<\/p>"
                     );
@@ -79,7 +79,7 @@ require([ "require-renderjs", "jquery", "route", "url" ], function(domReady) {
                 container
                   .route("go", $.url.getPath(), 2)
                   .fail(function () {
-                    $(this).html("Unknown color (" + $.url.getPath() + ")");
+                    $('#select-color').html("Unknown color (" + $.url.getPath() + ")");
                   });
               });
           };
