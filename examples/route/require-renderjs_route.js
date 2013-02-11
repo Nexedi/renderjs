@@ -2,8 +2,8 @@
 require.config({
   baseUrl: "../..",
   paths: {
-    route: "examples/route/route",
-    url: "examples/route/url",
+    route: "lib/route/route",
+    url: "lib/route/url",
     jquery: "lib/jquery/jquery"
   },
 });
