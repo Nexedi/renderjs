@@ -4,21 +4,19 @@ require.config({
   paths: {
     route: "lib/route/route",
     url: "lib/route/url",
-    jquery: "lib/jquery/jquery"
+    jquery: "lib/jquery/jquery",
+    renderjs: "renderjs",
   },
+  shim: {
+    url: [ "renderjs" ]
+  }
 });
 
-require([ "require-renderjs", "jquery", "route", "url" ], function(domReady) {
-          var body = $("body");
-          // XXX: we should use Renderjs's bindReady
-          setTimeout(
-            function () {
-
-              // render color picker application
-              RenderJs.GadgetIndex.getGadgetById("gadget-color-picker").render();
-
-              // Trigger route change
-              $.url.onhashchange(function () {
+require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(domReady) {
+          RenderJs.bindReady(function (){
+            var body = $("body");
+            RenderJs.GadgetIndex.getGadgetById("gadget-color-picker").render();
+            $.url.onhashchange(function () {
                 body
                   .route("go", $.url.getPath())
                   .fail(function () {
@@ -32,6 +30,6 @@ require([ "require-renderjs", "jquery", "route", "url" ], function(domReady) {
                     //initialize_route.apply(this, []);
                     RenderJs.GadgetIndex.getGadgetById("gadget-color-picker").render();
                   });
-              });
-            }, 1000);
+            });
+          });
 });
