@@ -17,6 +17,9 @@ var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
 // available 
 var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 
+// by default RenderJs will examine and create all routes
+var RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE = true;
+
 // fallback for IE
 if (typeof console === "undefined" || typeof console.log === "undefined") {
     var console = {};
@@ -36,18 +39,26 @@ var RenderJs = (function () {
           if (RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING) {
               RenderJs.bootstrap($('body'));
           }
-          if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
-            var root_gadget = RenderJs.GadgetIndex.getRootGadget();
+          var root_gadget = RenderJs.GadgetIndex.getRootGadget();
+          if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND||RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
             // We might have a page without gadgets.
             // Be careful, right now we can be in this case because
             // asynchronous gadget loading is not finished
             if (root_gadget !== undefined) {
               RenderJs.bindReady(
                 function () {
-                  // examine all Intaction Gadgets and bind accordingly
-                  $("div[data-gadget-connection]").each(function (index, element) {
-                    RenderJs.InteractionGadget.bind($(element));
-                  });
+                  if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
+                    // examine all Intaction Gadgets and bind accordingly
+                    $("div[data-gadget-connection]").each(function (index, element) {
+                      RenderJs.InteractionGadget.bind($(element));
+                    });
+                  }
+                  if (RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
+                    // create all routes between gadgets
+                    $("div[data-gadget-route]").each(function (index, element) {
+                      RenderJs.RouteGadget.route($(element));
+                    });
+                  }
                 });
             }
           }
@@ -727,6 +738,31 @@ var RenderJs = (function () {
                             );
                         }
                     });
+                }
+            };
+        }()),
+
+        RouteGadget : (function () {
+            /*
+             * A gadget that defines possible routes (i.e. URL changes) between gadgets.
+             */
+            return {
+
+                route: function (gadget_dom) {
+                    /*
+                     * Create routes between gadgets.
+                     */
+                  var body = $("body"),
+                      gadget_route_list = gadget_dom.attr("data-gadget-route");
+                  gadget_route_list = $.parseJSON(gadget_route_list);
+                  $.each(gadget_route_list, function (key, gadget_route) {
+                    // add route itself
+                    body
+                      .route("add", gadget_route.source, 1)
+                      .done(function () {
+                        RenderJs.GadgetIndex.getGadgetById(gadget_route.destination).render();
+                      });
+                  });
                 }
             };
         }())

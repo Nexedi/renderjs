@@ -11,11 +11,30 @@
 
   </head>
   <body>
-    <div id="body"></div>
+
+    <div data-gadget=""
+         id="main-router"
+         data-gadget-route="[
+          {&quot;source&quot;: &quot;/gadget-one/&quot;, &quot;destination&quot;: &quot;gadget-one&quot;},
+          {&quot;source&quot;: &quot;/gadget-two/&quot;, &quot;destination&quot;: &quot;gadget-two&quot;}]">
+    </div>
+
+    <div id="gadget-color-picker"
+         data-gadget="gadget-color-picker.html"></div>
+
+    <div id="gadget-one"
+         data-gadget="gadget-one.html"></div>
+
+    <div id="gadget-two"
+         data-gadget="gadget-two.html"></div>
+
+    <div id="gadget-footer"
+         data-gadget="gadget-footer.html"></div>
 
     <noscript>
       Please enable Javascript
     </noscript>
+
   </body>
 </html>
 
