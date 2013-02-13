@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="js/jqm-gadget-recursive.js"></script>
+    <link rel="stylesheet" href="css/jqm-gadget-recursive.css" />
+  </head>
+  <body>
+
+  <p>HELLO recursive</p>
+  <!-- cannot trigger g1 with a regular document binding, because going and forth re-binds into too much recursion
+  onclick="RenderJs.GadgetIndex.getGadgetById('g1').gadget_call1()"
+  -->
+  <button type="button" value="click me" id="clickediclick" icon="gear" iconpos="left" data-inline="true"/>
+
+  <script type="text/javascript" language="javascript">
+  //<![CDATA[
+     $(document).ready(function() {
+         var g2 = RenderJs.GadgetIndex.getGadgetById("g2");
+         console.log("attaching gadget_call2");
+         g2.gadget_call2 = function (){gadget_call2();};
+     });
+  //]]>
+  </script>
+  </body>
+</html>
