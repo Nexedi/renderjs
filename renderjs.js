@@ -45,8 +45,11 @@ var RenderJs = (function () {
               RenderJs.bindReady(
                 function () {
                   // examine all Intaction Gadgets and bind accordingly
-                  $("div[data-gadget-connection]").each(function (index, element) {
-                    RenderJs.InteractionGadget.bind($(element));
+                  $("div[data-gadget-connection]")
+                    .filter(function() { return $(this).data("bound") !== true; })
+                    .data('bound', true )
+                    .each(function (index, element) {
+                      RenderJs.InteractionGadget.bind($(element));
                   });
                 });
             }

@@ -7,8 +7,10 @@
   <body>
 
   <p>HELLO recursive</p>
-  <!-- cannot trigger g1 with a regular document binding, because going and forth re-binds into too much recursion-->
-  <button type="button" onclick="RenderJs.GadgetIndex.getGadgetById('g1').gadget_call1()" value="click me" id="clickediclick" icon="gear" iconpos="left" data-inline="true"/>
+  <!-- cannot trigger g1 with a regular document binding, because going and forth re-binds into too much recursion
+  onclick="RenderJs.GadgetIndex.getGadgetById('g1').gadget_call1()"
+  -->
+  <button type="button" value="click me" id="clickediclick" icon="gear" iconpos="left" data-inline="true"/>
 
   <script type="text/javascript" language="javascript">
   //<![CDATA[
