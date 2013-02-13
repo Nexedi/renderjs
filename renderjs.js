@@ -2,8 +2,6 @@
 /*global console, require, $, localStorage, document, jIO */
 /*jslint evil: true, white: true */
 
-"use strict";
-
 /*
  * RenderJs - Generic Gadget library renderer.
  * http://www.renderjs.org/documentation
@@ -21,12 +19,13 @@ var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 var RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE = true;
 
 // fallback for IE
-if (typeof console === "undefined" || typeof console.log === "undefined") {
+if (console === undefined || console.log === undefined) {
     var console = {};
     console.log = function () {};
 }
 
 var RenderJs = (function () {
+  "use strict";
     // a variable indicating if current gadget loading is over or not
     var is_ready = false;
 
@@ -49,8 +48,11 @@ var RenderJs = (function () {
                 function () {
                   if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
                     // examine all Intaction Gadgets and bind accordingly
-                    $("div[data-gadget-connection]").each(function (index, element) {
-                      RenderJs.InteractionGadget.bind($(element));
+                    $("div[data-gadget-connection]")
+                      .filter(function() { return $(this).data("bound") !== true; })
+                      .data('bound', true )
+                      .each(function (index, element) {
+                        RenderJs.InteractionGadget.bind($(element));
                     });
                   }
                   if (RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
@@ -118,10 +120,24 @@ var RenderJs = (function () {
              * Load gadget's SPECs from URL
              */
             var url, gadget_id, gadget_property, cacheable, cache_id,
+                i, gadget_index, gadget_index_id,
                 app_cache, data, gadget_js, is_update_gadget_data_running;
+
             url = gadget.attr("data-gadget");
             gadget_id = gadget.attr("id");
             gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+            gadget_index = RenderJs.GadgetIndex.getGadgetList();
+
+            for (i = 0; i < gadget_index.length; i += 1) {
+              gadget_index_id = gadget_index[i].id;
+              // stop here, if the gadget_id is already on the gadgetIndex
+              // but not when the gadget on the page has no childNodes
+              // (because it's back to unenhanced status = page reload)
+              if (gadget_index_id === gadget_id &&
+                $(document.getElementById(gadget_index_id)).children().length > 0) {
+                  return;
+              }
+            }
             if (gadget_js === undefined) {
               // register gadget in javascript namespace if not already registered
               gadget_js = new RenderJs.Gadget(gadget_id, gadget);
@@ -646,7 +662,7 @@ var RenderJs = (function () {
                   /*
                    * Register a service provided by a gadget.
                    */
-                },
+                }
             };
         }()),
 
