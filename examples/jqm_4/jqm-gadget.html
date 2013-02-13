@@ -96,9 +96,9 @@
   //<![CDATA[
      $(document).ready(function() {
          console.log("attaching gadget_call1 and 3");
-         gadget1 = RenderJs.GadgetIndex.getGadgetById("g1");
-         gadget1.gadget_call3 = function (e){gadget_call3("test parameter")};
-         gadget1.gadget_call1 = function (e){gadget_call1()};
+         var g1 = RenderJs.GadgetIndex.getGadgetById("g1");
+         g1.gadget_call3 = function (e){gadget_call3("test parameter")};
+         g1.gadget_call1 = function (e){gadget_call1()};
      });
   //]]>
 </script>
