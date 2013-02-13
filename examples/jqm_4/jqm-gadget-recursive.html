@@ -1,0 +1,22 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="js/jqm-gadget-recursive.js"></script>
+    <link rel="stylesheet" href="css/jqm-gadget-recursive.css" />
+  </head>
+  <body>
+
+  <p>HELLO recursive</p>
+  <input type="button" value="click me" id="clickediclick" icon="gear" iconpos="left" data-inline="true"/>
+
+  <script type="text/javascript" language="javascript">
+  //<![CDATA[
+     $(document).ready(function() {
+         var gadget = RenderJs.GadgetIndex.getGadgetById("g2");
+         console.log("attaching gadget_call2");
+         gadget.gadget_call2 = function (){gadget_call2();};
+     });
+  //]]>
+  </script>
+  </body>
+</html>
