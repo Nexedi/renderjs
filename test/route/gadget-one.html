@@ -1,0 +1,15 @@
+<html>
+  <head></head>
+  <body>
+    <script type="text/javascript" language="javascript">
+      //<![CDATA[
+        $(document).ready(function() {
+            gadget = RenderJs.GadgetIndex.getGadgetById("gadget-one");
+            gadget.render = function (){
+              route_changed=1; // so we can test this method was actually called from qunit
+            };
+        });
+      //]]>
+    </script>
+  </body>
+</html>

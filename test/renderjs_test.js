@@ -19,6 +19,8 @@ function cleanUp () {
 counter = 0;
 first_name=''
 last_name=''
+route_changed=0
+
 function parseJSONAndUpdateNameSpace(result) {
   first_name=result['first_name'];
   last_name=result['last_name'];
@@ -229,6 +231,40 @@ function setupRenderJSTest(){
 
     }, 3000)
 
+
+  });
+
+  module("RouteGadget");
+  test('RouteGadget', function () {
+    cleanUp();
+    RenderJs.addGadget("qunit-fixture", "new_route_add", "route/index.html", "", "");
+    equal(0, route_changed);
+    stop();
+
+    // we need to wait for all gadgets loading ...
+    RenderJs.bindReady(function () {
+      start();
+      // initialize route gadget as it's loaded asynchronously
+      RenderJs.RouteGadget.route($("#main-router"));
+      // listen to event and do actual routing
+      $.url.onhashchange(function () {
+        var body = $("body");
+        body
+          .route("go", $.url.getPath())
+          .fail(function () {
+                  alert("no route");
+          });
+      });
+      $.url.go('/gadget-one/');
+      // give some time so .render finishes, most likely we need some event like .bindReady
+      // to indicate that respective .render method finishes in generic RenderJs ?
+      stop();
+      setTimeout( function () {
+        start();
+        // respective gadget .render method must be called and global var changed
+        equal(1, route_changed);
+        }, 1000);
+    });
 
   });
 
