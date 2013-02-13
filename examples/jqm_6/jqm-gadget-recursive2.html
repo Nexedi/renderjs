@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="js/jqm-gadget-recursive.js"></script>
+    <link rel="stylesheet" href="css/jqm-gadget-recursive.css" />
+  </head>
+  <body>
+
+  <p>HELLO recursive2</p>
+  <button type="button" value="no func" id="dooo" icon="gear" iconpos="left" data-inline="true"/>
+
+      <script type="text/javascript" language="javascript">
+    //<![CDATA[
+     $(document).ready(function() {
+        var g4 = RenderJs.GadgetIndex.getGadgetById("g4");
+         g4.gadget_call4 = function (){gadget_call4();}
+         g4.gadget_call5 = function(){gadget_call5();};
+         g4.updatelayout = function (){
+          console.log("triggering updatelayout");
+         };
+     });
+  //]]>
+  </script>
+  </body>
+</html>

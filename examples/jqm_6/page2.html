@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/jqm.css" />
+    <script data-main="js/require-renderjs.js" type="text/javascript" src="../../lib/require/require.js"></script>
+    <title>Page 2</title>
+</head>
+<body>
+
+  <div data-role="page" id="page2">
+    <div data-role="header">
+      <h1>Example 3 - Page 2</h1>
+    </div>
+
+    <div data-role="content">
+      <p>Page 2 - more gadgets!</p>
+      <a data-role="button" data-icon="arrow-l" href="index.html" data-rel="back" data-inline="true" data-mini="true">Back</a>
+      <div id="g3" data-gadget="jqm-gadget-list.html"></div>
+      <a href="page3.html" data-ajax="false" data-role="button">Refresh</a>
+    </div>
+
+    <div data-gadget="" id="main-interactor2"
+         data-gadget-connection="[
+            {&quot;source&quot;: &quot;g3.gadget_call3&quot;, &quot;destination&quot;: &quot;g4.gadget_call4&quot;},
+            {&quot;source&quot;: &quot;g4.testevent&quot;, &quot;destination&quot;: &quot;g4.updatelayout&quot;},
+            {&quot;source&quot;: &quot;main-interactor2.testevent2&quot;, &quot;destination&quot;: &quot;g4.gadget_call5&quot;}
+         ]">
+    </div>
+    
+  </div>
+
+</body>
+</html>
