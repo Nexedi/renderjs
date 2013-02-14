@@ -1,7 +1,7 @@
 /*! RenderJs v0.2  */
 /*global console, require, $, localStorage, document, jIO */
 /*jslint evil: true, white: true */
-
+"use strict";
 /*
  * RenderJs - Generic Gadget library renderer.
  * http://www.renderjs.org/documentation
@@ -25,7 +25,6 @@ if (console === undefined || console.log === undefined) {
 }
 
 var RenderJs = (function () {
-  "use strict";
     // a variable indicating if current gadget loading is over or not
     var is_ready = false;
 
