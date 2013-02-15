@@ -14,6 +14,22 @@ require.config({
 
 require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(domReady) {
           RenderJs.bindReady(function (){
+
+            // XXX: try to encapsulate this in router gadget
+            gadget = RenderJs.GadgetIndex.getGadgetById("main-router");
+            gadget.gadget_one = function (){
+              console.log("gadget-one");
+              // we use interactionGadget which will call proper gadgets' function
+            };
+            gadget = RenderJs.GadgetIndex.getGadgetById("main-router");
+            gadget.gadget_two = function (){
+              console.log("gadget-two");
+              // we use interactionGadget which will call proper gadgets' function
+            };
+
+            // XXX: fid why interaction gadget is not initialized proeprly yet
+            RenderJs.InteractionGadget.bind($("#main-interactor"))
+
             var body = $("body");
             RenderJs.GadgetIndex.getGadgetById("gadget-color-picker").render();
             $.url.onhashchange(function () {

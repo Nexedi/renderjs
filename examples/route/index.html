@@ -15,8 +15,8 @@
     <div data-gadget=""
          id="main-router"
          data-gadget-route="[
-          {&quot;source&quot;: &quot;/gadget-one/&quot;, &quot;destination&quot;: &quot;gadget-one&quot;},
-          {&quot;source&quot;: &quot;/gadget-two/&quot;, &quot;destination&quot;: &quot;gadget-two&quot;}]">
+          {&quot;source&quot;: &quot;/gadget-one/&quot;, &quot;destination&quot;: &quot;main-router.gadget_one&quot;},
+          {&quot;source&quot;: &quot;/gadget-two/&quot;, &quot;destination&quot;: &quot;main-router.gadget_two&quot;}]">
     </div>
 
     <div id="gadget-color-picker"
@@ -30,6 +30,13 @@
 
     <div id="gadget-footer"
          data-gadget="gadget-footer.html"></div>
+
+    <div data-gadget=""
+         id="main-interactor"
+         data-gadget-connection="[
+          {&quot;source&quot;: &quot;main-router.gadget_one&quot;, &quot;destination&quot;: &quot;gadget-one.render&quot;},
+          {&quot;source&quot;: &quot;main-router.gadget_two&quot;, &quot;destination&quot;: &quot;gadget-two.render&quot;}]">
+    </div>
 
     <noscript>
       Please enable Javascript

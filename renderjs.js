@@ -775,7 +775,10 @@ var RenderJs = (function () {
                     body
                       .route("add", gadget_route.source, 1)
                       .done(function () {
-                        RenderJs.GadgetIndex.getGadgetById(gadget_route.destination).render();
+                        var gadget_id = gadget_route.destination.split('.')[0],
+                            method_id = gadget_route.destination.split('.')[1];
+                        gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+                        gadget[method_id]();
                       });
                   });
                 }

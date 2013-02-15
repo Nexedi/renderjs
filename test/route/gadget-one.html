@@ -5,7 +5,7 @@
       //<![CDATA[
         $(document).ready(function() {
             gadget = RenderJs.GadgetIndex.getGadgetById("gadget-one");
-            gadget.render = function (){
+            gadget.gadget_one = function (){
               route_changed=1; // so we can test this method was actually called from qunit
             };
         });
