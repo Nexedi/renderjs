@@ -2,14 +2,16 @@
   <head></head>
   <body>
     <h2> Color picker</h2>
-    <div id="body"></div>
+    <div class="body"></div>
 
     <script type="text/javascript" language="javascript">
       //<![CDATA[
         $(document).ready(function() {
-            gadget = RenderJs.GadgetIndex.getGadgetById("gadget-color-picker");
+            // dirty way to get which is actual gadget we are used for
+            gadget_id = $(".body").parent().attr("id")
+            gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
             gadget.render = function (){
-              var body = $("body");
+              var body = $(".body");
               // Home route. Redirect to sub app /color/
               body
                 .route("add", "", 1)
@@ -39,23 +41,23 @@
                   page += "<li style='text-align: center;'><a style='text-decoration: none; display: block; width: 2em;' href='" +
                     $.url.generateUrl("/color/X/X/X") + "'>XXX<a><\/li>";
                   page += "<\/ul>";
-                  page += "<div style='display: block;' id='select-color'><\/div>"
+                  page += "<div style='display: block;' class='select-color'><\/div>"
                   page += "<a href='" +  $.url.generateUrl("/gadget-one/") + "'>Gadget 1</a>";
                   page += "&nbsp;<a href='" +  $.url.generateUrl("/gadget-two/") + "'>Gadget 2</a>";
-                  page += "<div id='container'></div>";
-                  $('#body').html(page);
+                  page += "<div class='container'></div>";
+                  $('.body').html(page);
 
                   // Create sub routed in the container
                   container = $(this).find("div");
                   container
                     .route("add", "/color/", 2)
                     .done(function () {
-                      $('#select-color').text("Please select a color");
+                      $('.select-color').text("Please select a color");
                     });
                   container
                     .route("add", "/color/<int:red>/<int:green>/<int:blue>/", 2)
                     .done(function (red, green, blue) {
-                      $('#select-color').html(
+                      $('.select-color').html(
                         "<div style='background-color:rgb(" + red + "," + green + "," + blue + ");'>&nbsp;<\/div>" +
                           "<p>Color (" + red + "," + green + "," + blue + ") selected at " + new Date() + "<\/p>"
                       );
@@ -63,7 +65,7 @@
                   container
                     .route("go", $.url.getPath(), 2)
                     .fail(function () {
-                      $('#select-color').html("Unknown color (" + $.url.getPath() + ")");
+                      $('.select-color').html("Unknown color (" + $.url.getPath() + ")");
                     });
                 });
           };
