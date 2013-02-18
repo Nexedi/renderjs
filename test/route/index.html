@@ -4,14 +4,20 @@
     <title></title>
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-
   </head>
   <body>
 
     <div data-gadget=""
          id="main-router"
          data-gadget-route="[
-              {&quot;source&quot;: &quot;/gadget-one/&quot;, &quot;destination&quot;: &quot;gadget-one.gadget_one&quot;}]">
+              {&quot;source&quot;: &quot;/gadget-one/&quot;, &quot;destination&quot;: &quot;gadget-one.gadget_one&quot;},
+              {&quot;source&quot;: &quot;/gadget-two/&quot;, &quot;destination&quot;: &quot;gadget-one.gadget_two&quot;}]">
+    </div>
+
+    <div data-gadget=""
+         id="suplimentary-router"
+         data-gadget-route="[
+              {&quot;source&quot;: &quot;/gadget-three/&quot;, &quot;destination&quot;: &quot;gadget-one.gadget_three&quot;}]">
     </div>
 
     <div id="gadget-one"

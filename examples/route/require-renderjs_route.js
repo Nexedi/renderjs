@@ -26,7 +26,7 @@ require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(d
               // we use interactionGadget which will call proper gadgets' function
             };
 
-            // XXX: fid why interaction gadget is not initialized properly yet
+            // we have to re-bind interaction gadget as main-route API implemantation changed
             $("div[data-gadget-connection]").each(function (index, element) {
               RenderJs.InteractionGadget.bind($(element));
             });

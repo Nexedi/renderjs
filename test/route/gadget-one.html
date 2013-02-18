@@ -5,8 +5,14 @@
       //<![CDATA[
         $(document).ready(function() {
             gadget = RenderJs.GadgetIndex.getGadgetById("gadget-one");
-            gadget.gadget_one = function (){
+            gadget.gadget_one = function () {
               route_changed=1; // so we can test this method was actually called from qunit
+            };
+            gadget.gadget_two = function () {
+              route_changed=2; // so we can test this method was actually called from qunit
+            };
+            gadget.gadget_three = function () {
+              route_changed=3; // so we can test this method was actually called from qunit
             };
         });
       //]]>

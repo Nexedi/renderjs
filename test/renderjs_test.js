@@ -245,25 +245,48 @@ function setupRenderJSTest(){
     RenderJs.bindReady(function () {
       start();
       // initialize route gadget as it's loaded asynchronously
-      RenderJs.RouteGadget.route($("#main-router"));
+      $("div[data-gadget-route]").each(function (index, element) {
+        RenderJs.RouteGadget.route($(element));
+      });
+
       // listen to event and do actual routing
       $.url.onhashchange(function () {
-        var body = $("body");
-        body
-          .route("go", $.url.getPath())
-          .fail(function () {
-                  alert("no route");
-          });
+        RenderJs.RouteGadget.go($.url.getPath(),
+                                function () {
+                                  console.log("no route");});
       });
+
       $.url.go('/gadget-one/');
       // give some time so .render finishes, most likely we need some event like .bindReady
       // to indicate that respective .render method finishes in generic RenderJs ?
       stop();
       setTimeout( function () {
-        start();
         // respective gadget .render method must be called and global var changed
         equal(1, route_changed);
+        equal('/gadget-one/', window.location.toString().split('#')[1]);
+        start();
+
+        $.url.go('/gadget-two/');
+        stop();
+        setTimeout( function () {
+          // respective gadget .render method must be called and global var changed
+          equal(2, route_changed);
+          equal('/gadget-two/', window.location.toString().split('#')[1]);
+          start();
+
+          $.url.go('/gadget-three/');
+          stop();
+          setTimeout( function () {
+            // respective gadget .render method must be called and global var changed
+            equal(3, route_changed);
+            equal('/gadget-three/', window.location.toString().split('#')[1]);
+            start();
+            }, 1000);
+
+          }, 1000);
+
         }, 1000);
+
     });
 
   });
