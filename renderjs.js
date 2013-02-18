@@ -768,19 +768,39 @@ var RenderJs = (function () {
                      * Create routes between gadgets.
                      */
                   var body = $("body"),
+                      handler_func,
                       gadget_route_list = gadget_dom.attr("data-gadget-route");
                   gadget_route_list = $.parseJSON(gadget_route_list);
                   $.each(gadget_route_list, function (key, gadget_route) {
-                    // add route itself
-                    body
-                      .route("add", gadget_route.source, 1)
-                      .done(function () {
+                    handler_func = function () {
                         var gadget_id = gadget_route.destination.split('.')[0],
-                            method_id = gadget_route.destination.split('.')[1];
-                        gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+                            method_id = gadget_route.destination.split('.')[1],
+                            gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
                         gadget[method_id]();
-                      });
+                    };
+                    // add route itself
+                    RenderJs.RouteGadget.add(gadget_route.source, handler_func, 1);
                   });
+                },
+
+                add: function (path, handler_func, priority) {
+                    /*
+                     * Add a route between path (hashable) and a handler function (part of Gadget's API).
+                     */
+                  var body = $("body");
+                  body
+                      .route("add", path, 1)
+                      .done(handler_func);
+                },
+
+                go: function (path, handler_func, priority) {
+                    /*
+                     * Go a route.
+                     */
+                  var body = $("body");
+                  body
+                      .route("go", path, priority)
+                      .fail(handler_func);
                 }
             };
         }())
