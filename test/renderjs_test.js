@@ -159,7 +159,11 @@ function setupRenderJSTest(){
 
     // we need to wait for all gadgets loading ...
     RenderJs.bindReady(function () {
-      RenderJs.InteractionGadget.bind($("#main-interactor"));
+      //RenderJs.InteractionGadget.bind($("#main-interactor"));
+      $("div[data-gadget-connection]").each(function (index, element) {
+        RenderJs.InteractionGadget.bind($(element));
+      });
+
       start();
       equal(0, counter);
       // A.inc will call B.inc, both will increase counter by 1
@@ -173,6 +177,11 @@ function setupRenderJSTest(){
       // when A.inc calls B.inc thus result is 6 NOT 5!
       $('#main-interactor').trigger('multiEvent');
       equal(6, counter);
+      // check multiple interactors can coexist (a.inc2 +2 -> B.inc2 +2)
+      RenderJs.GadgetIndex.getGadgetById("A").inc2();
+      equal(10, counter);
+      // XXX: test dynamically adding an InteractionGadget
+
     });
    });
 
@@ -286,7 +295,7 @@ function setupRenderJSTest(){
           }, 1000);
 
         }, 1000);
-
+      // XXX: test dynamically adding a RouteGadget
     });
 
   });
