@@ -257,6 +257,13 @@ function setupRenderJSTest(){
       $("div[data-gadget-route]").each(function (index, element) {
         RenderJs.RouteGadget.route($(element));
       });
+      var path_list = [];
+      $.each(RenderJs.RouteGadget.getRouteList(),
+             function (index, value) {
+               path_list.push(value.path);
+      });
+      equal(3, RenderJs.RouteGadget.getRouteList().length);
+      deepEqual(["/gadget-one/", "/gadget-two/","/gadget-three/"], path_list);
 
       // listen to event and do actual routing
       $.url.onhashchange(function () {

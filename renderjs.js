@@ -761,6 +761,7 @@ var RenderJs = (function () {
             /*
              * A gadget that defines possible routes (i.e. URL changes) between gadgets.
              */
+            var route_list = [];
             return {
 
                 route: function (gadget_dom) {
@@ -791,6 +792,10 @@ var RenderJs = (function () {
                   body
                       .route("add", path, 1)
                       .done(handler_func);
+                  // save locally
+                  route_list.push({"path": path,
+                                   "handler_func": handler_func,
+                                   "priority": priority});
                 },
 
                 go: function (path, handler_func, priority) {
@@ -801,6 +806,21 @@ var RenderJs = (function () {
                   body
                       .route("go", path, priority)
                       .fail(handler_func);
+                },
+
+                remove: function (path) {
+                    /*
+                     * Remove a route.
+                     */
+
+                    // XXX: implement remove a route when route.js supports it
+                },
+
+                getRouteList: function () {
+                    /*
+                     * Get list of all router
+                     */
+                  return route_list;
                 }
             };
         }())
