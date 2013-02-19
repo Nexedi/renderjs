@@ -28,10 +28,7 @@
     <script type="text/javascript" language="javascript">
       //<![CDATA[
         $(document).ready(function() {
-            // dirty way to get which is actual gadget we are used for
-            gadget_id = $(".body").parent().attr("id")
-            gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-
+            gadget = RenderJs.getSelfGadget();
             // define entry point which handles an url
             gadget.render = function (){
               var handler_func;

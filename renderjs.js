@@ -26,7 +26,7 @@ if (console === undefined || console.log === undefined) {
 
 var RenderJs = (function () {
     // a variable indicating if current gadget loading is over or not
-    var is_ready = false;
+    var is_ready = false, current_gadget;
 
     return {
 
@@ -109,9 +109,26 @@ var RenderJs = (function () {
              * Set gadget data and recursively load it in case it holds another
              * gadgets.
              */
+            // set current gadget as being loaded so gadget instance itself knows which gadget it is
+            current_gadget = RenderJs.GadgetIndex.getGadgetById(gadget.attr("id"));
             gadget.append(data);
+            // reset as no longer current gadget
+            current_gadget = undefined;
             // a gadget may contain sub gadgets
             RenderJs.loadRecursiveGadget(gadget);
+        },
+
+        getSelfGadget: function () {
+           /*
+            * Get current gadget being loaded
+            * This function must be used with care as it relies on Javascript nature of being a single
+            * threaded application. Currently current gadget is set in a global RenderJs variable
+            * before its HTML is inserted into DOM and if multiple threads were running (which is not the case currently)
+            * this could lead to reace conditions and unreliable getSelfGadget results.
+            * Additionally this function is available only at gadget's script load time - i.e.
+            * it can't be used in after that calls. In this case gagdget can save this value internally.
+            */
+           return current_gadget;
         },
 
         loadGadget: function (gadget) {
@@ -777,7 +794,7 @@ var RenderJs = (function () {
                         var gadget_id = gadget_route.destination.split('.')[0],
                             method_id = gadget_route.destination.split('.')[1],
                             gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-                        gadget[method_id]();
+                        gadget[method_id](gadget_id=gadget_id);
                     };
                     // add route itself
                     RenderJs.RouteGadget.add(gadget_route.source, handler_func, 1);

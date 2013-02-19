@@ -2,6 +2,34 @@
   <head></head>
   <body>
     <h1> This is footer loaded asynchronously at startup</h1>
+    <div class="route-select">
+      <ul>
+        <li><a href="#/footer_gadget_1/">Footer Gadget 1</a></li>
+        <li><a href="#/footer_gadget_2/">Footer Gadget 2</a></li>
+        <li><a href="#/footer_gadget_3/">Footer Gadget 3</a></li>
+        <li><a href="#/footer_gadget_4/">Footer Gadget 4</a></li>
+        <li><a href="#/footer_gadget_5/">Footer Gadget 5</a></li>
+      </ul>
+    </div>
+
+    <div id="footer-container">
+     <div data-gadget-source="" data-gadget-handler="" data-gadget="gadget-three.html" id="footer_gadget_1"></div>
+     <div data-gadget-source="" data-gadget-handler="" data-gadget="gadget-three.html" id="footer_gadget_2"></div>
+     <div data-gadget-source="" data-gadget-handler="" data-gadget="gadget-three.html" id="footer_gadget_3"></div>
+     <div data-gadget-source="" data-gadget-handler="" data-gadget="gadget-three.html" id="footer_gadget_4"></div>
+     <div data-gadget-source="" data-gadget-handler="" data-gadget="gadget-three.html" id="footer_gadget_5"></div>
+
+      <div data-gadget=""
+           id="footer-router"
+           data-gadget-route="[
+          {&quot;source&quot;: &quot;/footer_gadget_1/&quot;, &quot;destination&quot;: &quot;footer_gadget_1.render&quot;},
+          {&quot;source&quot;: &quot;/footer_gadget_2/&quot;, &quot;destination&quot;: &quot;footer_gadget_2.render&quot;},
+          {&quot;source&quot;: &quot;/footer_gadget_3/&quot;, &quot;destination&quot;: &quot;footer_gadget_3.render&quot;},
+          {&quot;source&quot;: &quot;/footer_gadget_4/&quot;, &quot;destination&quot;: &quot;footer_gadget_4.render&quot;},
+          {&quot;source&quot;: &quot;/footer_gadget_5/&quot;, &quot;destination&quot;: &quot;footer_gadget_5.render&quot;}]">
+      </div>
+
+    </div>
 
   </body>
 </html>
