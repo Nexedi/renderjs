@@ -11,10 +11,7 @@
             $(gadget.getDom()).find(".gadget-id-viewer").html("This is " + gadget.getId())
 
             gadget.render = function (gadget_id){
-              // XXX: find cooler way to get this gadget_id rather from url .. (closures?)
-              //gadget_id = window.location.toString().split("#")[1].replace("/", "").replace("/", "");
               gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-              console.log(gadget);
               $(gadget.getDom().find(".gadget-id-viewer")).toggle();
             };
         });

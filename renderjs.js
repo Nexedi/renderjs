@@ -794,6 +794,7 @@ var RenderJs = (function () {
                         var gadget_id = gadget_route.destination.split('.')[0],
                             method_id = gadget_route.destination.split('.')[1],
                             gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+                        // XXX: pass passed to us arguments + gadget_id
                         gadget[method_id](gadget_id=gadget_id);
                     };
                     // add route itself

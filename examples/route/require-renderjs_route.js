@@ -20,8 +20,6 @@ require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(d
             gadget.gadget_one = function (){
               // we use interactionGadget which will call proper gadgets' function
             };
-
-            gadget = RenderJs.GadgetIndex.getGadgetById("main-router");
             gadget.gadget_two = function (){
               // we use interactionGadget which will call proper gadgets' function
             };
@@ -31,7 +29,6 @@ require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(d
               RenderJs.InteractionGadget.bind($(element));
             });
 
-            RenderJs.GadgetIndex.getGadgetById("gadget-color-picker").render();
             $.url.onhashchange(function () {
               RenderJs.RouteGadget.go($.url.getPath(),
                                       function () {
@@ -40,9 +37,10 @@ require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(d
                                           "<p>Oups, seems the route '<b>" + $.url.getPath() + "<\/b>' doesn't exist!<\/p>" +
                                             "<a href='" + $.url.generateUrl("") + "'>Go back to home<\/a>");
                                         // All routes have been deleted by fail.
-                                        // Recreate the default one.
-                                        //initialize_route.apply(this, []);
-                                        RenderJs.GadgetIndex.getGadgetById("gadget-color-picker").render();
+                                        // XXX: Recreate the default routes using RouteGadget
+                                        $("div[data-gadget-route]").each(function (index, element) {
+                                          RenderJs.RouteGadget.route($(element));
+                                        });
                                       });
             });
           });

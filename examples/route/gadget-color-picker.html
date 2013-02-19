@@ -20,7 +20,6 @@
     </ul>
     <div class="select-color" style="display: block;">Unknown color (/color/)</div>
 
-    <a href="#/gadget-one/">Gadget 1</a>&nbsp;<a href="#/gadget-two/">Gadget 2</a>
     <div class="container"></div>
 
     </div>
@@ -29,37 +28,30 @@
       //<![CDATA[
         $(document).ready(function() {
             gadget = RenderJs.getSelfGadget();
-            // define entry point which handles an url
-            gadget.render = function (){
-              var handler_func;
 
+            gadget.redirect = function () {
               // Default route. Redirect to color subapp
-              RenderJs.RouteGadget.add("",
-                                       function () {$.url.redirect('/color/');},
-                                       1);
+              $.url.redirect('/color/');
+            };
 
-              handler_func = function () {
-
-                  // Create sub routed in the container
-                  RenderJs.RouteGadget.add("/color/",
-                                           function () {
-                                             $('.select-color').text("Please select a color");},
-                                           2);
-                  RenderJs.RouteGadget.add("/color/<int:red>/<int:green>/<int:blue>/",
-                                           function (red, green, blue) {
-                                            $('.select-color').html(
-                                              "<div style='background-color:rgb(" + red + "," + green + "," + blue + ");'>&nbsp;<\/div>" +
-                                              "<p>Color (" + red + "," + green + "," + blue + ") selected at " + new Date() + "<\/p>");},
-                                           2);
-                  RenderJs.RouteGadget.go($.url.getPath(),
-                                          function () {
-                                            $('.select-color').html("Unknown color (" + $.url.getPath() + ")");},
-                                          2);
-                };
-
-              // /color app. Create subroutes and initialize DOM
-              RenderJs.RouteGadget.add("/color<path:params>", handler_func, 1);
-          };
+            gadget.initRoutes = function () {
+              // Create sub routed in the container
+              // XXX: it uses low level API
+              RenderJs.RouteGadget.add("/color/",
+                                       function () {
+                                         $('.select-color').text("Please select a color");},
+                                       2);
+              RenderJs.RouteGadget.add("/color/<int:red>/<int:green>/<int:blue>/",
+                                       function (red, green, blue) {
+                                        $('.select-color').html(
+                                           "<div style='background-color:rgb(" + red + "," + green + "," + blue + ");'>&nbsp;<\/div>" +
+                                           "<p>Color (" + red + "," + green + "," + blue + ") selected at " + new Date() + "<\/p>");},
+                                        2);
+              RenderJs.RouteGadget.go($.url.getPath(),
+                                      function () {
+                                        $('.select-color').html("Unknown color (" + $.url.getPath() + ")");},
+                                      2);
+            };
         });
       //]]>
     </script>

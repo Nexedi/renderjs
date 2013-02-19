@@ -15,12 +15,17 @@
     <div data-gadget=""
          id="main-router"
          data-gadget-route="[
+          {&quot;source&quot;: &quot;&quot;, &quot;destination&quot;: &quot;gadget-color-picker.redirect&quot;},
+          {&quot;source&quot;: &quot;/color<path:params>&quot;, &quot;destination&quot;: &quot;gadget-color-picker.initRoutes&quot;},
           {&quot;source&quot;: &quot;/gadget-one/&quot;, &quot;destination&quot;: &quot;main-router.gadget_one&quot;},
           {&quot;source&quot;: &quot;/gadget-two/&quot;, &quot;destination&quot;: &quot;main-router.gadget_two&quot;}]">
     </div>
 
     <div id="gadget-color-picker"
          data-gadget="gadget-color-picker.html"></div>
+
+    <a href="#/gadget-one/">Gadget 1</a>&nbsp;
+    <a href="#/gadget-two/">Gadget 2</a>
 
     <div id="gadget-one"
          data-gadget="gadget-one.html"></div>
