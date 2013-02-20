@@ -307,5 +307,28 @@ function setupRenderJSTest(){
 
   });
 
+  module("GadgetMultipleInstances");
+  test('GadgetMultipleInstances', function () {
+    cleanUp();
+    $("#qunit-fixture").append('<div data-gadget="self_gadget/self.html" id="self1"</div>');
+    $("#qunit-fixture").append('<div data-gadget="self_gadget/self.html" id="self2"</div>');
+    $("#qunit-fixture").append('<div data-gadget="self_gadget/self.html" id="self3"</div>');
+    RenderJs.bootstrap($("#qunit-fixture"));
+    stop();
+
+    // we need to wait for all gadgets loading ...
+    RenderJs.bindReady(function () {
+      start();
+      // check it's instanciated properly and getSelfGadget returns proper gadget instance
+      equal("self1", RenderJs.GadgetIndex.getGadgetById("self1").instance_id);
+      equal("self2", RenderJs.GadgetIndex.getGadgetById("self2").instance_id);
+      equal("self3", RenderJs.GadgetIndex.getGadgetById("self3").instance_id);
+
+      // getSelfGadget works only when gadget is loaded so it must be reset in all other cases
+      equal(undefined, RenderJs.getSelfGadget());
+      // only 3 instance should exist
+      equal(3, RenderJs.GadgetIndex.getGadgetList().length);
+    });
+  });
 };
 
