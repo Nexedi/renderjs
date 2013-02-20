@@ -33,11 +33,12 @@ require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(d
               RenderJs.RouteGadget.go($.url.getPath(),
                                       function () {
                                         // Method to display error to the user
-                                        $(this).html(
+                                        gadget = RenderJs.GadgetIndex.getGadgetById("portal-status-message");
+                                        gadget.showMessage(
                                           "<p>Oups, seems the route '<b>" + $.url.getPath() + "<\/b>' doesn't exist!<\/p>" +
                                             "<a href='" + $.url.generateUrl("") + "'>Go back to home<\/a>");
                                         // All routes have been deleted by fail.
-                                        // XXX: Recreate the default routes using RouteGadget
+                                        // So recreate the default routes using RouteGadget
                                         $("div[data-gadget-route]").each(function (index, element) {
                                           RenderJs.RouteGadget.route($(element));
                                         });
