@@ -18,7 +18,7 @@
       <li><a href="#/color/150/150/150/" class="list-item" style="background-color:rgb(150,150,150);">&nbsp;</a></li>
       <li style="text-align: center;"><a href="#/color/X/X/X" style="text-decoration: none; display: block; width: 2em;">XXX</a></li>
     </ul>
-    <div class="select-color" style="display: block;">Unknown color (/color/)</div>
+    <div class="select-color" style="display: block;"></div>
 
     <div class="container"></div>
 
@@ -34,19 +34,18 @@
               $.url.redirect('/color/');
             };
 
+            gadget.selectColorMessage = function () {
+              $('.select-color').text("Please select a color");
+            };
+
+            gadget.updateColor = function (red, green, blue) {
+              $('.select-color').html(
+                "<div style='background-color:rgb(" + red + "," + green + "," + blue + ");'>&nbsp;<\/div>" +
+                "<p>Color (" + red + "," + green + "," + blue + ") selected at " + new Date() + "<\/p>");
+            };
+
             gadget.initRoutes = function () {
-              // Create sub routed in the container
-              // XXX: it uses low level API
-              RenderJs.RouteGadget.add("/color/",
-                                       function () {
-                                         $('.select-color').text("Please select a color");},
-                                       2);
-              RenderJs.RouteGadget.add("/color/<int:red>/<int:green>/<int:blue>/",
-                                       function (red, green, blue) {
-                                        $('.select-color').html(
-                                           "<div style='background-color:rgb(" + red + "," + green + "," + blue + ");'>&nbsp;<\/div>" +
-                                           "<p>Color (" + red + "," + green + "," + blue + ") selected at " + new Date() + "<\/p>");},
-                                        2);
+              // XXX: improve this part so we can declare in RouteGadget
               RenderJs.RouteGadget.go($.url.getPath(),
                                       function () {
                                         $('.select-color').html("Unknown color (" + $.url.getPath() + ")");},

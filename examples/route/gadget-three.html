@@ -7,11 +7,10 @@
       //<![CDATA[
         $(document).ready(function() {
             gadget = RenderJs.getSelfGadget();
-            //console.log($(gadget.getDom()).find(".gadget-id-viewer"));
             $(gadget.getDom()).find(".gadget-id-viewer").html("This is " + gadget.getId())
 
-            gadget.render = function (gadget_id){
-              gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+            gadget.render = function (){
+              gadget = RenderJs.getSelfGadget();
               $(gadget.getDom().find(".gadget-id-viewer")).toggle();
             };
         });

@@ -786,7 +786,7 @@ var RenderJs = (function () {
                      * Create routes between gadgets.
                      */
                   var body = $("body"),
-                      handler_func,
+                      handler_func, priority,
                       gadget_route_list = gadget_dom.attr("data-gadget-route");
                   gadget_route_list = $.parseJSON(gadget_route_list);
                   $.each(gadget_route_list, function (key, gadget_route) {
@@ -794,11 +794,19 @@ var RenderJs = (function () {
                         var gadget_id = gadget_route.destination.split('.')[0],
                             method_id = gadget_route.destination.split('.')[1],
                             gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-                        // XXX: pass passed to us arguments + gadget_id
-                        gadget[method_id](gadget_id=gadget_id);
+                        // set gadget value so getSelfGadget can work
+                        current_gadget = gadget;
+                        gadget[method_id].apply(null, arguments);
+                        // reset as no longer needed
+                        current_gadget = undefined;
                     };
                     // add route itself
-                    RenderJs.RouteGadget.add(gadget_route.source, handler_func, 1);
+                    priority = gadget_route.priority;
+                    if (priority === undefined) {
+                      // default is 1 -i.e.first level
+                      priority = 1;
+                    }
+                    RenderJs.RouteGadget.add(gadget_route.source, handler_func, priority);
                   });
                 },
 

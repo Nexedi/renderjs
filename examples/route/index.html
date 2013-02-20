@@ -20,6 +20,12 @@
          data-gadget-route="[
           {&quot;source&quot;: &quot;&quot;, &quot;destination&quot;: &quot;gadget-color-picker.redirect&quot;},
           {&quot;source&quot;: &quot;/color<path:params>&quot;, &quot;destination&quot;: &quot;gadget-color-picker.initRoutes&quot;},
+          {&quot;source&quot;: &quot;/color/&quot;,
+           &quot;destination&quot;: &quot;gadget-color-picker.selectColorMessage&quot;,
+           &quot;priority&quot;:2},
+          {&quot;source&quot;: &quot;/color/<int:red>/<int:green>/<int:blue>/&quot;,
+           &quot;destination&quot;: &quot;gadget-color-picker.updateColor&quot;,
+           &quot;priority&quot;:2},
           {&quot;source&quot;: &quot;/gadget-one/&quot;, &quot;destination&quot;: &quot;main-router.gadget_one&quot;},
           {&quot;source&quot;: &quot;/gadget-two/&quot;, &quot;destination&quot;: &quot;main-router.gadget_two&quot;}]">
     </div>
