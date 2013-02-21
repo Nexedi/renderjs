@@ -200,7 +200,7 @@ function setupRenderJSTest(){
   module("GadgetDataHandler");
   test('GadgetDataHandler', function () {
     cleanUp();
-    $("#qunit-fixture").append('<div data-gadget="" id="json-gadget" data-gadget-source = "json/json_file.json" data-gadget-handler="parseJSONAndUpdateNameSpace"></div>');
+    $("#qunit-fixture").append('<div data-gadget="" id="json-gadget" data-gadget-source = "json/json_file.json" data-gadget-handler="parseJSONAndUpdateNameSpace"><p>some content</p></div>');
     RenderJs.bootstrap($("#qunit-fixture"));
     equal('', first_name);
     equal('', last_name);

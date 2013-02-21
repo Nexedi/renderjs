@@ -28,6 +28,13 @@ var RenderJs = (function () {
     // a variable indicating if current gadget loading is over or not
     var is_ready = false, current_gadget;
 
+    function setSelfGadget (gadget) {
+      /*
+       * Only used internally to set current gadget being executed.
+       */
+      current_gadget = gadget;
+    }
+
     return {
 
         init: function () {
@@ -103,10 +110,10 @@ var RenderJs = (function () {
              * gadgets.
              */
             // set current gadget as being loaded so gadget instance itself knows which gadget it is
-            current_gadget = RenderJs.GadgetIndex.getGadgetById(gadget.attr("id"));
+            setSelfGadget(RenderJs.GadgetIndex.getGadgetById(gadget.attr("id")));
             gadget.append(data);
             // reset as no longer current gadget
-            current_gadget = undefined;
+            setSelfGadget(undefined);
             // a gadget may contain sub gadgets
             RenderJs.loadRecursiveGadget(gadget);
         },
@@ -680,18 +687,19 @@ var RenderJs = (function () {
                         /*
                         * Inspect DOM and initialize this gadget
                         */
-                        var dom_list;
+                        var dom_list, gadget_id;
                         if (force===1) {
                           // we explicitly want to re-init elements even if already this is done before
                           dom_list = $("div[data-gadget-connection]");
                         }
                         else {
+                          // XXX: improve and save 'bound' on javascript representation of a gadget not DOM
                           dom_list = $("div[data-gadget-connection]")
                                        .filter(function() { return $(this).data("bound") !== true; })
-                                       .data('bound', true )
+                                       .data('bound', true );
                         }
                         dom_list.each(function (index, element) {
-                             RenderJs.InteractionGadget.bind($(element));});
+                          RenderJs.InteractionGadget.bind($(element));});
                 },
 
                 bind: function (gadget_dom) {
@@ -811,10 +819,10 @@ var RenderJs = (function () {
                             method_id = gadget_route.destination.split('.')[1],
                             gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
                         // set gadget value so getSelfGadget can work
-                        current_gadget = gadget;
+                        setSelfGadget(gadget);
                         gadget[method_id].apply(null, arguments);
                         // reset as no longer needed
-                        current_gadget = undefined;
+                        setSelfGadget(undefined);
                     };
                     // add route itself
                     priority = gadget_route.priority;
