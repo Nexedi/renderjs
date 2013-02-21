@@ -137,20 +137,15 @@ var RenderJs = (function () {
             gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget_id);
             gadget_index = RenderJs.GadgetIndex.getGadgetList();
 
-            for (i = 0; i < gadget_index.length; i += 1) {
-              gadget_index_id = gadget_index[i].id;
-              // stop here, if the gadget_id is already on the gadgetIndex
-              // but not when the gadget on the page has no childNodes
-              // (because it's back to unenhanced status = page reload)
-              if (gadget_index_id === gadget_id &&
-                $(document.getElementById(gadget_index_id)).children().length > 0) {
-                  return;
-              }
-            }
             if (gadget_js === undefined) {
               // register gadget in javascript namespace if not already registered
               gadget_js = new RenderJs.Gadget(gadget_id, gadget);
               RenderJs.GadgetIndex.registerGadget(gadget_js);
+            }
+
+            if (gadget_js.isReady()) {
+              // avoid loading again gadget which was loaded before in same page
+              return ;
             }
 
             // update Gadget's instance with contents of "data-gadget-property"
