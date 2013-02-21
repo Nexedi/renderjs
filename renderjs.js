@@ -47,18 +47,11 @@ var RenderJs = (function () {
                 function () {
                   if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
                     // examine all Intaction Gadgets and bind accordingly
-                    $("div[data-gadget-connection]")
-                      .filter(function() { return $(this).data("bound") !== true; })
-                      .data('bound', true )
-                      .each(function (index, element) {
-                        RenderJs.InteractionGadget.bind($(element));
-                    });
+                    RenderJs.InteractionGadget.init();
                   }
                   if (RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
                     // create all routes between gadgets
-                    $("div[data-gadget-route]").each(function (index, element) {
-                      RenderJs.RouteGadget.route($(element));
-                    });
+                    RenderJs.RouteGadget.init();
                   }
                 });
             }
@@ -687,6 +680,25 @@ var RenderJs = (function () {
              * Basic gadget interaction gadget implementation.
              */
             return {
+
+                init: function (force) {
+                        /*
+                        * Inspect DOM and initialize this gadget
+                        */
+                        var dom_list;
+                        if (force===1) {
+                          // we explicitly want to re-init elements even if already this is done before
+                          dom_list = $("div[data-gadget-connection]");
+                        }
+                        else {
+                          dom_list = $("div[data-gadget-connection]")
+                                       .filter(function() { return $(this).data("bound") !== true; })
+                                       .data('bound', true )
+                        }
+                        dom_list.each(function (index, element) {
+                             RenderJs.InteractionGadget.bind($(element));});
+                },
+
                 bind: function (gadget_dom) {
                     /*
                      * Bind event between gadgets.
@@ -780,6 +792,15 @@ var RenderJs = (function () {
              */
             var route_list = [];
             return {
+
+                init: function () {
+                  /*
+                   * Inspect DOM and initialize this gadget
+                   */
+                  $("div[data-gadget-route]").each(function (index, element) {
+                      RenderJs.RouteGadget.route($(element));
+                  });
+                },
 
                 route: function (gadget_dom) {
                     /*

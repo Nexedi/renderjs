@@ -24,10 +24,8 @@ require([ "renderjs", "require-renderjs", "jquery", "route", "url" ], function(d
               // we use interactionGadget which will call proper gadgets' function
             };
 
-            // we have to re-bind interaction gadget as main-route API implemantation changed
-            $("div[data-gadget-connection]").each(function (index, element) {
-              RenderJs.InteractionGadget.bind($(element));
-            });
+            // we have to re-bind (force) interaction gadget as main-route API implemantation changed
+            RenderJs.InteractionGadget.init(force=1);
 
             $.url.onhashchange(function () {
               RenderJs.RouteGadget.go($.url.getPath(),

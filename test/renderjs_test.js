@@ -159,10 +159,7 @@ function setupRenderJSTest(){
 
     // we need to wait for all gadgets loading ...
     RenderJs.bindReady(function () {
-      //RenderJs.InteractionGadget.bind($("#main-interactor"));
-      $("div[data-gadget-connection]").each(function (index, element) {
-        RenderJs.InteractionGadget.bind($(element));
-      });
+      RenderJs.InteractionGadget.init();
 
       start();
       equal(0, counter);
@@ -180,6 +177,21 @@ function setupRenderJSTest(){
       // check multiple interactors can coexist (a.inc2 +2 -> B.inc2 +2)
       RenderJs.GadgetIndex.getGadgetById("A").inc2();
       equal(10, counter);
+
+      // test force rebind
+      RenderJs.GadgetIndex.getGadgetById("A").inc2 = function () {return 0;};
+      equal(0, RenderJs.GadgetIndex.getGadgetById("A").inc2());
+
+      // rebind should not override inc2 as already changed
+      RenderJs.InteractionGadget.init();
+      equal(0, RenderJs.GadgetIndex.getGadgetById("A").inc2());
+
+      // if we force rebind it should be back to previous state
+      RenderJs.GadgetIndex.getGadgetById("A").inc2 = function (){counter = counter +2;};
+      RenderJs.InteractionGadget.init(force=1);
+      RenderJs.GadgetIndex.getGadgetById("A").inc2()
+      equal(16, counter);
+
       // XXX: test dynamically adding an InteractionGadget
 
     });
@@ -254,9 +266,7 @@ function setupRenderJSTest(){
     RenderJs.bindReady(function () {
       start();
       // initialize route gadget as it's loaded asynchronously
-      $("div[data-gadget-route]").each(function (index, element) {
-        RenderJs.RouteGadget.route($(element));
-      });
+      RenderJs.RouteGadget.init();
       var path_list = [];
       $.each(RenderJs.RouteGadget.getRouteList(),
              function (index, value) {
