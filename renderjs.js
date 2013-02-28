@@ -310,7 +310,7 @@ var RenderJs = (function () {
         },
 
         addGadget: function (dom_id, gadget_id, gadget, gadget_data_handler,
-                            gadget_data_source) {
+                            gadget_data_source, bootstrap) {
             /*
              * add new gadget and render it
              */
@@ -328,7 +328,9 @@ var RenderJs = (function () {
             tab_gadget = tab_container.find('#' + gadget_id);
 
             // render new gadget
-            RenderJs.bootstrap(tab_container);
+            if (bootstrap !== false) {
+              RenderJs.bootstrap(tab_container);
+            }
 
             return tab_gadget;
         },
@@ -493,13 +495,13 @@ var RenderJs = (function () {
                 },
 
                 addNewTabGadget: function (dom_id, gadget_id, gadget, gadget_data_handler,
-                                          gadget_data_source) {
+                                          gadget_data_source, bootstrap) {
                     /*
                      * add new gadget and render it
                      */
                     var tab_gadget;
                     tab_gadget = RenderJs.addGadget(
-                        dom_id, gadget_id, gadget, gadget_data_handler, gadget_data_source
+                        dom_id, gadget_id, gadget, gadget_data_handler, gadget_data_source, bootstrap
                     );
 
                     // we should unregister all gadgets part of this TabbularGadget
