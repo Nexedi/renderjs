@@ -435,6 +435,8 @@ var RenderJs = (function () {
             this.id = gadget_id;
             this.dom = dom;
             this.is_ready = false;
+            // set enhanced flag
+            this.is_enhanced = false;
 
             this.getId = function () {
                 return this.id;
@@ -451,11 +453,26 @@ var RenderJs = (function () {
                 return this.is_ready;
             };
 
-            this.setReady = function () {
+            this.setReady = function (value) {
                 /*
                  * Return True if remote gadget is loaded into DOM.
                  */
-                this.is_ready = true;
+                // allow to set to false, when removing gadget from DOM
+                this.is_ready = value === undefined ? true : value;
+            };
+
+            this.isEnhanced = function() {
+                /*
+                 * Return True if remote gadget has been enhanced
+                 */
+                return this.is_enhanced;
+            };
+
+            this.setEnhanced = function (value) {
+            /*
+             * Update enhancment status
+             */
+              this.is_enhanced = value;
             };
 
             this.remove = function () {
