@@ -12,7 +12,7 @@
 var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
 
 // by default RenderJs will examine and bind all interaction gadgets
-// available 
+// available
 var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 
 // by default RenderJs will examine and create all routes
@@ -276,7 +276,7 @@ var RenderJs = (function () {
         updateGadgetData: function (gadget) {
             /*
              * Gadget can be updated from "data-gadget-source" (i.e. a json)
-             * and "data-gadget-handler" attributes (i.e. a namespace Javascript) 
+             * and "data-gadget-handler" attributes (i.e. a namespace Javascript)
              */
             var data_source, data_handler;
             data_source = gadget.attr("data-gadget-source");
@@ -325,7 +325,7 @@ var RenderJs = (function () {
             ].join('\n');
 
             tab_container.append(html_string);
-            tab_gadget = tab_container.find(".gadget");
+            tab_gadget = tab_container.find('#' + gadget_id);
 
             // render new gadget
             RenderJs.bootstrap(tab_container);
@@ -462,9 +462,16 @@ var RenderJs = (function () {
                 /*
                  * Remove gadget (including its DOM element).
                  */
-                // unregister from GadgetIndex
+                var gadget;
+                // unregister root from GadgetIndex
                 RenderJs.GadgetIndex.unregisterGadget(this);
-                // remove its DOM element
+                // gadget might contain sub gadgets so before remove entire
+                // DOM we must unregister them from GadgetIndex
+                this.getDom().find("[data-gadget]").each( function () {
+                  gadget = RenderJs.GadgetIndex.getGadgetById($(this).attr("id"));
+                  RenderJs.GadgetIndex.unregisterGadget(gadget);
+                });
+                // remove root's entire DOM element
                 $(this.getDom()).remove();
             };
         },
@@ -473,6 +480,7 @@ var RenderJs = (function () {
             /*
              * Generic tabular gadget
              */
+            var gadget_list = [];
             return {
                 toggleVisibility: function (visible_dom) {
                     /*
@@ -493,7 +501,18 @@ var RenderJs = (function () {
                     tab_gadget = RenderJs.addGadget(
                         dom_id, gadget_id, gadget, gadget_data_handler, gadget_data_source
                     );
-                    // XXX: we should unregister all gadgets (if any we replace now in DOM)
+
+                    // we should unregister all gadgets part of this TabbularGadget
+                    $.each(gadget_list,
+                         function (index, gadget_id) {
+                           var gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
+                           gadget.remove();
+                           // update list of root gadgets inside TabbularGadget
+                           gadget_list.splice($.inArray(gadget_id, gadget_list), 1);
+                        }
+                    );
+                    // add it as root gadget
+                    gadget_list.push(tab_gadget.attr("id"));
                 }
             };
         }()),
@@ -706,7 +725,7 @@ var RenderJs = (function () {
                     /*
                      * Bind event between gadgets.
                      */
-                    var gadget_id, gadget_connection_list, 
+                    var gadget_id, gadget_connection_list,
                       createMethodInteraction = function (
                         original_source_method_id, source_gadget_id,
                         source_method_id, destination_gadget_id,

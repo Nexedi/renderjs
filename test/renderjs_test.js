@@ -93,6 +93,7 @@ function setupRenderJSTest(){
       root_gadget.remove();
       equal(RenderJs.GadgetIndex.getGadgetList().length, 0);
       equal(0, $("#new-gadget").length);
+      // XXX: test removing a root gadget also removes its sibling gadgets and their DOM
     });
    });
 
@@ -123,6 +124,8 @@ function setupRenderJSTest(){
       equal($("#qunit-fixture").children("#new_added").length, 1);
       equal(RenderJs.GadgetIndex.getGadgetList().length, 1);
       equal(RenderJs.GadgetIndex.getRootGadget().getDom().attr("id"), "new_added");
+      // XXX: test adding a new tab gadget and that old one was removed from
+      // both DOM and GadgetIndex
     });
    });
 
