@@ -150,6 +150,11 @@ var RenderJs = (function () {
               RenderJs.GadgetIndex.registerGadget(gadget_js);
             }
 
+            // update gadget.dom if it's contents are not in the document
+            if (!gadget_js.dom.closest("body").length) {
+              gadget_js.dom = gadget;
+            }
+
             if (gadget_js.isReady()) {
               // avoid loading again gadget which was loaded before in same page
               return ;
