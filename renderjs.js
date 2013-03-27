@@ -611,7 +611,9 @@ var RenderJs = (function () {
                     $(this.getGadgetList()).each(
                         function (index, value) {
                             if (value.isReady() === false) {
+                                if(value.dom.closest("body").length) {
                                 result = false;
+                                }
                             }
                         }
                     );
