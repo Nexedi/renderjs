@@ -1,3 +1,96 @@
+function makeid() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for( var i=0; i < 5; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return text;
+}
+
+// we need to register all callbacks in a registry to be able to evaluate them later on
+// when handling the response from the global environment back to the sandbox
+var callbackRegistry = {};
+
+var selfGadget = {};
+
+
+function registerCallback(callback, id) {
+  callbackRegistry[id] = callback;
+}
+
+// Initiate the communication
+var communicate = function(id, selector, callback) {
+    var callId = makeid();
+    registerCallback(callback, callId);
+    
+    postMessage({
+        command: 'masterAndCommander', 
+        data: {
+          id: id,
+          callback: callId,
+          selector: selector
+        }
+    })
+};
+
+// Opposite, handle responses
+var handleResponse = function(data) {
+  var callback = callbackRegistry[data.callback];
+  if(callback) {
+    callback(data.result);
+  }
+};
+
+var handleGadgetResponse = function(data) {
+  var callback = callbackRegistry[data.callback];
+  var proxy = {};
+  for(var i in data.selectors) {
+    selectors[data.selectors[i]] = selectorProxy(data.selectors[i]);
+  };
+  
+  if(callback) {
+    callback(proxy);
+  }
+};
+
+//Answers a function that will forward to the unboxed gadget
+function selectorProxy(selector, id) {
+  return function(callback) {
+    var args = Array.prototype.slice.call(arguments);
+    //todo handle arguments
+    communicate(id, selector, callback);
+  };
+};
+
+// Async get gadget by id. out of renderjs for now. needs refactorings
+
+function asyncGetGadgetById(id, callback) {
+  var callId = makeid();
+  registerCallback(callback, callId);
+  
+  postMessage({
+        command: 'getGadgetById', 
+        data: {
+          id: id,
+          callback: callId
+        }
+    })
+};
+
+function handleMethodCall(data) {
+  var response = getSelfGadget()[data.selector]();
+  postMessage({
+        command: 'methodResponse', 
+        data: {
+          id: data.id,
+          data: response
+        }
+    })
+};
+
+function getSelfGadget() {
+  return selfGadget;
+}
+
 /*! RenderJs v0.2  */
 /*global console, require, $, localStorage, document, jIO */
 /*jslint evil: true, white: true */
@@ -109,9 +202,31 @@ var RenderJs = (function () {
              * Set gadget data and recursively load it in case it holds another
              * gadgets.
              */
+            
+            var element, scripts;
             // set current gadget as being loaded so gadget instance itself knows which gadget it is
-            setSelfGadget(RenderJs.GadgetIndex.getGadgetById(gadget.attr("id")));
-            gadget.append(data);
+            var gadget_js, sandbox;
+            setSelfGadget(gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget.attr("id")));
+            
+            element = $('<div>' + data + '</div>');
+            is_sandoxed = gadget.attr("data-gadget-safejs");
+            console.log(is_sandoxed);
+            // XXX: replace javascript by safe javascript
+            if(typeof safejs !== 'undefined' && (is_sandoxed==="1")) {
+              scripts = [];
+              $($(element).find("script").attr("type", "text/safe-javascript")).get()
+                .forEach(function(each) { scripts.push($(each).attr('src')) });
+              element = gadget.append(element);
+              sandbox = safejs({policy: "read-write", 
+                     scripts: scripts,
+                     node: element.get(0),
+                     dependencies: ["http://localhost/renderjs/renderjs.js"]
+              });
+              gadget_js.sandbox = sandbox;
+            } else {
+              gadget.append(element);
+            }
+            
             // reset as no longer current gadget
             setSelfGadget(undefined);
             // a gadget may contain sub gadgets
@@ -137,7 +252,8 @@ var RenderJs = (function () {
              */
             var url, gadget_id, gadget_property, cacheable, cache_id,
                 i, gadget_index, gadget_index_id,
-                app_cache, data, gadget_js, is_update_gadget_data_running;
+                app_cache, data, gadget_js, is_update_gadget_data_running,
+                sandbox;
 
             url = gadget.attr("data-gadget");
             gadget_id = gadget.attr("id");
@@ -148,8 +264,13 @@ var RenderJs = (function () {
               // register gadget in javascript namespace if not already registered
               gadget_js = new RenderJs.Gadget(gadget_id, gadget);
               RenderJs.GadgetIndex.registerGadget(gadget_js);
+              // XXX: is_sandboxed
+              is_sandboxed = gadget.attr("data-gadget-safejs");
+              if(is_sandboxed==="1") {
+                gadget_js.is_sandboxed = is_sandboxed;
+              }
             }
-
+         
             if (gadget_js.isReady()) {
               // avoid loading again gadget which was loaded before in same page
               return ;
@@ -167,6 +288,8 @@ var RenderJs = (function () {
             if (url !== undefined && url !== "") {
                 cacheable = gadget.attr("data-gadget-cacheable");
                 cache_id = gadget.attr("data-gadget-cache-id");
+                sandbox = gadget.attr("data-gadget-sandox");
+                
                 if (cacheable !== undefined && cache_id !== undefined) {
                     cacheable = Boolean(parseInt(cacheable, 10));
                 }

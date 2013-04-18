@@ -18,6 +18,6 @@ require.config({
   }
 });
 
-require([ "renderjs", "./lib/safe-js/safe" ], function(domReady) {
+require([ "renderjs"], function(domReady) {
   RenderJs.init();
 });
