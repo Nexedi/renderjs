@@ -202,17 +202,14 @@ var RenderJs = (function () {
              * Set gadget data and recursively load it in case it holds another
              * gadgets.
              */
-            
-            var element, scripts;
+            var element, scripts, gadget_js, sandbox;
             // set current gadget as being loaded so gadget instance itself knows which gadget it is
-            var gadget_js, sandbox;
             setSelfGadget(gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget.attr("id")));
-            
-            element = $('<div>' + data + '</div>');
+            element = $('<div>' + data + '</div>'); // we need to work with one root element only
             is_sandoxed = gadget.attr("data-gadget-safejs");
-            console.log(is_sandoxed);
-            // XXX: replace javascript by safe javascript
-            if(typeof safejs !== 'undefined' && (is_sandoxed==="1")) {
+            // we need to replace javascript by safe javascript which will be loaded inside a worker
+            // by safe-js
+            if (typeof safejs !== 'undefined' && is_sandoxed==="1") {
               scripts = [];
               $($(element).find("script").attr("type", "text/safe-javascript")).get()
                 .forEach(function(each) { scripts.push($(each).attr('src')) });
@@ -220,13 +217,16 @@ var RenderJs = (function () {
               sandbox = safejs({policy: "read-write", 
                      scripts: scripts,
                      node: element.get(0),
+                     // XXX: remove hard coded url
                      dependencies: ["http://localhost/renderjs/renderjs.js"]
               });
               gadget_js.sandbox = sandbox;
-            } else {
+            } 
+            else {
+              // not sandboxed
               gadget.append(element);
             }
-            
+
             // reset as no longer current gadget
             setSelfGadget(undefined);
             // a gadget may contain sub gadgets

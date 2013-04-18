@@ -1,7 +1,7 @@
 <html>
 
   <head>
-    <title>Proto 1</title>
+    <title>Proto using safe-js</title>
 
     <script data-main="./require-renderjs.js"
             type="text/javascript"
@@ -10,21 +10,21 @@
   </head>
 
   <body>
-    <div id="test"></div>
-
- <div id="test_no"> No changable</div>
+    <div id="test">This example is in root folder until we find a way to use properly requirejs 
+                  with renderjs dependencies inside a worker environment
+    </div>
 
 
     <div id="A"
-         data-gadget="A.html"
+         data-gadget="examples/safe-js/A.html"
          data-gadget-safejs="1"></div>
 
     <div id="B"
-         data-gadget="B.html"
+         data-gadget="examples/safe-js/B.html"
          data-gadget-safejs="1"></div>
 
     <div id="C"
-         data-gadget="C.html"
+         data-gadget="examples/safe-js/C.html"
          data-gadget-safejs="0"></div>
 
   </body>
