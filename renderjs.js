@@ -1,3 +1,5 @@
+// SafeJS add ons 
+
 function makeid() {
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -10,6 +12,7 @@ function makeid() {
 // when handling the response from the global environment back to the sandbox
 var callbackRegistry = {};
 
+// a global variable that holds current gadget, this is bad as it's shared
 var selfGadget = {};
 
 
@@ -21,7 +24,6 @@ function registerCallback(callback, id) {
 var communicate = function(id, selector, callback) {
     var callId = makeid();
     registerCallback(callback, callId);
-    
     postMessage({
         command: 'masterAndCommander', 
         data: {
@@ -46,7 +48,7 @@ var handleGadgetResponse = function(data) {
   for(var i in data.selectors) {
     selectors[data.selectors[i]] = selectorProxy(data.selectors[i]);
   };
-  
+
   if(callback) {
     callback(proxy);
   }
@@ -62,11 +64,10 @@ function selectorProxy(selector, id) {
 };
 
 // Async get gadget by id. out of renderjs for now. needs refactorings
-
 function asyncGetGadgetById(id, callback) {
   var callId = makeid();
   registerCallback(callback, callId);
-  
+
   postMessage({
         command: 'getGadgetById', 
         data: {
