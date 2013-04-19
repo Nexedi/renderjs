@@ -7,15 +7,35 @@
  * http://www.renderjs.org/documentation
  */
 
-// by default RenderJs will render all gadgets when page is loaded
-// still it's possible to override this and use explicit gadget rendering
+
+/**
+* By default RenderJs will render all gadgets when page is loaded
+* still it's possible to override this and use explicit gadget rendering.
+* 
+* @property RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING
+* @type {Boolean}
+* @default "true"
+*/
 var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
 
-// by default RenderJs will examine and bind all interaction gadgets
-// available
+
+/**
+* By default RenderJs will examine and bind all interaction gadgets
+* available.
+* 
+* @property RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND
+* @type {Boolean}
+* @default "true"
+*/
 var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 
-// by default RenderJs will examine and create all routes
+/**
+* By default RenderJs will examine and create all routes
+* 
+* @property RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE
+* @type {Boolean}
+* @default "true"
+*/
 var RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE = true;
 
 // fallback for IE
@@ -24,6 +44,11 @@ if (console === undefined || console.log === undefined) {
     console.log = function () {};
 }
 
+/**
+Provides the base RenderJs class
+
+@module RenderJs
+**/
 var RenderJs = (function () {
     // a variable indicating if current gadget loading is over or not
     var is_ready = false, current_gadget;

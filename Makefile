@@ -6,6 +6,7 @@ RENDERJS_MIN		= renderjs.min.js
 UGLIFY_CMD	= $(shell which uglifyjs || echo node ~/node_modules/uglify-js/bin/uglifyjs)
 # npm install jslint
 LINT_CMD	= $(shell which jslint || echo node ~/node_modules/jslint/bin/jslint.js) --terse
+YUIDOC_CMD      = $(shell which yuidoc)
 
 auto: build
 build: uglify
@@ -18,5 +19,7 @@ $(RENDERJS_MIN): $(RENDERJS)
 lint: $(RENDERJS)
 	$(LINT_CMD) "$<"
 
+doc:
+	$(YUIDOC_CMD) .
 clean:
 	rm -f $(RENDERJS_MIN)
