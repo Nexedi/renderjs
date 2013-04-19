@@ -436,45 +436,6 @@ var RenderJs = (function () {
             this.id = gadget_id;
             this.dom = dom;
             this.is_ready = false;
-
-            this.getId = function () {
-                return this.id;
-            };
-
-            this.getDom = function () {
-                return this.dom;
-            };
-
-            this.isReady = function () {
-                /*
-                 * Return True if remote gadget is loaded into DOM.
-                 */
-                return this.is_ready;
-            };
-
-            this.setReady = function () {
-                /*
-                 * Return True if remote gadget is loaded into DOM.
-                 */
-                this.is_ready = true;
-            };
-
-            this.remove = function () {
-                /*
-                 * Remove gadget (including its DOM element).
-                 */
-                var gadget;
-                // unregister root from GadgetIndex
-                RenderJs.GadgetIndex.unregisterGadget(this);
-                // gadget might contain sub gadgets so before remove entire
-                // DOM we must unregister them from GadgetIndex
-                this.getDom().find("[data-gadget]").each( function () {
-                  gadget = RenderJs.GadgetIndex.getGadgetById($(this).attr("id"));
-                  RenderJs.GadgetIndex.unregisterGadget(gadget);
-                });
-                // remove root's entire DOM element
-                $(this.getDom()).remove();
-            };
         },
 
         TabbularGadget: (function () {
@@ -896,3 +857,43 @@ var RenderJs = (function () {
         }())
     };
 }());
+
+// Define Gadget prototype
+RenderJs.Gadget.prototype.getId = function () {
+  return this.id;
+};
+
+RenderJs.Gadget.prototype.getDom = function () {
+  return this.dom;
+};
+
+RenderJs.Gadget.prototype.isReady = function () {
+  /*
+  * Return True if remote gadget is loaded into DOM.
+  */
+  return this.is_ready;
+};
+
+RenderJs.Gadget.prototype.setReady = function () {
+  /*
+  * Return True if remote gadget is loaded into DOM.
+  */
+  this.is_ready = true;
+};
+
+RenderJs.Gadget.prototype.remove = function () {
+  /*
+  * Remove gadget (including its DOM element).
+  */
+  var gadget;
+  // unregister root from GadgetIndex
+  RenderJs.GadgetIndex.unregisterGadget(this);
+  // gadget might contain sub gadgets so before remove entire
+  // DOM we must unregister them from GadgetIndex
+  this.getDom().find("[data-gadget]").each( function () {
+    gadget = RenderJs.GadgetIndex.getGadgetById($(this).attr("id"));
+    RenderJs.GadgetIndex.unregisterGadget(gadget);
+  });
+  // remove root's entire DOM element
+  $(this.getDom()).remove();
+};
