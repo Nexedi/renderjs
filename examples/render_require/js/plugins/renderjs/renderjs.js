@@ -153,7 +153,6 @@ var RenderJs = (function () {
               gadget_js = new RenderJs.Gadget(gadget_id, gadget);
               RenderJs.GadgetIndex.registerGadget(gadget_js);
             }
-
             if (gadget_js.isReady()) {
               // avoid loading again gadget which was loaded before in same page
               return ;
@@ -182,7 +181,7 @@ var RenderJs = (function () {
                     app_cache = RenderJs.Cache.get(cache_id, undefined);
                     if (app_cache === undefined || app_cache === null) {
                         // not in cache so we pull from network and cache
-                        // require-handle - info see below
+                        // require-handle, info see belwo
                         if (require !== undefined && gadget_module !== undefined) {
                           require([gadget_module], function (response) {
                             RenderJs.GadgetIndex.getGadgetById(gadget_id)
@@ -221,19 +220,26 @@ var RenderJs = (function () {
                         RenderJs.updateGadgetData(gadget);
                     }
                 } else {
-                  // INFO: use requireJS to load gadgets as compilable modules
+                  // if require is available and gadget is specified as
+                  // a module, require it vs using ajax
+
+                  // => this will require a js module file, which
+                  // after loading all html/css/json dependencies
+                  // should return data as a string to be appended to
+                  // the page
                   if (require !== undefined && gadget_module !== undefined) {
                     require([gadget_module], function (response) {
-                      // this will require a module => specified path + .js(!)
+                      // this will require a module => specified path + .js
                       // inside this module we can define all dependencies
-                      // (css, js and json), managed by requireJS plugins
+                      // including css, js and json files
 
-                      // the module returns an object called "response"
+                      // for now the module returns an object called response
+                      // which contains
                       // response.data => HTML to be appended
                       // response.callback => callback for appended source code
 
-                      // the callback is run from setGadgetAndRecurse - after
-                      // the HTML has been appended to the DOM
+                      // callbacks are renderJS based, so they should be run
+                      // when RenderJs is available = here or on the page
                       RenderJs.GadgetIndex.getGadgetById(gadget_id)
                         .setReady();
                       RenderJs.setGadgetAndRecurse(gadget, response.data,
@@ -475,7 +481,6 @@ var RenderJs = (function () {
             this.id = gadget_id;
             this.dom = dom;
             this.is_ready = false;
-            // set enhanced flag
             this.is_enhanced = false;
 
             this.getId = function () {
@@ -497,7 +502,6 @@ var RenderJs = (function () {
                 /*
                  * Return True if remote gadget is loaded into DOM.
                  */
-                // allow to set to false, when removing gadget from DOM
                 this.is_ready = value === undefined ? true : value;
             };
 
@@ -790,6 +794,7 @@ var RenderJs = (function () {
                     };
                     gadget_id = gadget_dom.attr("id");
                     gadget_connection_list = gadget_dom.attr("data-gadget-connection");
+
                     gadget_connection_list = $.parseJSON(gadget_connection_list);
                     $.each(gadget_connection_list, function (key, value) {
                         var source, source_gadget_id, source_method_id,
