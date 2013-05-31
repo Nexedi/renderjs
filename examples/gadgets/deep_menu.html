@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>content</title>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="../../renderjs.js"></script>
+</head>
+<body>
+  <table style="border: 1px solid black; font-size: 9px">
+    <tr>
+      <td colspan="2" style="text-align:center;"><b>menu_deep.html</b></td>
+    <tr>
+      <td><b>Loaded</b></td>
+      <td>Nested iFrame (via addGadget())</td>
+    </tr>
+    <tr>
+      <td><b>Location</b></td>
+      <td>inside content_menu.html</td>
+    </tr>
+    <tr>
+      <td><b>Service</b></td>
+      <td>substract</td>
+    </tr>
+    <tr>
+      <td><b>Domain</b></td>
+      <td>CROSS DOMAIN</td>
+    </tr>
+  </table>
+  <p>Hello, I'm a cross domain gadget, providing Substract Service</p>
+  <ul>
+    <li><button class="e" data-foo="1" data-bar="1">Button D</button></li>
+    <li><button class="f" data-foo="11" data-bar="2">Button E</button></li>
+    <li><button class="g" data-foo="111" data-bar="3">Button F</button></li>
+  </ul>
+
+  <script type="text/javascript">
+
+    //<![CDATA[
+    var document = this.document;
+    $(this.document).find('button').on('click', function(e, target) {
+//       var parent;
+//       if ( window.self === window.top || self == top ) { 
+//         // parent is root
+//         parent = window.location.href;
+//       } else { 
+//         // inside an iFrame
+//         parent = window.parent.location.href;
+//       }
+//       console.log("DEEP");
+//       console.log(window);
+//       console.log("posting to:");
+//       console.log(parent);
+//       window.postMessage(e.target.getAttribute("data-foo"), parent);
+    });
+
+    // service substraction
+    var subtract = function (a, b) {
+      try {
+        return a-b;
+      }
+      catch (e) {
+        return "not possible to subtract";
+      }
+    };
+
+    // API add service JS (src optional)
+    $(this).addService({"type": "service/math", "rel": "subtract"});
+
+    //]]>
+  </script>
+</body>
+</html>

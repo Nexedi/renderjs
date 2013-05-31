@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>content</title>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="../../renderjs.js"></script>
+</head>
+<body>
+  <table style="border: 1px solid black; font-size: 9px">
+    <tr>
+      <td colspan="2" style="text-align:center;"><b>content_menu.html</b></td>
+    <tr>
+      <td><b>Loaded</b></td>
+      <td>iFrame (from HTML source)</td>
+    </tr>
+    <tr>
+      <td><b>Location</b></td>
+      <td>inside index.html</td>
+    </tr>
+    <tr>
+      <td><b>Service</b></td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td><b>Domain</b></td>
+      <td>same</td>
+    </tr>
+  </table>
+  <ul>
+    <li><button class="a" data-foo="5" data-bar="6">Button A</button></li>
+    <li><button class="b" data-foo="4" data-bar="1">Button B</button></li>
+    <li><button class="c" data-foo="8" data-bar="2">Button C</button></li>
+  </ul>
+
+  <script type="text/javascript">
+    $(this.document).addGadget({"src":"http://domain1/sven/newRenderjs/examples/gadgets/deep_menu.html", "iframe":"true"});
+    // $(this.document).addGadget({"src":"deep_menu.html", "iframe":"true"});
+  </script>
+  <script type="text/javascript">
+    (function () {
+      //<![CDATA[
+      var document = this.document;
+//    // retrieve parameters set by renderJs
+//    setTimeout(function(){
+//         console.log("settimeout");
+//         console.log($("body")[0])
+//         console.log($("body")[0].config);
+//     },0);
+    }());
+
+
+      //]]>
+  </script>
+</body>
+</html>

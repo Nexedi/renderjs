@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>content_loader</title>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  <script type="text/javascript" src="../../renderjs.js"></script>
+<body>
+  <table style="border: 1px solid black; font-size: 9px">
+    <tr>
+      <td colspan="2" style="text-align:center;"><b>content_loader.html</b></td>
+    <tr>
+      <td><b>Loaded</b></td>
+      <td>iFrame (from HTML source)</td>
+    </tr>
+    <tr>
+      <td><b>Location</b></td>
+      <td>inside index.html</td>
+    </tr>
+    <tr>
+      <td><b>Service</b></td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td><b>Domain</b></td>
+      <td>same</td>
+    </tr>
+  </table>
+  <p>Hello, I'm the gadge text</p>
+  <div class="foo"></div>
+  <script type="text/javascript">
+    $('.foo').addGadget({"src":"content.html"});
+    // $('.foo').addGadget({"src":"content.html", "iframe":"true"});
+  </script>
+</body>
+</html>

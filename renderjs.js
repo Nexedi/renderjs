@@ -1,924 +1,915 @@
-/*! RenderJs v0.2  */
-/*global console, require, $, localStorage, document, jIO */
-/*jslint evil: true, white: true */
-"use strict";
-/*
- * RenderJs - Generic Gadget library renderer.
- * http://www.renderjs.org/documentation
- */
+// TODOS:
+// -> remove wrapping elements on hardcoded gadgets
+//    -> JQM needs trigger("create") on parent, easy to call on wrapper 
+//      -> enhance before replace?
+//    -> does a sandbox need a wrapper?
+// -> addGadget
+//    -> add callbacks
+// -> allow to load remote src files, which should only have <link> elements
+//    to publish their services
+// -> find a way to prevent a gadget from reloading a plugin that's already
+//    active on the page
 
 
-/**
-* By default RenderJs will render all gadgets when page is loaded
-* still it's possible to override this and use explicit gadget rendering.
-* 
-* @property RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING
-* @type {Boolean}
-* @default "true"
-*/
-var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
+// DISCUSSION POINTS:
+// (1) 
+// (2) If not used for interactions or routing, what's the purpose of 
+//     gadgetIndex?
+// (3) Do we dumb-store in the index or perform some sort of validation 
+//     before adding a gadget to an index?
+// (4) 
+// (5) Should findGadget() = find recursive gadgets, also work with a single 
+//     gadget id, like findGadget({"id":"1ewnel73"}), I guess not as we 
+//     are using random uuids internally only
+// (6)
+// (7)
+// (8) 
+// (9) When hard-coding services (see content.html), the "url" parameter can 
+//     be omitted which would default to current iFrame (window) or root? 
+// (10)
+// (11)is passing the root URL through the URL a security vulnerablity?
+// (12)should findGadget and findService be API methods? They will scan the
+//     DOM for services/gadgets, but this should actually be done (and is done)
+//     automatically
+// (13)we need to use an id to identify <frames> on a page, currently set as
+//     uuid by renderJs. We could also use data-id or remove the id and try
+//     to match by src (url), but this will be worse in terms of performance
+// (14)what do to about service parameters. A service that requires parameters
+//     a and b passed to return c should somewhere also specify this. Do we
+//     need a service JSON/HAL API? or where should this information be made
+//     availabel
+
+// Info:
+// iframe communication:
+// http://stackoverflow.com/questions/15884994/javascript-can-data-be-passed-bi-directionally-through-an-iframe/
+// http://stackoverflow.com/questions/16689280/how-to-set-jquery-data-on-an-iframe-body-tag-and-retrieve-it-from-inside-the-i/16689994?noredirect=1#16689994
+
+// custom URI schemes:
+// http://stackoverflow.com/questions/4403992/possible-to-handle-your-own-http-url-schemes-in-ios/5149668#5149668
+
+// validate URL: 
+// http://stackoverflow.com/questions/161738/what-is-the-best-regular-expression-to-check-if-a-string-is-a-valid-url
+
+(function ($, window, undefined) {
+  var priv = {};
+  var that = {};
+
+  // ==================  utility methods ==================
+
+  // => cross-browser reduce (no support in ie8-, opera 12-)
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce?redirectlocale=en-US&redirectslug=JavaScript%2FReference%2FGlobal_Objects%2FArray%2FReduce
+  if ('function' !== typeof Array.prototype.reduce) {
+    Array.prototype.reduce = function(callback, opt_initialValue){
+      'use strict';
+      if (null === this || 'undefined' === typeof this) {
+        // At the moment all modern browsers, that support strict mode, have
+        // native implementation of Array.prototype.reduce. For instance, IE8
+        // does not support strict mode, so this check is actually useless.
+        throw new TypeError(
+            'Array.prototype.reduce called on null or undefined');
+      }
+      if ('function' !== typeof callback) {
+        throw new TypeError(callback + ' is not a function');
+      }
+      var index = 0, length = this.length >>> 0, value, isValueSet = false;
+      if (1 < arguments.length) {
+        value = opt_initialValue;
+        isValueSet = true;
+      }
+      for ( ; length > index; ++index) {
+        if (!this.hasOwnProperty(index)) continue;
+        if (isValueSet) {
+          value = callback(value, this[index], index, this);
+        } else {
+          value = this[index];
+          isValueSet = true;
+        }
+      }
+      if (!isValueSet) {
+        throw new TypeError('Reduce of empty array with no initial value');
+      }
+      return value;
+    };
+  }
+
+  // => regexes used to convert Ajax response string into HTML element list
+  // thx require: http://requirejs.org/docs/release/2.1.6/comments/require.js
+  priv.removeJSComments = /(\/\*([\s\S]*?)\*\/|([^:]|^)\/\/(.*)$)/mg;
+  priv.removeHTMLComments = /<!--[\s\S]*?-->/mg;
+  priv.removeLineBreaks = /(\r\n|\n|\r)/mg;
+  priv.removeWhiteSpace = /\s+/mg;
+  priv.removeWhiteSpaceBetweenElements = />\s+</mg;
 
 
-/**
-* By default RenderJs will examine and bind all interaction gadgets
-* available.
-* 
-* @property RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND
-* @type {Boolean}
-* @default "true"
-*/
-var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
+  // => convert all URLs to absolute URLs
+  // thx JQM - http://code.jquery.com/mobile/latest/jquery.mobile.js
 
-/**
-* By default RenderJs will examine and create all routes
-* 
-* @property RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE
-* @type {Boolean}
-* @default "true"
-*/
-var RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE = true;
+  // URL regexp
+  //     [0]: http://jblas:password@mycompany.com:8080/mail/inbox?msg=1234&type=unread#msg-content
+  //     [1]: http://jblas:password@mycompany.com:8080/mail/inbox?msg=1234&type=unread
+  //     [2]: http://jblas:password@mycompany.com:8080/mail/inbox
+  //     [3]: http://jblas:password@mycompany.com:8080
+  //     [4]: http:
+  //     [5]: //
+  //     [6]: jblas:password@mycompany.com:8080
+  //     [7]: jblas:password
+  //     [8]: jblas
+  //     [9]: password
+  //    [10]: mycompany.com:8080
+  //    [11]: mycompany.com
+  //    [12]: 8080
+  //    [13]: /mail/inbox
+  //    [14]: /mail/
+  //    [15]: inbox
+  //    [16]: ?msg=1234&type=unread
+  //    [17]: #msg-content
+  priv.urlParser = /^\s*(((([^:\/#\?]+:)?(?:(\/\/)((?:(([^:@\/#\?]+)(?:\:([^:@\/#\?]+))?)@)?(([^:\/#\?\]\[]+|\[[^\/\]@#?]+\])(?:\:([0-9]+))?))?)?)?((\/?(?:[^\/\?#]+\/+)*)([^\?#]*)))?(\?[^#]+)?)(#.*)?/
 
-// fallback for IE
-if (console === undefined || console.log === undefined) {
-    var console = {};
-    console.log = function () {};
-}
+  // parse a URL
+  priv.parseUrl = function( url ) {
+    if ( $.type( url ) === "object" ) {
+      return url;
+    }
+    var matches = priv.urlParser.exec( url || "" ) || [];
+    return {
+      href:         matches[  0 ] || "",
+      hrefNoHash:   matches[  1 ] || "",
+      hrefNoSearch: matches[  2 ] || "",
+      domain:       matches[  3 ] || "",
+      protocol:     matches[  4 ] || "",
+      doubleSlash:  matches[  5 ] || "",
+      authority:    matches[  6 ] || "",
+      username:     matches[  8 ] || "",
+      password:     matches[  9 ] || "",
+      host:         matches[ 10 ] || "",
+      hostname:     matches[ 11 ] || "",
+      port:         matches[ 12 ] || "",
+      pathname:     matches[ 13 ] || "",
+      directory:    matches[ 14 ] || "",
+      filename:     matches[ 15 ] || "",
+      search:       matches[ 16 ] || "",
+      hash:         matches[ 17 ] || ""
+    };
+  };
 
-/**
-Provides the base RenderJs class
+  // is relateive URl (check protocol)
+  priv.isRelativeUrl = function (url ) {
+    return priv.parseUrl( url ).protocol === "";
+  };
 
-@module RenderJs
-**/
-var RenderJs = (function () {
-    // a variable indicating if current gadget loading is over or not
-    var is_ready = false, current_gadget;
+  // get location
+  priv.getLocation = function (url) {
+    var uri = url ? priv.parseUrl( url ) : location,
+      hash = priv.parseUrl( url || location.href ).hash;
 
-    function setSelfGadget (gadget) {
-      /*
-       * Only used internally to set current gadget being executed.
-       */
-      current_gadget = gadget;
+    // mimic the browser with an empty string when the hash is empty
+    hash = hash === "#" ? "" : hash;
+
+    // Make sure to parse the url or the location object for the hash because using location.hash
+    // is autodecoded in firefox, the rest of the url should be from the object (location unless
+    // we're testing) to avoid the inclusion of the authority
+    return uri.protocol + "//" + uri.host + uri.pathname + uri.search + hash;
+  };
+
+  // make PATH absolute
+  priv.makePathAbsolute = function (relPath, absPath) {
+    var absStack, relStack, i, d;
+
+    if ( relPath && relPath.charAt( 0 ) === "/" ) {
+      return relPath;
     }
 
-    return {
+    relPath = relPath || "";
+    absPath = absPath ? absPath.replace( /^\/|(\/[^\/]*|[^\/]+)$/g, "" ) : "";
+    absStack = absPath ? absPath.split( "/" ) : [];
+    relStack = relPath.split( "/" );
 
-        init: function () {
-          /*
-           * Do all initialization
-           */
-          if (RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING) {
-              RenderJs.bootstrap($('body'));
+    for ( i = 0; i < relStack.length; i++ ) {
+      d = relStack[ i ];
+      switch ( d ) {
+        case ".":
+          break;
+        case "..":
+          if ( absStack.length ) {
+            absStack.pop();
           }
-          var root_gadget = RenderJs.GadgetIndex.getRootGadget();
-          if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND||RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
-            // We might have a page without gadgets.
-            // Be careful, right now we can be in this case because
-            // asynchronous gadget loading is not finished
-            if (root_gadget !== undefined) {
-              RenderJs.bindReady(
-                function () {
-                  if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND) {
-                    // examine all Intaction Gadgets and bind accordingly
-                    RenderJs.InteractionGadget.init();
-                  }
-                  if (RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
-                    // create all routes between gadgets
-                    RenderJs.RouteGadget.init();
-                  }
-                });
-            }
-          }
-        },
-
-        bootstrap: function (root) {
-            /*
-             * Load all gadgets for this DOM element
-             * (including recursively contained ones)
-             */
-            var gadget_id, is_gadget;
-            gadget_id = root.attr("id");
-            is_gadget = root.attr("data-gadget") !== undefined;
-            // this will make RenderJs fire "ready" event when all gadgets are loaded.
-            RenderJs.setReady(false);
-            if (is_gadget && gadget_id !== undefined ) {
-              // bootstart root gadget only if it is indeed a gadget
-              RenderJs.loadGadget(root);
-            }
-            RenderJs.loadRecursiveGadget(root);
-        },
-
-        loadRecursiveGadget: function (root) {
-            /*
-             * Load all contained gadgets inside passed DOM element.
-             */
-            var gadget_list, gadget, gadget_id, gadget_js;
-            gadget_list = root.find("[data-gadget]");
-
-            // register all gadget in advance so checkAndTriggerReady
-            // can have accurate information for list of all gadgets
-            gadget_list.each(function () {
-              gadget = $(this);
-              gadget_id = gadget.attr("id");
-              gadget_js = new RenderJs.Gadget(gadget_id, gadget);
-              RenderJs.GadgetIndex.registerGadget(gadget_js);
-            });
-
-            // Load chilren
-            gadget_list.each(function () {
-                RenderJs.loadGadget($(this));
-            });
-        },
-
-        setGadgetAndRecurse: function (gadget, data) {
-            /*
-             * Set gadget data and recursively load it in case it holds another
-             * gadgets.
-             */
-            // set current gadget as being loaded so gadget instance itself knows which gadget it is
-            setSelfGadget(RenderJs.GadgetIndex.getGadgetById(gadget.attr("id")));
-            gadget.append(data);
-            // reset as no longer current gadget
-            setSelfGadget(undefined);
-            // a gadget may contain sub gadgets
-            RenderJs.loadRecursiveGadget(gadget);
-        },
-
-        getSelfGadget: function () {
-           /*
-            * Get current gadget being loaded
-            * This function must be used with care as it relies on Javascript nature of being a single
-            * threaded application. Currently current gadget is set in a global RenderJs variable
-            * before its HTML is inserted into DOM and if multiple threads were running (which is not the case currently)
-            * this could lead to reace conditions and unreliable getSelfGadget results.
-            * Additionally this function is available only at gadget's script load time - i.e.
-            * it can't be used in after that calls. In this case gagdget can save this value internally.
-            */
-           return current_gadget;
-        },
-
-        loadGadget: function (gadget) {
-            /*
-             * Load gadget's SPECs from URL
-             */
-            var url, gadget_id, gadget_property, cacheable, cache_id,
-                i, gadget_index, gadget_index_id,
-                app_cache, data, gadget_js, is_update_gadget_data_running;
-
-            url = gadget.attr("data-gadget");
-            gadget_id = gadget.attr("id");
-            gadget_js = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-            gadget_index = RenderJs.GadgetIndex.getGadgetList();
-
-            if (gadget_js === undefined) {
-              // register gadget in javascript namespace if not already registered
-              gadget_js = new RenderJs.Gadget(gadget_id, gadget);
-              RenderJs.GadgetIndex.registerGadget(gadget_js);
-            }
-            if (gadget_js.isReady()) {
-              // avoid loading again gadget which was loaded before in same page
-              return ;
-            }
-
-            // update Gadget's instance with contents of "data-gadget-property"
-            gadget_property = gadget.attr("data-gadget-property");
-            if (gadget_property !== undefined) {
-              gadget_property = $.parseJSON(gadget_property);
-              $.each(gadget_property, function (key, value) {
-                gadget_js[key] = value;
-              });
-            }
-
-            if (url !== undefined && url !== "") {
-                cacheable = gadget.attr("data-gadget-cacheable");
-                cache_id = gadget.attr("data-gadget-cache-id");
-                if (cacheable !== undefined && cache_id !== undefined) {
-                    cacheable = Boolean(parseInt(cacheable, 10));
-                }
-                //cacheable = false ; // to develop faster
-                if (cacheable) {
-                    // get from cache if possible, use last part from URL as
-                    // cache_key
-                    app_cache = RenderJs.Cache.get(cache_id, undefined);
-                    if (app_cache === undefined || app_cache === null) {
-                        // not in cache so we pull from network and cache
-                        $.ajax({
-                            url: url,
-                            yourCustomData: {
-                                "gadget_id": gadget_id,
-                                "cache_id": cache_id
-                            },
-                            success: function (data) {
-                                cache_id = this.yourCustomData.cache_id;
-                                gadget_id = this.yourCustomData.gadget_id;
-                                RenderJs.Cache.set(cache_id, data);
-                                RenderJs.GadgetIndex.getGadgetById(gadget_id).
-                                    setReady();
-                                RenderJs.setGadgetAndRecurse(gadget, data);
-                                RenderJs.checkAndTriggerReady();
-                                RenderJs.updateGadgetData(gadget);
-                            }
-                        });
-                    } else {
-                        // get from cache
-                        data = app_cache;
-                        gadget_js.setReady();
-                        this.setGadgetAndRecurse(gadget, data);
-                        this.checkAndTriggerReady();
-                        RenderJs.updateGadgetData(gadget);
-                    }
-                } else {
-                    // not to be cached
-                    $.ajax({
-                        url: url,
-                        yourCustomData: {"gadget_id": gadget_id},
-                        success: function (data) {
-                            gadget_id = this.yourCustomData.gadget_id;
-                            RenderJs.GadgetIndex.getGadgetById(gadget_id).
-                                setReady();
-                            RenderJs.setGadgetAndRecurse(gadget, data);
-                            RenderJs.checkAndTriggerReady();
-                            RenderJs.updateGadgetData(gadget);
-                        }
-                    });
-                }
-            }
-            else {
-                // gadget is an inline (InteractorGadget or one using
-                // data-gadget-source / data-gadget-handler) so no need
-                // to load it from network
-                is_update_gadget_data_running = RenderJs.updateGadgetData(gadget);
-                if (!is_update_gadget_data_running) {
-                  // no update is running so gadget is basically ready
-                  // if update is running then it should take care and set status
-                  gadget_js.setReady();
-                }
-                RenderJs.checkAndTriggerReady();
-            }
-        },
-
-        isReady: function () {
-            /*
-             * Get rendering status
-             */
-            return is_ready;
-        },
-
-        setReady: function (value) {
-            /*
-             * Update rendering status
-             */
-            is_ready = value;
-        },
-
-        bindReady: function (ready_function) {
-            /*
-             * Bind a function on ready gadget loading.
-             */
-            $("body").one("ready", ready_function);
-        },
-
-        checkAndTriggerReady: function () {
-            /*
-             * Trigger "ready" event only if all gadgets were marked as "ready"
-             */
-            var is_gadget_list_loaded;
-            is_gadget_list_loaded = RenderJs.GadgetIndex.isGadgetListLoaded();
-            if (is_gadget_list_loaded) {
-                if (!RenderJs.isReady()) {
-                    // backwards compatability with already written code
-                    RenderJs.GadgetIndex.getRootGadget().getDom().
-                        trigger("ready");
-                    // trigger ready on root body element
-                    $("body").trigger("ready");
-                    // this set will make sure we fire this event only once
-                    RenderJs.setReady(true);
-                }
-            }
-            return is_gadget_list_loaded;
-        },
-
-        updateGadgetData: function (gadget) {
-            /*
-             * Gadget can be updated from "data-gadget-source" (i.e. a json)
-             * and "data-gadget-handler" attributes (i.e. a namespace Javascript)
-             */
-            var data_source, data_handler;
-            data_source = gadget.attr("data-gadget-source");
-            data_handler = gadget.attr("data-gadget-handler");
-            // acquire data and pass it to method handler
-            if (data_source !== undefined && data_source !== "") {
-                $.ajax({
-                    url: data_source,
-                    dataType: "json",
-                    yourCustomData: {"data_handler": data_handler,
-                                     "gadget_id": gadget.attr("id")},
-                    success: function (result) {
-                              var data_handler, gadget_id;
-                              data_handler = this.yourCustomData.data_handler;
-                              gadget_id = this.yourCustomData.gadget_id;
-                              if (data_handler !== undefined) {
-                                  // eval is not nice to use
-                                  eval(data_handler + "(result)");
-                                  gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-                                  // mark gadget as loaded and fire a check
-                                  // to see if all gadgets are loaded
-                                  gadget.setReady();
-                                  RenderJs.checkAndTriggerReady();
-                              }
-                             }
-                });
-                // asynchronous update happens and respective thread will update status
-                return true;
-            }
-            return false;
-        },
-
-        addGadget: function (dom_id, gadget_id, gadget, gadget_data_handler,
-                            gadget_data_source, bootstrap) {
-            /*
-             * add new gadget and render it
-             */
-            var html_string, tab_container, tab_gadget;
-            tab_container = $('#' + dom_id);
-            tab_container.empty();
-            html_string = [
-                '<div  id="' + gadget_id + '"',
-                'data-gadget="' + gadget + '"',
-                'data-gadget-handler="' + gadget_data_handler + '" ',
-                'data-gadget-source="' + gadget_data_source + '"></div>'
-            ].join('\n');
-
-            tab_container.append(html_string);
-            tab_gadget = tab_container.find('#' + gadget_id);
-
-            // render new gadget
-            if (bootstrap !== false) {
-              RenderJs.bootstrap(tab_container);
-            }
-
-            return tab_gadget;
-        },
-
-        Cache: (function () {
-            /*
-             * Generic cache implementation that can fall back to local
-             * namespace storage if no "modern" storage like localStorage
-             * is available
-             */
-            return {
-                ROOT_CACHE_ID: 'APP_CACHE',
-
-                getCacheId: function (cache_id) {
-                    /*
-                     * We should have a way to 'purge' localStorage by setting a
-                     * ROOT_CACHE_ID in all browser instances
-                     */
-                    return this.ROOT_CACHE_ID + cache_id;
-                },
-
-                hasLocalStorage: function () {
-                    /*
-                     * Feature test if localStorage is supported
-                     */
-                    var mod;
-                    mod = 'localstorage_test_12345678';
-                    try {
-                        localStorage.setItem(mod, mod);
-                        localStorage.removeItem(mod);
-                        return true;
-                    } catch (e) {
-                        return false;
-                    }
-                },
-
-                get: function (cache_id, default_value) {
-                    /* Get cache key value */
-                    cache_id = this.getCacheId(cache_id);
-                    if (this.hasLocalStorage()) {
-                        return this.LocalStorageCachePlugin.
-                            get(cache_id, default_value);
-                    }
-                    //fallback to javscript namespace cache
-                    return this.NameSpaceStorageCachePlugin.
-                        get(cache_id, default_value);
-                },
-
-                set: function (cache_id, data) {
-                    /* Set cache key value */
-                    cache_id = this.getCacheId(cache_id);
-                    if (this.hasLocalStorage()) {
-                        this.LocalStorageCachePlugin.set(cache_id, data);
-                    } else {
-                        this.NameSpaceStorageCachePlugin.set(cache_id, data);
-                    }
-                },
-
-                LocalStorageCachePlugin: (function () {
-                    /*
-                     * This plugin saves using HTML5 localStorage.
-                     */
-                    return {
-                        get: function (cache_id, default_value) {
-                            /* Get cache key value */
-                            if (localStorage.getItem(cache_id) !== null) {
-                              return JSON.parse(localStorage.getItem(cache_id));
-                            }
-                            return default_value;
-                        },
-
-                        set: function (cache_id, data) {
-                            /* Set cache key value */
-                            localStorage.setItem(cache_id, JSON.stringify(data));
-                        }
-                    };
-                }()),
-
-                NameSpaceStorageCachePlugin: (function () {
-                    /*
-                     * This plugin saves within current page namespace.
-                     */
-                    var namespace = {};
-
-                    return {
-                        get: function (cache_id, default_value) {
-                            /* Get cache key value */
-                            return namespace[cache_id];
-                        },
-
-                        set: function (cache_id, data) {
-                            /* Set cache key value */
-                            namespace[cache_id] = data;
-                        }
-                    };
-                }())
-            };
-        }()),
-
-        Gadget: function (gadget_id, dom) {
-            /*
-             * Javascript Gadget representation
-             */
-            this.id = gadget_id;
-            this.dom = dom;
-            this.is_ready = false;
-        },
-
-        TabbularGadget: (function () {
-            /*
-             * Generic tabular gadget
-             */
-            var gadget_list = [];
-            return {
-                toggleVisibility: function (visible_dom) {
-                    /*
-                     * Set tab as active visually and mark as not active rest.
-                     */
-                    $(".selected").addClass("not_selected");
-                    $(".selected").removeClass("selected");
-                    visible_dom.addClass("selected");
-                    visible_dom.removeClass("not_selected");
-                },
-
-                addNewTabGadget: function (dom_id, gadget_id, gadget, gadget_data_handler,
-                                          gadget_data_source, bootstrap) {
-                    /*
-                     * add new gadget and render it
-                     */
-                    var tab_gadget;
-                    tab_gadget = RenderJs.addGadget(
-                        dom_id, gadget_id, gadget, gadget_data_handler, gadget_data_source, bootstrap
-                    );
-
-                    // we should unregister all gadgets part of this TabbularGadget
-                    $.each(gadget_list,
-                         function (index, gadget_id) {
-                           var gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-                           gadget.remove();
-                           // update list of root gadgets inside TabbularGadget
-                           gadget_list.splice($.inArray(gadget_id, gadget_list), 1);
-                        }
-                    );
-                    // add it as root gadget
-                    gadget_list.push(tab_gadget.attr("id"));
-                }
-            };
-        }()),
-
-        GadgetIndex: (function () {
-            /*
-             * Generic gadget index placeholder
-             */
-            var gadget_list = [];
-
-            return {
-
-                getGadgetIdListFromDom: function (dom) {
-                  /*
-                   * Get list of all gadget's ID from DOM
-                   */
-                  var gadget_id_list = [];
-                  $.each(dom.find('[data-gadget]'),
-                         function (index, value) {
-                           gadget_id_list.push($(value).attr("id"));}
-                    );
-                  return gadget_id_list;
-                },
-
-                setGadgetList: function (gadget_list_value) {
-                    /*
-                     * Set list of registered gadgets
-                     */
-                    gadget_list = gadget_list_value;
-                },
-
-                getGadgetList: function () {
-                    /*
-                     * Return list of registered gadgets
-                     */
-                    return gadget_list;
-                },
-
-                registerGadget: function (gadget) {
-                    /*
-                     * Register gadget
-                     */
-                    if (RenderJs.GadgetIndex.getGadgetById(gadget.id) === undefined) {
-                      // register only if not already added
-                      gadget_list.push(gadget);
-                    }
-                },
-
-                unregisterGadget: function (gadget) {
-                    /*
-                     * Unregister gadget
-                     */
-                    var index = $.inArray(gadget, gadget_list);
-                    if (index !== -1) {
-                        gadget_list.splice(index, 1);
-                    }
-                },
-
-                getGadgetById: function (gadget_id) {
-                    /*
-                     * Get gadget javascript representation by its Id
-                     */
-                    var gadget;
-                    gadget = undefined;
-                    $(RenderJs.GadgetIndex.getGadgetList()).each(
-                        function (index, value) {
-                            if (value.getId() === gadget_id) {
-                                gadget = value;
-                            }
-                        }
-                    );
-                    return gadget;
-                },
-
-                getRootGadget: function () {
-                    /*
-                     * Return root gadget (always first one in list)
-                     */
-                    return this.getGadgetList()[0];
-                },
-
-                isGadgetListLoaded: function () {
-                    /*
-                     * Return True if all gadgets were loaded from network or
-                     * cache
-                     */
-                    var result;
-                    result = true;
-                    $(this.getGadgetList()).each(
-                        function (index, value) {
-                            if (value.isReady() === false) {
-                                result = false;
-                            }
-                        }
-                    );
-                    return result;
-                }
-            };
-        }()),
-
-        GadgetCatalog : (function () {
-            /*
-             * Gadget catalog provides API to get list of gadgets from a repository
-             */
-            var cache_id = "setGadgetIndexUrlList";
-
-            function updateGadgetIndexFromURL(url) {
-              // split to base and document url
-              var url_list = url.split('/'),
-                  document_url = url_list[url_list.length-1],
-                  d = url_list.splice($.inArray(document_url, url_list), 1),
-                  base_url = url_list.join('/'),
-                  web_dav = jIO.newJio({
-                      "type": "dav",
-                      "username": "",
-                      "password": "",
-                      "url": base_url});
-              web_dav.get(document_url,
-                          function (err, response) {
-                            RenderJs.Cache.set(url, response);
-              });
-            }
-
-            return {
-                updateGadgetIndex: function () {
-                  /*
-                   * Update gadget index from all configured remote repositories.
-                   */
-                  $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
-                         function(index, value) {
-                          updateGadgetIndexFromURL(value);
-                         });
-                },
-
-                setGadgetIndexUrlList: function (url_list) {
-                  /*
-                   * Set list of Gadget Index repositories.
-                   */
-                  // store in Cache (html5 storage)
-                  RenderJs.Cache.set(cache_id, url_list);
-                },
-
-                getGadgetIndexUrlList: function () {
-                  /*
-                   * Get list of Gadget Index repositories.
-                   */
-                  // get from Cache (html5 storage)
-                  return RenderJs.Cache.get(cache_id, undefined);
-                },
-
-                getGadgetListThatProvide: function (service) {
-                  /*
-                   * Return list of all gadgets that providen a given service.
-                   * Read this list from data structure created in HTML5 local
-                   * storage by updateGadgetIndexFromURL
-                   */
-                  // get from Cache stored index and itterate over it
-                  // to find matching ones
-                  var gadget_list = [];
-                  $.each(RenderJs.GadgetCatalog.getGadgetIndexUrlList(),
-                         function(index, url) {
-                           // get repos from cache
-                           var cached_repo = RenderJs.Cache.get(url);
-                           $.each(cached_repo.gadget_list,
-                                   function(index, gadget) {
-                                     if ($.inArray(service, gadget.service_list) > -1) {
-                                       // gadget provides a service, add to list
-                                       gadget_list.push(gadget);
-                                     }
-                                  }
-                                 );
-                         });
-                  return gadget_list;
-                },
-
-                registerServiceList: function (gadget, service_list) {
-                  /*
-                   * Register a service provided by a gadget.
-                   */
-                }
-            };
-        }()),
-
-        InteractionGadget : (function () {
-            /*
-             * Basic gadget interaction gadget implementation.
-             */
-            return {
-
-                init: function (force) {
-                        /*
-                        * Inspect DOM and initialize this gadget
-                        */
-                        var dom_list, gadget_id;
-                        if (force===1) {
-                          // we explicitly want to re-init elements even if already this is done before
-                          dom_list = $("div[data-gadget-connection]");
-                        }
-                        else {
-                          // XXX: improve and save 'bound' on javascript representation of a gadget not DOM
-                          dom_list = $("div[data-gadget-connection]")
-                                       .filter(function() { return $(this).data("bound") !== true; })
-                                       .data('bound', true );
-                        }
-                        dom_list.each(function (index, element) {
-                          RenderJs.InteractionGadget.bind($(element));});
-                },
-
-                bind: function (gadget_dom) {
-                    /*
-                     * Bind event between gadgets.
-                     */
-                    var gadget_id, gadget_connection_list,
-                      createMethodInteraction = function (
-                        original_source_method_id, source_gadget_id,
-                        source_method_id, destination_gadget_id,
-                        destination_method_id) {
-                        var interaction = function () {
-                            // execute source method
-                            RenderJs.GadgetIndex.getGadgetById(
-                                source_gadget_id)[original_source_method_id].
-                                apply(null, arguments);
-                            // call trigger so bind can be asynchronously called
-                            RenderJs.GadgetIndex.getGadgetById(
-                                destination_gadget_id).dom.trigger(source_method_id);
-                        };
-                        return interaction;
-                    },
-                    createTriggerInteraction = function (
-                        destination_gadget_id, destination_method_id) {
-                        var interaction = function () {
-                            RenderJs.GadgetIndex.getGadgetById(
-                                destination_gadget_id)[destination_method_id].
-                                apply(null, arguments);
-                        };
-                        return interaction;
-                    };
-                    gadget_id = gadget_dom.attr("id");
-                    gadget_connection_list = gadget_dom.attr("data-gadget-connection");
-                    gadget_connection_list = $.parseJSON(gadget_connection_list);
-                    $.each(gadget_connection_list, function (key, value) {
-                        var source, source_gadget_id, source_method_id,
-                        source_gadget, destination, destination_gadget_id,
-                        destination_method_id, destination_gadget,
-                        original_source_method_id;
-                        source = value.source.split(".");
-                        source_gadget_id = source[0];
-                        source_method_id = source[1];
-                        source_gadget = RenderJs.GadgetIndex.
-                            getGadgetById(source_gadget_id);
-
-                        destination = value.destination.split(".");
-                        destination_gadget_id = destination[0];
-                        destination_method_id = destination[1];
-                        destination_gadget = RenderJs.GadgetIndex.
-                            getGadgetById(destination_gadget_id);
-
-                        if (source_gadget.hasOwnProperty(source_method_id)) {
-                            // direct javascript use case
-                            original_source_method_id = "original_" +
-                                source_method_id;
-                            source_gadget[original_source_method_id] =
-                                source_gadget[source_method_id];
-                            source_gadget[source_method_id] =
-                                createMethodInteraction(
-                                    original_source_method_id,
-                                    source_gadget_id,
-                                    source_method_id,
-                                    destination_gadget_id,
-                                    destination_method_id
-                                );
-                            // we use html custom events for asyncronous method call so
-                            // bind destination_gadget to respective event
-                            destination_gadget.dom.bind(
-                                source_method_id,
-                                createTriggerInteraction(
-                                    destination_gadget_id, destination_method_id
-                                )
-                            );
-                        }
-                        else {
-                            // this is a custom event attached to HTML gadget
-                            // representation
-                            source_gadget.dom.bind(
-                                source_method_id,
-                                createTriggerInteraction(
-                                    destination_gadget_id, destination_method_id
-                                )
-                            );
-                        }
-                    });
-                }
-            };
-        }()),
-
-        RouteGadget : (function () {
-            /*
-             * A gadget that defines possible routes (i.e. URL changes) between gadgets.
-             */
-            var route_list = [];
-            return {
-
-                init: function () {
-                  /*
-                   * Inspect DOM and initialize this gadget
-                   */
-                  $("div[data-gadget-route]").each(function (index, element) {
-                      RenderJs.RouteGadget.route($(element));
-                  });
-                },
-
-                route: function (gadget_dom) {
-                    /*
-                     * Create routes between gadgets.
-                     */
-                  var body = $("body"),
-                      handler_func, priority,
-                      gadget_route_list = gadget_dom.attr("data-gadget-route");
-                  gadget_route_list = $.parseJSON(gadget_route_list);
-                  $.each(gadget_route_list, function (key, gadget_route) {
-                    handler_func = function () {
-                        var gadget_id = gadget_route.destination.split('.')[0],
-                            method_id = gadget_route.destination.split('.')[1],
-                            gadget = RenderJs.GadgetIndex.getGadgetById(gadget_id);
-                        // set gadget value so getSelfGadget can work
-                        setSelfGadget(gadget);
-                        gadget[method_id].apply(null, arguments);
-                        // reset as no longer needed
-                        setSelfGadget(undefined);
-                    };
-                    // add route itself
-                    priority = gadget_route.priority;
-                    if (priority === undefined) {
-                      // default is 1 -i.e.first level
-                      priority = 1;
-                    }
-                    RenderJs.RouteGadget.add(gadget_route.source, handler_func, priority);
-                  });
-                },
-
-                add: function (path, handler_func, priority) {
-                    /*
-                     * Add a route between path (hashable) and a handler function (part of Gadget's API).
-                     */
-                  var body = $("body");
-                  body
-                      .route("add", path, 1)
-                      .done(handler_func);
-                  // save locally
-                  route_list.push({"path": path,
-                                   "handler_func": handler_func,
-                                   "priority": priority});
-                },
-
-                go: function (path, handler_func, priority) {
-                    /*
-                     * Go a route.
-                     */
-                  var body = $("body");
-                  body
-                      .route("go", path, priority)
-                      .fail(handler_func);
-                },
-
-                remove: function (path) {
-                    /*
-                     * Remove a route.
-                     */
-
-                    // XXX: implement remove a route when route.js supports it
-                },
-
-                getRouteList: function () {
-                    /*
-                     * Get list of all router
-                     */
-                  return route_list;
-                }
-            };
-        }())
+          break;
+        default:
+          absStack.push( d );
+          break;
+      }
+    }
+    return "/" + absStack.join( "/" );
+  };
+
+  // make URL absolute
+  priv.makeUrlAbsolute = function (relUrl, absUrl) {
+    if ( !priv.isRelativeUrl( relUrl ) ) {
+      return relUrl;
+    }
+    if ( absUrl === undefined ) {
+      absUrl = priv.parseUrl(priv.getLocation());
+    }
+
+    var relObj = priv.parseUrl( relUrl ),
+      absObj = priv.parseUrl( absUrl ),
+      protocol = relObj.protocol || absObj.protocol,
+      doubleSlash = relObj.protocol ? relObj.doubleSlash : ( relObj.doubleSlash || absObj.doubleSlash ),
+      authority = relObj.authority || absObj.authority,
+      hasPath = relObj.pathname !== "",
+      pathname = priv.makePathAbsolute( relObj.pathname || absObj.filename, absObj.pathname ),
+      search = relObj.search || ( !hasPath && absObj.search ) || "",
+      hash = relObj.hash;
+
+    return protocol + doubleSlash + authority + pathname + search + hash;
+  };
+
+
+  // => generate unique identifier
+  priv.generateUuid = function () {
+    var S4 = function () {
+      /* 65536 */
+      var i, string = Math.floor(
+        Math.random() * 0x10000
+      ).toString(16);
+      for (i = string.length; i < 4; i += 1) {
+        string = "0" + string;
+      }
+      return string;
     };
-}());
+    return S4() + S4();
+  };
 
-// Define Gadget prototype
-RenderJs.Gadget.prototype.getId = function () {
-  return this.id;
-};
+  // extract module name from path
+  priv.extractModuleName = function (src) {
+    var re =  /([\w\d_-]*)\.?[^\\\/]*$/i;
+    return src.match(re)[1]
+  }
 
-RenderJs.Gadget.prototype.getDom = function () {
-  return this.dom;
-};
+  // => safe getAttribute for data-*
+  // thx JQM - http://code.jquery.com/mobile/latest/jquery.mobile.js
+  priv.getAttribute = function (element, attribute, json) {
+    var value;
+    value = element.getAttribute( "data-" + attribute );
+    return value === "true" ? true :
+      value === "false" ? false :
+      value === null ? (json ? "" : undefined ) : value;
+  };
 
-RenderJs.Gadget.prototype.isReady = function () {
-  /*
-  * Return True if remote gadget is loaded into DOM.
-  */
-  return this.is_ready;
-};
+  // => URI methods
+  // decode URI
+  priv.decodeURI = function (string) {
+    return decodeURIComponent(string);
+  };
+  // encode URI
+  priv.encodeURI = function (string) {
+    return encodeURIComponent(string);
+  };
+  // decode URI array
+  priv.decodeURIArray = function (array) {
+    var i, newArray;
+    for (i = 0; i < array.length; i += 1) {
+      newArray.push(priv.decodeURI(array[i]));
+    }
+    return newArray;
+  };
 
-RenderJs.Gadget.prototype.setReady = function () {
-  /*
-  * Return True if remote gadget is loaded into DOM.
-  */
-  this.is_ready = true;
-};
 
-RenderJs.Gadget.prototype.remove = function () {
-  /*
-  * Remove gadget (including its DOM element).
-  */
-  var gadget;
-  // unregister root from GadgetIndex
-  RenderJs.GadgetIndex.unregisterGadget(this);
-  // gadget might contain sub gadgets so before remove entire
-  // DOM we must unregister them from GadgetIndex
-  this.getDom().find("[data-gadget]").each( function () {
-    gadget = RenderJs.GadgetIndex.getGadgetById($(this).attr("id"));
-    RenderJs.GadgetIndex.unregisterGadget(gadget);
+  // ==================  internal methods ==================
+
+  // => keep track of service requesters to reply to
+  priv.trackRequest = function (id, respondTo) {
+    if (priv.serviceTracker === undefined) {
+      priv.serviceTracker = [];
+    }
+    priv.serviceTracker.push({"id": id, "respondTo": respondTo});
+  };
+
+  // => retrieve window which called a specific service
+  priv.retrieveCallingWindow = function (id) {
+    var i, service, callee;
+
+    for (i = 0; i < priv.serviceTracker.length; i += 1) {
+      service = priv.serviceTracker[i];
+      if (service.id === id) {
+        callee = service.respondTo;
+        priv.serviceTracker.splice(i, 1);
+        return callee;
+      }
+    }
+  };
+
+  // => mapping URL query-string (configuration
+  priv.mapUrlString = function (spec) {
+    var key, obj, parsedJSON, config = {};
+    if (spec !== undefined && spec !== "") {
+      obj = spec.slice(1).split("=");
+      key = obj[0];
+      switch (key) {
+        case "string":
+        case "url":
+          config.root = priv.decodeURI(obj[1]);
+          break;
+        case "json":
+          parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
+          config.root = parsedJSON.root || window.location.pathname;
+          config.src = priv.decodeURIArray(parsedJSON.src) || [];
+          break;
+        case "hal":
+          parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
+          config.root = parsedJSON._links.self || window.location.pathname;
+          config.src = priv.decodeURIArray(parsedJSON.src) || [];
+          break;
+        case "data":
+          break;
+        default:
+          // no allowable-type - ignore config-parameter!
+          config.root = window.location.href
+          config.src = [];
+          break;
+      }
+    } else {
+      config = {"root": window.location.href}
+    }
+    return config;
+  };
+
+  // => create Index of gadgets on page (excluding gadgets inside iFrame/Sandbox)
+  priv.createGadgetIndex = function () {
+    that.gadgetIndex = [];
+  };
+
+  // => create gadget reference tree (includes gadgets inside iFrame/Sandbox)
+  priv.createGadgetTree = function () {
+    that.gadgetTree = {
+      "id": "root",
+      "src": window.location.href,
+      "children":[]
+    }
+  };
+
+  // => add gadget to index
+  priv.addGadgetToIndex = function (data, options) {
+    that.gadgetIndex.unshift({
+      "id": options.id,
+      "options": options,
+      "data": data
+    });
+  };
+
+  // => add gadget to tree
+  priv.addGadgetToTree = function (options, treeNode) {
+    var i, newNode;
+
+    // recursive add
+    if (options.parentFrame === undefined) {
+      treeNode.children.unshift({
+        "id": options.id,
+        "src": options.src,
+        "children": []
+      });
+    } else {
+      for (i = 0; i < treeNode.children.length; i += 1) {
+        newNode = treeNode.children[i];
+        if (options.parentFrame === newNode.id) {
+          delete options.parentFrame;
+          priv.addGadgetToTree(options, newNode);
+          break;
+        } else {
+          if (newNode.children.length > 0) {
+            priv.addGadgetToTree(options, newNode);
+          }
+        }
+      }
+    }
+
+    // if we are in a renderJs instance other than the root-instance
+    // (e.g. inside an iFrame) we also need to tell the root how this
+    // gadget can be accessed in case we want to call it's services
+    if (window.top !== window) {
+      window.top.postMessage({
+        // this will trigger addGagdetToTree() on root-in
+        "type":"tree/update",
+        "options": {
+          // passing "options":options will procude a DataCloneError, so
+          // this is the only way (it seems) to pass the options object.
+          "parentFrame": window.frameElement.getAttribute("id"),
+          "id": options.id,
+          "src": options.src,
+          "children": []
+        }
+      }, window.location.href.split("?")[0])
+    }
+  };
+
+  // => loop the gadgetTree to construct a selector to call a service
+  priv.constructSelectorForService = function (src, node, selector) {
+    var i, result;
+    selector = selector || [];
+    // we must not push "root" into the array to make reduce work
+    if (node.id !== "root") {
+      selector.push(node.id);
+    }
+    if (node.src === src) {
+      return selector;
+    }
+    for (i = 0; i < node.children.length; i += 1) {
+      result = priv.constructSelectorForService(src, node.children[i], selector);
+      if (result !== undefined) {
+        return result;
+      }
+      selector.pop();
+    }
+  };
+
+  // => interaction gadget and listener
+  // if initializing config is provided in the URL, we may have an src=[]
+  // of links to additional functional libraries (?), which should be
+  // available here. So we should load them.
+  priv.createServiceMap = function (spec) {
+    that.gadgetService = {
+      "root": spec.root || window.location.href,
+      "directories": spec.src || [],
+      "map": []
+    }
+    // listen for service postings to THIS renderJs instance
+    window.addEventListener("message", priv.serviceHandler, false);
+  };
+
+  // => manages all interactions (listens to incoming postMessages)
+  // need a switch, because only one "message" listener can be set
+  priv.serviceHandler = function (event) {
+    var route = event.data.type.split("/"),
+      trackingId;
+
+    // authenticate all message senders
+
+    // route
+    switch (route[0]) {
+      case "service":
+        priv.registerNewService(event);
+        break;
+      case "request":
+        trackingId = priv.generateUuid();
+        // track this request, so we know where to send the response
+        priv.trackRequest(trackingId, event.originalTarget);
+        // request the service
+        priv.requestServiceFromGadget(event, trackingId);
+        break;
+      case "tree":
+        if (route[1] === "update") {
+          priv.addGadgetToTree(event.data.options, that.gadgetTree);
+        }
+        break;
+      case "run":
+        priv.runService(event);
+        break;
+      case "result":
+        priv.sendServiceReply(event);
+        break;
+      case "reply":
+        priv.returnResult(event.data.result);
+        break;
+    }
+  };
+
+  // => return the result to the function call
+  priv.returnResult = function (result) {
+    console.log("hello inside reply");
+    return result;
+  };
+  // => sends a response message after a service has been run
+  priv.sendServiceReply = function (event) {
+    var targetWindow = priv.retrieveCallingWindow(event.data.trackingId);
+    targetWindow.postMessage({
+      "type": "reply",
+      "result": event.data.result
+    }, window.location.href.split("?")[0]);
+  };
+
+  // => run a service and post the result
+  priv.runService = function (event) {
+    var result = window[event.data.service].apply(this, event.data.parameters);
+    window.top.postMessage({
+      "type":"result",
+      "result": result,
+      "trackingId" : event.data.trackingId,
+    }, window.location.href.split("?")[0]);
+  };
+
+  // => request a service provided by a gadget
+  priv.requestServiceFromGadget = function (event, trackingId) {
+    var callService = priv.findServiceInMap(
+      event.data.service, event.data.type.split("/")[1]
+    ),
+    selector, i, targetWindow;
+
+    if (callService) {
+      // services are stored by URL (not id), so we need to find the service
+      // in our gadget tree by using the URL provided by the service... 
+      // and return an id path, so we can create a selector
+      selector = priv.constructSelectorForService(
+        callService.src, that.gadgetTree, []
+      );
+
+      // for plain nested gadgets (no iFrame/sandbox) this will return
+      // only an empty array
+      // for iFrames/sandbox, selector will be an array of ids from
+      // which we have to construct our window element to postMessage to
+      // see http://stackoverflow.com/questions/15076293/window-postmessage-to-a-nested-iframe-in-cross-domain
+      // https://developer.mozilla.org/en-US/docs/Web/API/window.frames
+      if (selector.length === 0) {
+        targetWindow = window;
+      } else {
+        targetWindow = selector.reduce(function(tgt, o) {
+          return tgt && tgt.getElementById(o).contentWindow;
+        }, document);
+      }
+      // and request the service
+      targetWindow.postMessage({
+        "type":"run",
+        "trackingId": trackingId,
+        "service": event.data.service,
+        "parameters":event.data.parameters
+      }, window.location.href)
+    }
+  };
+
+  // => check whether a service is available
+  priv.findServiceInMap = function (requestedService, scope) {
+    // scope... use for ???
+    var i, service;
+    for (i = 0; i < that.gadgetService.map.length; i += 1) {
+      service = that.gadgetService.map[i];
+      if (service.service === requestedService.service) {
+        return service;
+      }
+    }
+    return null;
+  };
+
+  // => register a new Service to the root
+  priv.registerNewService = function (event) {
+    var  i, check, addInteraction = true;
+
+    // prevent duplicate entrys of same service
+    for (i = 0; i < that.gadgetService.map.length; i += 1) {
+      check = that.gadgetService.map[i];
+      if (event.data.rel === check.rel) {
+        if (event.data.src === check.src) {
+          addInteraction = false;
+        }
+      }
+    }
+    if (addInteraction) {
+      that.gadgetService.map.push(event.data);
+    }
+  };
+
+  // => register gadget in index and tree
+  priv.registerGadget = function (data, options) {
+    // create index
+    if (that.gadgetIndex === undefined) {
+      priv.createGadgetIndex();
+    }
+
+    // create tree
+    if (that.gadgetTree === undefined) {
+      priv.createGadgetTree();
+    }
+
+    // index ~ cache
+    priv.addGadgetToIndex(data, options);
+
+    // tree ~ lookup reference
+    priv.addGadgetToTree(options, that.gadgetTree);
+  };
+
+  // => find hardcoded services in source HTML
+  priv.findServiceInHTML = function (spec, root) {
+    var root = root ? root : document, 
+    services, service, options, i, j;
+
+    try {
+      services = root.querySelectorAll('[data-service], link[type^=service]');
+
+      for (i = 0; i < services.length; i += 1) {
+        service = JSON.parse(priv.getAttribute(services[i], 'service'));
+        for (j = 0; j < service.length; j += 1) {
+          options = {
+            "rel": service[j].rel,
+            "type": service[j].type,
+            "src": service[j].src || window.location.href.split("?")[0]
+          }
+          $(root).addService(options);
+        }
+      }
+    }
+    catch (error) {
+      // permission denied accessing document of foreign domains
+    }
+  };
+
+  // => find hardcoded gadgets in source HTML
+  priv.findGadgetinHTML = function (spec, root) {
+    var root = root ? root : document,
+      gadgets, gadget, options, i;
+
+    // need to try/catch because cross domain will not permit qsa
+    // > so any cross domain gadgets have to be self-sufficient
+    // > have renderJs and load their own gadgets!
+    try {
+      gadgets = root.querySelectorAll('[data-gadget]');
+
+      // gadget options
+      for (i = 0; i < gadgets.length; i += 1) {
+        gadget = gadgets[i];
+        options = {
+          "src" : priv.makeUrlAbsolute(priv.getAttribute(gadget, 'gadget')) || null,
+          "id": priv.generateUuid(),
+          "param" : JSON.parse(priv.getAttribute(gadget, 'param', true) || null),
+          "sandbox" : priv.getAttribute(gadget, 'sandbox') || false,
+          "iframe" : priv.getAttribute(gadget, 'iframe') || false,
+          "wrapper": gadget,
+          "directory": spec
+        };
+
+        // add gadget
+        $(root).addGadget(options);
+      }
+    }
+    catch(error) {
+      // permission denied accessing document of foreign domains
+    }
+  };
+
+  // => insert a gadget into the DOM
+  priv.appendGadget = function (gadgetData, options) {
+    var newHTML = [],
+      newParentElement,
+      newRootElement,
+      callback,
+      cleanedString,
+      content,
+      i,
+      element;
+
+    // update gadgetIndex
+    priv.registerGadget(gadgetData, options);
+
+    // MODULE, DEFAULT handler
+    if (gadgetData !== undefined) {
+      if (typeof gadgetData === "object") {
+        newHTML = gadgetData.data;
+        callback = gadgetData.callback;
+      } else {
+        // extract relevant page elements here!
+        cleanedString = gadgetData
+            .replace(priv.removeJSComments, "")
+            .replace(priv.removeHTMLComments,"")
+            .replace(priv.removeLineBreaks, "")
+            .replace(priv.removeWhiteSpace, " ")
+            .replace(priv.removeWhiteSpaceBetweenElements, "><");
+        // this will return a nodeList with head and body elements
+        // e.g. [meta, title, link, p, div]
+        content = $.parseHTML(cleanedString, true);
+
+        for (i = 0; i < content.length; i += 1) {
+          element = content[i];
+          switch(element.tagName) {
+            case "LINK":
+              if (element.getAttribute("type").split("/")[0] === "service") {
+                $(element).addService({
+                  "src": element.getAttribute("src") || window.location.href.split("?")[0],
+                  "type": element.getAttribute("type"),
+                  "rel": element.getAttribute("rel")
+                });
+              }
+              break;
+            case "META":
+            case "TITLE":
+              break;
+            case "SCRIPT":
+              // TODOS: this is bad, problem is gadgets being injected into
+              // the DOM without iFrame, will also have all script tags
+              // inserted, so if they share any plugins (like renderJs), they
+              // will be re-requested and end up as additional instances
+              // in the same scope, so renderJs.addGadget() will trigger x-times
+              if (!content[i].getAttribute("src")) {
+                newHTML.push(content[i]);
+              }
+              break;
+            default:
+              // create a collection to append
+              newHTML.push(content[i]);
+              break;
+          }
+        }
+      }
+
+      // append or replace (as below, remove duplicate code later)
+      if (options.wrapper) {
+        newParentElement = options.parent[0] || options.parent;
+        $(options.wrapper).replaceWith( newHTML );
+      } else if (options.replaceParent) {
+        newParentElement = options.parent.parent()[0];
+        options.parent.replaceWith( newHTML ); 
+      } else {
+        newParentElement = options.parent;
+        $( newHTML ).prependTo(options.parent);
+      }
+      if (callback) {
+        callback();
+      }
+      // find recursive gadgets
+      $(newParentElement).findGadget();
+      // find recursive services
+      $(newParentElement).findService();
+    } else {
+      // IFRAME handler
+      newHTML = document.createElement("iframe");
+      newHTML.setAttribute("src", options.src + "?base=" + priv.encodeURI(options.directory.root));
+      newHTML.setAttribute("frameborder", 0);
+      newHTML.setAttribute("seamless", "seamless");
+      newHTML.setAttribute("id", options.id);
+
+      // append or replace
+      if (options.wrapper) {
+        newParentElement = options.parent[0] || options.parent;
+        $(options.wrapper).replaceWith( newHTML );
+      } else if (options.replaceParent) {
+        newParentElement = options.parent.parent()[0];
+        options.parent.replaceWith( newHTML ); 
+      } else {
+        newParentElement = options.parent;
+        $( newHTML ).prependTo(options.parent);
+      }
+
+      // select iframe
+      newRootElement = newParentElement.querySelectorAll(
+        '[id="'+options.id+'"]'
+      );
+
+      // add configuration and find recursive gadgets
+      $( newRootElement[0] ).load(function () {
+        var newElement = $(this);
+            newWindow = newElement[0].contentWindow;
+            //newHref = newWindow.location.href;
+
+        // pass parameters to nested iFrame by setting on <iframe> body
+        // if (options.param) {
+        //  newElement.contents().find("body")[0].config = options.param;
+        // }
+
+        // find recursive gadgets
+        newElement.findGadget();
+        // find services to publish
+        newElement.findService();
+      });
+    }
+  };
+ 
+  // => initialize
+  priv.initialize = function () {
+
+    // both root and iFrame try to map location.search, either for initial
+    // configuration or to retrieve the root when inside an iFrame
+    var spec = priv.mapUrlString(window.location.search);
+
+    // all instances of renderJs should have an serviceMap
+    priv.createServiceMap(spec);
+
+    // trigger => find HTML gadgets in root document
+    priv.findGadgetinHTML(spec);
+
+    // trigger => find HTML coded interactions in root document
+    priv.findServiceInHTML(spec);
+
+    // expose API
+    window.renderJs = that;
+  };
+
+  // ================ public API (call on renderJs and $(elem) ===========
+
+  // => publish a service to this instance (and root instance)
+  that.addService = $.fn.addService = function (options) {
+    var adressArray = window.location.href.split("?"), targetUrl;
+    options.src = options.src || adressArray[0];
+
+    // posts to URL passed (need for CORS?)
+    // otherwise window.top.location.href) would also work
+    if (adressArray.length === 1) {
+      targetUrl = priv.decodeURI(adressArray[0]);
+    } else {
+      targetUrl = priv.decodeURI(adressArray[1].split("=")[1]);
+    }
+    window.top.postMessage(options, targetUrl);
+  };
+
+  // => request a service to be run
+  that.requestService = $.fn.requestService = function (options) {
+    // set type
+    if (options.type === undefined) {
+      options.type = "request/any";
+    }
+    window.top.postMessage(options, window.location.href);
+  };
+
+  // => load gadget 
+  that.addGadget = $.fn.addGadget = function (options, callback) {
+    var adressArray = window.location.href.split("?");
+
+    // set parent
+    if (this[0] === document || this[0] === window) {
+      options.parent = document.body;
+      options.replaceParent = false;
+    } else {
+      options.parent = this;
+      options.replaceParent = true;
+    }
+    // set uuid
+    if (options.id === undefined) {
+      options.id = priv.generateUuid();
+    }
+    // set directory (root)
+    // if no ?-param is available, we can only set to href
+    if (options.directory === undefined) {
+      if (adressArray.length > 1) {
+        options.directory = {
+          "root": priv.decodeURI(adressArray[1].split("=")[1])
+        };
+      } else {
+        options.directory = {
+          "root": that.gadgetService ? that.gadgetService.root : window.location.href
+        }
+      }
+    }
+    // set offline
+    // set cors
+
+    // LOADING
+    // module
+    if (options.module && require !== undefined) {
+      require([priv.extractModuleName(options.src)], function (response) {
+        priv.appendGadget(response, options);
+      });
+    // iFrame
+    } else if (options.iframe) {
+      priv.appendGadget(undefined, options);
+    // via Ajax (default)
+    } else {
+      $.ajax({
+        url: options.src,
+        // not sure this is helpful or not
+        cache: true,
+        method: options.method || "GET",
+        success: function (data) {
+          priv.appendGadget(data, options);
+        },
+        error: function (error, status, message) {
+          console.log(error)
+          console.log(status)
+          console.log(message)
+        }
+      });
+    }
+  };
+
+  // => find gadgets inside a newly added gadget
+  that.findGadget = $.fn.findGadget = function () {
+    var root = root || this;
+    var spec = {};
+    if (root[0].tagName === "IFRAME") {
+      // will not be possible in external iframe, because of cors!
+      root = root[0].contentDocument || root[0].contentWindow.document;
+    } else {
+      root = root[0];
+    }
+    priv.findGadgetinHTML(spec, root);
+  };
+
+  // => recursive call - find services inside newly added gadget
+  that.findService = $.fn.findService = function () {
+    var root = root|| this;
+    var spec = {};
+    if (root[0].tagName === "IFRAME") {
+      // will not be possible in external iframe, because of cors!
+      root = root[0].contentDocument || root[0].contentWindow.document;
+    } else {
+      root = root[0];
+    }
+    priv.findServiceInHTML(spec, root);
+  };
+
+  // ==================  ENTRY =============
+  // => start here
+  // should not use doc.ready, but otherwise cannot load reference body from <HEAD>
+  $(document).ready(function() {
+    // prevent renderJs reloads from different URLs!
+    // this does not solve the problem of re-requesting all dependencies with timestamp
+    // when injecting elements into a page without iFrame
+    if (window.renderJs === undefined) {
+      priv.initialize();
+    }
   });
-  // remove root's entire DOM element
-  $(this.getDom()).remove();
-};
+}(jQuery, window));

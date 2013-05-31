@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>content</title>
+
+  <!-- API add service LINK (src optional) -->
+  <!-- <link rel="multiply" type="math" src="http://www.somewhere.com/else"> -->
+  <link rel="multiply" type="service/math">
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  <script type="text/javascript" src="../../renderjs.js"></script>
+</head>
+<body>
+  <table style="border: 1px solid black; font-size: 9px">
+    <tr>
+      <td colspan="2" style="text-align:center;"><b>content.html</b></td>
+    <tr>
+      <td><b>Loaded</b></td>
+      <td>Ajax (via addGadget())</td>
+    </tr>
+    <tr>
+      <td><b>Location</b></td>
+      <td>inside content_loader.html</td>
+    </tr>
+    <tr>
+      <td><b>Service</b></td>
+      <td>Multiply</td>
+    </tr>
+    <tr>
+      <td><b>Domain</b></td>
+      <td>same</td>
+    </tr>
+  </table>
+  <p>Loaded via AJAX, Service: Multiply, same domain</p>
+  <p>Hello, I provide a service</p>
+  <!-- API add service HTML (src optional) -->
+  <div data-service = '[{"rel":"multiply", "type":"service/math"}]'></div>
+
+  <script type="text/javascript">
+    //<![CDATA[
+    // service multiplication
+    var multiply = function (a, b) {
+      try {
+        return parseFloat(a)*parseFloat(b);
+      }
+      catch (e) {
+        return "not possible to multiply";
+      }
+    };
+    // API add service JS (src optional)
+    $(this).addService({"type": "service/math", "rel": "multiply"});
+    //]]>
+  </script>
+</body>
+</html>
