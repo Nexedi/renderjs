@@ -41,32 +41,36 @@
 
 // Info:
 // iframe communication:
-// http://stackoverflow.com/questions/15884994/javascript-can-data-be-passed-bi-directionally-through-an-iframe/
-// http://stackoverflow.com/questions/16689280/how-to-set-jquery-data-on-an-iframe-body-tag-and-retrieve-it-from-inside-the-i/16689994?noredirect=1#16689994
+// http://bit.ly/11gjl1e
+// http://bit.ly/1434ZSV
 
 // custom URI schemes:
-// http://stackoverflow.com/questions/4403992/possible-to-handle-your-own-http-url-schemes-in-ios/5149668#5149668
+// http://bit.ly/11tn2MJ
 
 // validate URL: 
-// http://stackoverflow.com/questions/161738/what-is-the-best-regular-expression-to-check-if-a-string-is-a-valid-url
+// http://bit.ly/2Ol4gj
 
-(function ($, window, undefined) {
-  var priv = {};
-  var that = {};
+/*jslint indent: 2, maxlen: 80, nomen: true */
+/*global window: true, $: true, undefined: true, console: true,
+  document: true, require: true*/
+(function ($, window) {
+  "use strict";
+  var priv = {},
+    that = {};
 
-  // ==================  utility methods ==================
+    // ==================  utility methods ==================
 
   // => cross-browser reduce (no support in ie8-, opera 12-)
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce?redirectlocale=en-US&redirectslug=JavaScript%2FReference%2FGlobal_Objects%2FArray%2FReduce
+  // http://mzl.la/11tnDy1
   if ('function' !== typeof Array.prototype.reduce) {
-    Array.prototype.reduce = function(callback, opt_initialValue){
-      'use strict';
+    Array.prototype.reduce = function (callback, opt_initialValue) {
       if (null === this || 'undefined' === typeof this) {
         // At the moment all modern browsers, that support strict mode, have
         // native implementation of Array.prototype.reduce. For instance, IE8
         // does not support strict mode, so this check is actually useless.
         throw new TypeError(
-            'Array.prototype.reduce called on null or undefined');
+            'Array.prototype.reduce called on null or undefined'
+        );
       }
       if ('function' !== typeof callback) {
         throw new TypeError(callback + ' is not a function');
@@ -99,7 +103,6 @@
   priv.removeLineBreaks = /(\r\n|\n|\r)/mg;
   priv.removeWhiteSpace = /\s+/mg;
   priv.removeWhiteSpaceBetweenElements = />\s+</mg;
-
 
   // => convert all URLs to absolute URLs
   // thx JQM - http://code.jquery.com/mobile/latest/jquery.mobile.js
@@ -224,7 +227,6 @@
     return protocol + doubleSlash + authority + pathname + search + hash;
   };
 
-
   // => generate unique identifier
   priv.generateUuid = function () {
     var S4 = function () {
@@ -243,17 +245,17 @@
   // extract module name from path
   priv.extractModuleName = function (src) {
     var re =  /([\w\d_-]*)\.?[^\\\/]*$/i;
-    return src.match(re)[1]
-  }
+    return src.match(re)[1];
+  };
 
   // => safe getAttribute for data-*
   // thx JQM - http://code.jquery.com/mobile/latest/jquery.mobile.js
   priv.getAttribute = function (element, attribute, json) {
     var value;
-    value = element.getAttribute( "data-" + attribute );
+    value = element.getAttribute("data-" + attribute);
     return value === "true" ? true :
-      value === "false" ? false :
-      value === null ? (json ? "" : undefined ) : value;
+        value === "false" ? false :
+            value === null ? (json ? "" : undefined) : value;
   };
 
   // => URI methods
@@ -267,7 +269,7 @@
   };
   // decode URI array
   priv.decodeURIArray = function (array) {
-    var i, newArray;
+    var i, newArray = [];
     for (i = 0; i < array.length; i += 1) {
       newArray.push(priv.decodeURI(array[i]));
     }
@@ -306,46 +308,46 @@
       obj = spec.slice(1).split("=");
       key = obj[0];
       switch (key) {
-        case "string":
-        case "url":
-          config.root = priv.decodeURI(obj[1]);
-          break;
-        case "json":
-          parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
-          config.root = parsedJSON.root || window.location.pathname;
-          config.src = priv.decodeURIArray(parsedJSON.src) || [];
-          break;
-        case "hal":
-          parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
-          config.root = parsedJSON._links.self || window.location.pathname;
-          config.src = priv.decodeURIArray(parsedJSON.src) || [];
-          break;
-        case "data":
-          break;
-        default:
-          // no allowable-type - ignore config-parameter!
-          config.root = window.location.href
-          config.src = [];
-          break;
+      case "string":
+      case "url":
+        config.root = priv.decodeURI(obj[1]);
+        break;
+      case "json":
+        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
+        config.root = parsedJSON.root || window.location.pathname;
+        config.src = priv.decodeURIArray(parsedJSON.src) || [];
+        break;
+      case "hal":
+        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
+        config.root = parsedJSON._links.self || window.location.pathname;
+        config.src = priv.decodeURIArray(parsedJSON.src) || [];
+        break;
+      case "data":
+        break;
+      default:
+        // no allowable-type - ignore config-parameter!
+        config.root = window.location.href;
+        config.src = [];
+        break;
       }
     } else {
-      config = {"root": window.location.href}
+      config = {"root": window.location.href};
     }
     return config;
   };
 
-  // => create Index of gadgets on page (excluding gadgets inside iFrame/Sandbox)
+  // => create Index of gadgets on page (excluding gadgets in iFrame/Sandbox)
   priv.createGadgetIndex = function () {
     that.gadgetIndex = [];
   };
 
-  // => create gadget reference tree (includes gadgets inside iFrame/Sandbox)
+  // => create gadget reference tree (includes gadgets in iFrame/Sandbox)
   priv.createGadgetTree = function () {
     that.gadgetTree = {
       "id": "root",
       "src": window.location.href,
-      "children":[]
-    }
+      "children": []
+    };
   };
 
   // => add gadget to index
@@ -375,10 +377,9 @@
           delete options.parentFrame;
           priv.addGadgetToTree(options, newNode);
           break;
-        } else {
-          if (newNode.children.length > 0) {
-            priv.addGadgetToTree(options, newNode);
-          }
+        }
+        if (newNode.children.length > 0) {
+          priv.addGadgetToTree(options, newNode);
         }
       }
     }
@@ -389,7 +390,7 @@
     if (window.top !== window) {
       window.top.postMessage({
         // this will trigger addGagdetToTree() on root-in
-        "type":"tree/update",
+        "type": "tree/update",
         "options": {
           // passing "options":options will procude a DataCloneError, so
           // this is the only way (it seems) to pass the options object.
@@ -398,7 +399,7 @@
           "src": options.src,
           "children": []
         }
-      }, window.location.href.split("?")[0])
+      }, window.location.href.split("?")[0]);
     }
   };
 
@@ -414,7 +415,11 @@
       return selector;
     }
     for (i = 0; i < node.children.length; i += 1) {
-      result = priv.constructSelectorForService(src, node.children[i], selector);
+      result = priv.constructSelectorForService(
+        src,
+        node.children[i],
+        selector
+      );
       if (result !== undefined) {
         return result;
       }
@@ -431,7 +436,7 @@
       "root": spec.root || window.location.href,
       "directories": spec.src || [],
       "map": []
-    }
+    };
     // listen for service postings to THIS renderJs instance
     window.addEventListener("message", priv.serviceHandler, false);
   };
@@ -446,36 +451,37 @@
 
     // route
     switch (route[0]) {
-      case "service":
-        priv.registerNewService(event);
-        break;
-      case "request":
-        trackingId = priv.generateUuid();
-        // track this request, so we know where to send the response
-        priv.trackRequest(trackingId, event.originalTarget);
-        // request the service
-        priv.requestServiceFromGadget(event, trackingId);
-        break;
-      case "tree":
-        if (route[1] === "update") {
-          priv.addGadgetToTree(event.data.options, that.gadgetTree);
-        }
-        break;
-      case "run":
-        priv.runService(event);
-        break;
-      case "result":
-        priv.sendServiceReply(event);
-        break;
-      case "reply":
-        priv.returnResult(event.data.result);
-        break;
+    case "service":
+      priv.registerNewService(event);
+      break;
+    case "request":
+      trackingId = priv.generateUuid();
+      // track this request, so we know where to send the response
+      priv.trackRequest(trackingId, event.originalTarget);
+      // request the service
+      priv.requestServiceFromGadget(event, trackingId);
+      break;
+    case "tree":
+      if (route[1] === "update") {
+        priv.addGadgetToTree(event.data.options, that.gadgetTree);
+      }
+      break;
+    case "run":
+      priv.runService(event);
+      break;
+    case "result":
+      priv.sendServiceReply(event);
+      break;
+    case "reply":
+      priv.returnResult(event.data.result);
+      break;
     }
   };
 
   // => return the result to the function call
   priv.returnResult = function (result) {
-    console.log("hello inside reply");
+    // need a way to return this result to the calling function
+    console.log(result);
     return result;
   };
   // => sends a response message after a service has been run
@@ -491,33 +497,37 @@
   priv.runService = function (event) {
     var result = window[event.data.service].apply(this, event.data.parameters);
     window.top.postMessage({
-      "type":"result",
+      "type": "result",
       "result": result,
-      "trackingId" : event.data.trackingId,
+      "trackingId" : event.data.trackingId
     }, window.location.href.split("?")[0]);
   };
 
   // => request a service provided by a gadget
   priv.requestServiceFromGadget = function (event, trackingId) {
     var callService = priv.findServiceInMap(
-      event.data.service, event.data.type.split("/")[1]
+      event.data.service,
+      event.data.type.split("/")[1]
     ),
-    selector, i, targetWindow;
+      selector,
+      targetWindow;
 
     if (callService) {
       // services are stored by URL (not id), so we need to find the service
       // in our gadget tree by using the URL provided by the service... 
       // and return an id path, so we can create a selector
       selector = priv.constructSelectorForService(
-        callService.src, that.gadgetTree, []
+        callService.src,
+        that.gadgetTree,
+        []
       );
 
       // for plain nested gadgets (no iFrame/sandbox) this will return
       // only an empty array
       // for iFrames/sandbox, selector will be an array of ids from
       // which we have to construct our window element to postMessage to
-      // see http://stackoverflow.com/questions/15076293/window-postmessage-to-a-nested-iframe-in-cross-domain
-      // https://developer.mozilla.org/en-US/docs/Web/API/window.frames
+      // http://bit.ly/12m3wJD
+      // http://mzl.la/17EeDiN
       if (selector.length === 0) {
         targetWindow = window;
       } else {
@@ -527,11 +537,11 @@
       }
       // and request the service
       targetWindow.postMessage({
-        "type":"run",
+        "type": "run",
         "trackingId": trackingId,
         "service": event.data.service,
-        "parameters":event.data.parameters
-      }, window.location.href)
+        "parameters": event.data.parameters
+      }, window.location.href);
     }
   };
 
@@ -586,9 +596,13 @@
   };
 
   // => find hardcoded services in source HTML
-  priv.findServiceInHTML = function (spec, root) {
-    var root = root ? root : document, 
-    services, service, options, i, j;
+  priv.findServiceInHTML = function (spec, sentRoot) {
+    var root = sentRoot || document,
+      services,
+      service,
+      options,
+      i,
+      j;
 
     try {
       services = root.querySelectorAll('[data-service], link[type^=service]');
@@ -600,20 +614,22 @@
             "rel": service[j].rel,
             "type": service[j].type,
             "src": service[j].src || window.location.href.split("?")[0]
-          }
+          };
           $(root).addService(options);
         }
       }
-    }
-    catch (error) {
-      // permission denied accessing document of foreign domains
+    } catch (error) {
+      console.log(error);
     }
   };
 
   // => find hardcoded gadgets in source HTML
-  priv.findGadgetinHTML = function (spec, root) {
-    var root = root ? root : document,
-      gadgets, gadget, options, i;
+  priv.findGadgetinHTML = function (spec, sentRoot) {
+    var root = sentRoot || document,
+      gadgets,
+      gadget,
+      options,
+      i;
 
     // need to try/catch because cross domain will not permit qsa
     // > so any cross domain gadgets have to be self-sufficient
@@ -625,9 +641,11 @@
       for (i = 0; i < gadgets.length; i += 1) {
         gadget = gadgets[i];
         options = {
-          "src" : priv.makeUrlAbsolute(priv.getAttribute(gadget, 'gadget')) || null,
+          "src" : priv.makeUrlAbsolute(priv.getAttribute(gadget, 'gadget')),
           "id": priv.generateUuid(),
-          "param" : JSON.parse(priv.getAttribute(gadget, 'param', true) || null),
+          "param" : JSON.parse(
+            priv.getAttribute(gadget, 'param', true) || null
+          ),
           "sandbox" : priv.getAttribute(gadget, 'sandbox') || false,
           "iframe" : priv.getAttribute(gadget, 'iframe') || false,
           "wrapper": gadget,
@@ -637,9 +655,8 @@
         // add gadget
         $(root).addGadget(options);
       }
-    }
-    catch(error) {
-      // permission denied accessing document of foreign domains
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -666,7 +683,7 @@
         // extract relevant page elements here!
         cleanedString = gadgetData
             .replace(priv.removeJSComments, "")
-            .replace(priv.removeHTMLComments,"")
+            .replace(priv.removeHTMLComments, "")
             .replace(priv.removeLineBreaks, "")
             .replace(priv.removeWhiteSpace, " ")
             .replace(priv.removeWhiteSpaceBetweenElements, "><");
@@ -676,33 +693,34 @@
 
         for (i = 0; i < content.length; i += 1) {
           element = content[i];
-          switch(element.tagName) {
-            case "LINK":
-              if (element.getAttribute("type").split("/")[0] === "service") {
-                $(element).addService({
-                  "src": element.getAttribute("src") || window.location.href.split("?")[0],
-                  "type": element.getAttribute("type"),
-                  "rel": element.getAttribute("rel")
-                });
-              }
-              break;
-            case "META":
-            case "TITLE":
-              break;
-            case "SCRIPT":
-              // TODOS: this is bad, problem is gadgets being injected into
-              // the DOM without iFrame, will also have all script tags
-              // inserted, so if they share any plugins (like renderJs), they
-              // will be re-requested and end up as additional instances
-              // in the same scope, so renderJs.addGadget() will trigger x-times
-              if (!content[i].getAttribute("src")) {
-                newHTML.push(content[i]);
-              }
-              break;
-            default:
-              // create a collection to append
+          switch (element.tagName) {
+          case "LINK":
+            if (element.getAttribute("type").split("/")[0] === "service") {
+              $(element).addService({
+                "src": element.getAttribute("src") ||
+                  window.location.href.split("?")[0],
+                "type": element.getAttribute("type"),
+                "rel": element.getAttribute("rel")
+              });
+            }
+            break;
+          case "META":
+          case "TITLE":
+            break;
+          case "SCRIPT":
+            // TODOS: this is bad, problem is gadgets being injected into
+            // the DOM without iFrame, will also have all script tags
+            // inserted, so if they share any plugins (like renderJs), they
+            // will be re-requested and end up as additional instances
+            // in the same scope, so renderJs.addGadget() will trigger x-times
+            if (!content[i].getAttribute("src")) {
               newHTML.push(content[i]);
-              break;
+            }
+            break;
+          default:
+            // create a collection to append
+            newHTML.push(content[i]);
+            break;
           }
         }
       }
@@ -710,13 +728,13 @@
       // append or replace (as below, remove duplicate code later)
       if (options.wrapper) {
         newParentElement = options.parent[0] || options.parent;
-        $(options.wrapper).replaceWith( newHTML );
+        $(options.wrapper).replaceWith(newHTML);
       } else if (options.replaceParent) {
         newParentElement = options.parent.parent()[0];
-        options.parent.replaceWith( newHTML ); 
+        options.parent.replaceWith(newHTML);
       } else {
         newParentElement = options.parent;
-        $( newHTML ).prependTo(options.parent);
+        $(newHTML).prependTo(options.parent);
       }
       if (callback) {
         callback();
@@ -728,7 +746,10 @@
     } else {
       // IFRAME handler
       newHTML = document.createElement("iframe");
-      newHTML.setAttribute("src", options.src + "?base=" + priv.encodeURI(options.directory.root));
+      newHTML.setAttribute(
+        "src",
+        options.src + "?base=" + priv.encodeURI(options.directory.root)
+      );
       newHTML.setAttribute("frameborder", 0);
       newHTML.setAttribute("seamless", "seamless");
       newHTML.setAttribute("id", options.id);
@@ -736,25 +757,23 @@
       // append or replace
       if (options.wrapper) {
         newParentElement = options.parent[0] || options.parent;
-        $(options.wrapper).replaceWith( newHTML );
+        $(options.wrapper).replaceWith(newHTML);
       } else if (options.replaceParent) {
         newParentElement = options.parent.parent()[0];
-        options.parent.replaceWith( newHTML ); 
+        options.parent.replaceWith(newHTML);
       } else {
         newParentElement = options.parent;
-        $( newHTML ).prependTo(options.parent);
+        $(newHTML).prependTo(options.parent);
       }
 
       // select iframe
       newRootElement = newParentElement.querySelectorAll(
-        '[id="'+options.id+'"]'
+        '[id="' + options.id + '"]'
       );
 
       // add configuration and find recursive gadgets
-      $( newRootElement[0] ).load(function () {
+      $(newRootElement[0]).load(function () {
         var newElement = $(this);
-            newWindow = newElement[0].contentWindow;
-            //newHref = newWindow.location.href;
 
         // pass parameters to nested iFrame by setting on <iframe> body
         // if (options.param) {
@@ -768,7 +787,7 @@
       });
     }
   };
- 
+
   // => initialize
   priv.initialize = function () {
 
@@ -816,7 +835,7 @@
   };
 
   // => load gadget 
-  that.addGadget = $.fn.addGadget = function (options, callback) {
+  that.addGadget = $.fn.addGadget = function (options) {
     var adressArray = window.location.href.split("?");
 
     // set parent
@@ -840,8 +859,10 @@
         };
       } else {
         options.directory = {
-          "root": that.gadgetService ? that.gadgetService.root : window.location.href
-        }
+          "root": that.gadgetService ?
+              that.gadgetService.root :
+              window.location.href
+        };
       }
     }
     // set offline
@@ -867,18 +888,18 @@
           priv.appendGadget(data, options);
         },
         error: function (error, status, message) {
-          console.log(error)
-          console.log(status)
-          console.log(message)
+          console.log(error);
+          console.log(status);
+          console.log(message);
         }
       });
     }
   };
 
   // => find gadgets inside a newly added gadget
-  that.findGadget = $.fn.findGadget = function () {
-    var root = root || this;
-    var spec = {};
+  that.findGadget = $.fn.findGadget = function (sentRoot) {
+    var root = sentRoot || this,
+      spec = {};
     if (root[0].tagName === "IFRAME") {
       // will not be possible in external iframe, because of cors!
       root = root[0].contentDocument || root[0].contentWindow.document;
@@ -889,9 +910,9 @@
   };
 
   // => recursive call - find services inside newly added gadget
-  that.findService = $.fn.findService = function () {
-    var root = root|| this;
-    var spec = {};
+  that.findService = $.fn.findService = function (sentRoot) {
+    var root = sentRoot || this,
+      spec = {};
     if (root[0].tagName === "IFRAME") {
       // will not be possible in external iframe, because of cors!
       root = root[0].contentDocument || root[0].contentWindow.document;
@@ -903,11 +924,13 @@
 
   // ==================  ENTRY =============
   // => start here
-  // should not use doc.ready, but otherwise cannot load reference body from <HEAD>
+  // don't use doc.ready, but otherwise cannot load references to elements in
+  // body from <SCRIPT> in <HEAD>
   $(document).ready(function() {
     // prevent renderJs reloads from different URLs!
-    // this does not solve the problem of re-requesting all dependencies with timestamp
-    // when injecting elements into a page without iFrame
+    // this does not solve the problem of re-requesting dependencies 
+    // with ?timestamp=_123241231231 when injecting elements into a page 
+    // without iFrame
     if (window.renderJs === undefined) {
       priv.initialize();
     }
