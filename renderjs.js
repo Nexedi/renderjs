@@ -50,6 +50,10 @@
 // validate URL: 
 // http://bit.ly/2Ol4gj
 
+// deferred explanation:
+// http://bit.ly/WH2TRI
+// http://bit.ly/zm0Csi
+
 /*jslint indent: 2, maxlen: 80, nomen: true */
 /*global window: true, $: true, undefined: true, console: true,
   document: true, require: true*/
@@ -58,7 +62,40 @@
   var priv = {},
     that = {};
 
-    // ==================  utility methods ==================
+  // ==================  utility methods ==================
+
+  // extend $.deferred to allow multiple calls and resolves
+  // thx router.js
+  $.extend({
+    StatelessDeferred: function () {
+      var doneList = $.Callbacks("memory"),
+        promise = {
+          done: doneList.add,
+
+          // Get a promise for this deferred
+          // If obj is provided, the promise aspect is added to the object
+          promise: function (obj) {
+            var i,
+              keys = ['done', 'promise'];
+            if (obj === undefined) {
+              obj = promise;
+            } else {
+              for (i = 0; i < keys.length; i += 1) {
+                obj[keys[i]] = promise[keys[i]];
+              }
+            }
+            return obj;
+          }
+        },
+        deferred = promise.promise({});
+
+      deferred.resolveWith = doneList.fireWith;
+      deferred.resolve = doneList.fire;
+
+      // All done!
+      return deferred;
+    }
+  });
 
   // => cross-browser reduce (no support in ie8-, opera 12-)
   // http://mzl.la/11tnDy1
@@ -279,12 +316,35 @@
 
   // ==================  internal methods ==================
 
+  // => keep service callbacks available until a postMessage returns response
+  priv.trackCallback = function (id, callback, callbackFunction) {
+    if (priv.callbackTracker === undefined) {
+      priv.callbackTracker = [];
+    }
+    priv.callbackTracker.push({
+      "id": id,
+      "callback": callback,
+      "callbackFunction": callbackFunction
+    });
+  };
+
   // => keep track of service requesters to reply to
   priv.trackRequest = function (id, respondTo) {
     if (priv.serviceTracker === undefined) {
       priv.serviceTracker = [];
     }
     priv.serviceTracker.push({"id": id, "respondTo": respondTo});
+  };
+
+  // => retrieve callback for a specific service call
+  priv.retrieveCallback = function (id) {
+    var i, callback;
+    for (i = 0; i < priv.callbackTracker.length; i += 1) {
+      callback = priv.callbackTracker[i];
+      if (callback.id = id) {
+        return [callback.callback, callback.callbackFunction];
+      }
+    }
   };
 
   // => retrieve window which called a specific service
@@ -456,6 +516,7 @@
       break;
     case "request":
       trackingId = priv.generateUuid();
+
       // track this request, so we know where to send the response
       priv.trackRequest(trackingId, event.originalTarget);
       // request the service
@@ -473,23 +534,25 @@
       priv.sendServiceReply(event);
       break;
     case "reply":
-      priv.returnResult(event.data.result);
+      priv.returnResult(event);
       break;
     }
   };
 
   // => return the result to the function call
-  priv.returnResult = function (result) {
-    // need a way to return this result to the calling function
-    console.log(result);
-    return result;
+  priv.returnResult = function (event) {
+    var callback = priv.retrieveCallback(event.data.callback);
+    // resolve the deferred, which includes the requestService callback
+    callback[0].resolve(event.data.result, callback[1]);
   };
+
   // => sends a response message after a service has been run
   priv.sendServiceReply = function (event) {
     var targetWindow = priv.retrieveCallingWindow(event.data.trackingId);
     targetWindow.postMessage({
       "type": "reply",
-      "result": event.data.result
+      "result": event.data.result,
+      "callback": event.data.callbackId,
     }, window.location.href.split("?")[0]);
   };
 
@@ -499,7 +562,8 @@
     window.top.postMessage({
       "type": "result",
       "result": result,
-      "trackingId" : event.data.trackingId
+      "trackingId" : event.data.trackingId,
+      "callbackId": event.data.callbackId,
     }, window.location.href.split("?")[0]);
   };
 
@@ -535,10 +599,12 @@
           return tgt && tgt.getElementById(o).contentWindow;
         }, document);
       }
+
       // and request the service
       targetWindow.postMessage({
         "type": "run",
         "trackingId": trackingId,
+        "callbackId": event.data.callbackId,
         "service": event.data.service,
         "parameters": event.data.parameters
       }, window.location.href);
@@ -826,11 +892,25 @@
   };
 
   // => request a service to be run
-  that.requestService = $.fn.requestService = function (options) {
+  that.requestService = $.fn.requestService = function (options, callbackFunction) {
+    var deferred = new $.StatelessDeferred(),
+      callbackId = priv.generateUuid(),
+      callback = deferred;
+
+    // store callback to be retrieved by response handler
+    priv.trackCallback(callbackId, callback, callbackFunction);
+
     // set type
     if (options.type === undefined) {
       options.type = "request/any";
     }
+
+    deferred.done(function(result, callbackFunction) {
+      if (callbackFunction) {
+        callbackFunction(result);
+      }
+    });
+    options.callbackId = callbackId;
     window.top.postMessage(options, window.location.href);
   };
 
@@ -887,10 +967,8 @@
         success: function (data) {
           priv.appendGadget(data, options);
         },
-        error: function (error, status, message) {
+        error: function (error) {
           console.log(error);
-          console.log(status);
-          console.log(message);
         }
       });
     }
