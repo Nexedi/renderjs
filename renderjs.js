@@ -568,23 +568,19 @@
       "type": "reply",
       "result": event.data.result,
       "callback": event.data.callbackId,
-    }, window.location.href.split("?")[0]);
+    }, event.origin);
   };
 
   // => run a service and post the result
   priv.runService = function (event) {
-    var result = window[event.data.service].apply(this, event.data.parameters),
-      foreign = priv.isForeignUrl(event.origin);
+    var result = window[event.data.service].apply(this, event.data.parameters);
 
     window.top.postMessage({
       "type": "result",
       "result": result,
       "trackingId" : event.data.trackingId,
       "callbackId": event.data.callbackId,
-      // "*" is not recommended, but when using localhost, this seems
-      // to be the only way to get the message to domain1...?
-      // make sure this works with window.location.href in production
-    }, foreign ? "*" : window.location.href.split("?")[0]);
+    }, event.origin);
   };
 
   // => request a service provided by a gadget
@@ -594,8 +590,7 @@
       event.data.type.split("/")[1]
     ),
       selector,
-      targetWindow,
-      foreign;
+      targetWindow;
 
     if (callService) {
       // services are stored by URL (not id), so we need to find the service
@@ -620,7 +615,6 @@
       if (selector.length === 0) {
         targetWindow = window;
       } else {
-        foreign = selector[selector.length-1][1];
         try {
           targetWindow = selector.reduce(function(tgt, o) {
             return tgt && o[1] ?
@@ -639,10 +633,7 @@
         "callbackId": event.data.callbackId,
         "service": event.data.service,
         "parameters": event.data.parameters
-        // "*" is not recommended, but when using localhost, this seems
-        // to be the only way to get the message to domain1...?
-        // make sure this works with window.location.href in production
-      }, foreign ? "*" : window.location.href);
+      }, event.origin);
     }
   };
 
