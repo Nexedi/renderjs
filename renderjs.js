@@ -54,6 +54,9 @@
 // http://bit.ly/WH2TRI
 // http://bit.ly/zm0Csi
 
+// URI-templates:
+// https://code.google.com/p/uri-templates/
+
 /*jslint indent: 2, maxlen: 80, nomen: true */
 /*global window: true, $: true, undefined: true, console: true,
   document: true, require: true*/
@@ -517,40 +520,42 @@
   // => manages all interactions (listens to incoming postMessages)
   // need a switch, because only one "message" listener can be set
   priv.serviceHandler = function (event) {
-    var route = event.data.type.split("/"),
-      trackingId;
+    var type = event.data.type, route, trackingId;
+    if (type) {
+      route = event.data.type.split("/");
 
-    // authenticate all message senders
-    // basic "authentication" is done through the switch, which requires
-    // a matching type to be passed - still the incoming URL should be
-    // authenticated, too, plus preferably another ticket-authentication.
+      // authenticate all message senders
+      // basic "authentication" is done through the switch, which requires
+      // a matching type to be passed - still the incoming URL should be
+      // authenticated, too, plus preferably another ticket-authentication.
 
-    // route
-    switch (route[0]) {
-    case "service":
-      priv.registerNewService(event);
-      break;
-    case "request":
-      trackingId = priv.generateUuid();
-      // track this request, so we know where to send the response
-      priv.trackRequest(trackingId, event.originalTarget);
-      // request the service
-      priv.requestServiceFromGadget(event, trackingId);
-      break;
-    case "tree":
-      if (route[1] === "update") {
-        priv.addGadgetToTree(event.data.options, that.gadgetTree);
+      // route
+      switch (route[0]) {
+      case "service":
+        priv.registerNewService(event);
+        break;
+      case "request":
+        trackingId = priv.generateUuid();
+        // track this request, so we know where to send the response
+        priv.trackRequest(trackingId, event.originalTarget);
+        // request the service
+        priv.requestServiceFromGadget(event, trackingId);
+        break;
+      case "tree":
+        if (route[1] === "update") {
+          priv.addGadgetToTree(event.data.options, that.gadgetTree);
+        }
+        break;
+      case "run":
+        priv.runService(event);
+        break;
+      case "result":
+        priv.sendServiceReply(event);
+        break;
+      case "reply":
+        priv.returnResult(event);
+        break;
       }
-      break;
-    case "run":
-      priv.runService(event);
-      break;
-    case "result":
-      priv.sendServiceReply(event);
-      break;
-    case "reply":
-      priv.returnResult(event);
-      break;
     }
   };
 
