@@ -1082,8 +1082,11 @@
   dispatch = function () {
     // XXX Local hack
     var ls_regexp = /^browser:\/\/localstorage\/([\w\W]+)/,
-      browse_file_regexp = /^browser:\/\/browse\/ls\/([\w\W]+)/,
-      browse_directory_regexp = /^browser:\/\/browse\/ls\//,
+      browse_ls_file_regexp = /^browser:\/\/browse\/ls\/([\w\W]+)/,
+      browse_ls_directory_regexp = /^browser:\/\/browse\/ls\//,
+      ss_regexp = /^browser:\/\/sessionstorage\/([\w\W]+)/,
+      browse_ss_file_regexp = /^browser:\/\/browse\/ss\/([\w\W]+)/,
+      browse_ss_directory_regexp = /^browser:\/\/browse\/ss\//,
       plumb_regexp = /^browser:\/\/plumb\/([\w\W]+)\//,
       key;
     if (ls_regexp.test(this.url)) {
@@ -1101,8 +1104,8 @@
       } else {
         this.respond(405, {}, "");
       }
-    } else if (browse_file_regexp.test(this.url)) {
-      key = browse_file_regexp.exec(this.url)[1];
+    } else if (browse_ls_file_regexp.test(this.url)) {
+      key = browse_ls_file_regexp.exec(this.url)[1];
       this.respond(200, {
         'Content-Type': 'application/hal+json'
       }, JSON.stringify({
@@ -1111,7 +1114,7 @@
           enclosure: {href: 'browser://localstorage/' + key},
         }
       }));
-    } else if (browse_directory_regexp.test(this.url)) {
+    } else if (browse_ls_directory_regexp.test(this.url)) {
       var response = {
         _links: {
           self: {href: this.url},
@@ -1126,6 +1129,49 @@
       this.respond(200, {
         'Content-Type': 'application/hal+json'
       }, JSON.stringify(response));
+
+    } else if (ss_regexp.test(this.url)) {
+      key = ss_regexp.exec(this.url)[1];
+      if (this.method === "POST") {
+        sessionStorage[key] = this.requestBody;
+        this.respond(200, {}, "");
+      } else if (this.method === "GET") {
+        this.respond(200, {
+          "Content-Type": "text/plain"
+        }, sessionStorage[key]);
+      } else if (this.method === "DELETE") {
+        sessionStorage.removeItem(key);
+        this.respond(200, {}, "");
+      } else {
+        this.respond(405, {}, "");
+      }
+    } else if (browse_ss_file_regexp.test(this.url)) {
+      key = browse_ss_file_regexp.exec(this.url)[1];
+      this.respond(200, {
+        'Content-Type': 'application/hal+json'
+      }, JSON.stringify({
+        _links: {
+          self: {href: this.url},
+          enclosure: {href: 'browser://locasstorage/' + key},
+        }
+      }));
+    } else if (browse_ss_directory_regexp.test(this.url)) {
+      var response = {
+        _links: {
+          self: {href: this.url},
+          contents: [],
+        }
+      };
+
+      for (var key in sessionStorage){
+         response._links.contents.push({href: 'browser://browse/ss/' + key});
+      }
+
+      this.respond(200, {
+        'Content-Type': 'application/hal+json'
+      }, JSON.stringify(response));
+
+
     } else if (plumb_regexp.test(this.url)) {
       key = plumb_regexp.exec(this.url)[1];
       if (this.method === "POST") {
