@@ -30,10 +30,16 @@
               $(this).text(errorThrown);
             },
             success: function (value, textStatus, jqXHR) {
-              $(this).text(value);
+              if (value === "") {
+                $(this).text("file not found");
+              } else {
+                $(this).text(value);
+              }
             },
           });
         }
+      } else {
+        $(this).text("no file to display");
       }
     };
 
