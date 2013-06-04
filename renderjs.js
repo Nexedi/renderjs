@@ -1108,7 +1108,8 @@
         if (key === "topwindow") {
           // XXX hardcoded * necessarity to send in case of file URL
           // Fix needed!!!
-          window.top.postMessage(this.body, "*");
+          window.top.postMessage(this.requestBody, "*");
+          this.respond(204, {}, "");
         } else {
           this.respond(404, {}, "");
         }

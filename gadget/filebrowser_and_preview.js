@@ -16,7 +16,7 @@
   };
 
   var handler = function (event) {
-    console.log(event.origin);
+    console.log(event.data);
     console.log("hello inside handler");
     console.log(event);
   };
