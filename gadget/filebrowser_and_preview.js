@@ -57,8 +57,8 @@
       fileToDisplayData = "data://application/hal+json;base64," + 
         window.btoa(JSON.stringify({
         _links: {
-          self: {href: 'browser://browse/ls/'},
-          storage: {href: 'browser://browse/ls/'},
+          self: {href: fileToDisplay},
+          storage: {href: fileToDisplay},
           display: {href: 'browser://plumb/parentwindow/'},
         }}));
 
