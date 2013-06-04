@@ -42,7 +42,8 @@
         event.source.location.pathname,
         frame.getAttribute("src").split("?")[0]
       ) < 0) {
-        frame.contentWindow.postMessage(event.data, window.location.href);
+        frame.contentWindow.postMessage(event.data, "*");
+        // frame.contentWindow.postMessage(event.data, window.location.href);
       }
     }
   };
