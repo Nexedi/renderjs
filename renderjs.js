@@ -599,7 +599,7 @@
 
     if (callService) {
       // services are stored by URL (not id), so we need to find the service
-      // in our gadget tree by using the URL provided by the service... 
+      // in our gadget tree by using the URL provided by the service...
       // and return an id path, so we can create a selector
       selector = priv.constructSelectorForService(
         callService.src,
@@ -948,7 +948,7 @@
     window.top.postMessage(options, window.location.href);
   };
 
-  // => load gadget 
+  // => load gadget
   that.addGadget = $.fn.addGadget = function (options) {
     var adressArray = window.location.href.split("?");
 
@@ -1040,8 +1040,8 @@
   // body from <SCRIPT> in <HEAD>
   $(document).ready(function() {
     // prevent renderJs reloads from different URLs!
-    // this does not solve the problem of re-requesting dependencies 
-    // with ?timestamp=_123241231231 when injecting elements into a page 
+    // this does not solve the problem of re-requesting dependencies
+    // with ?timestamp=_123241231231 when injecting elements into a page
     // without iFrame
     if (window.renderJs === undefined) {
       priv.initialize();
@@ -1053,8 +1053,32 @@
   //////////////////////////////////////////////
 
   var default_xhr = $.ajaxSettings.xhr,
-    dispatch;
-  
+    dispatch,
+    dispatch_data;
+
+  dispatch_data = function () {
+    // data:[<mediatype>][;base64],<data>
+    var regexp = /^data:\/\/([\w\/]+)?(;base64)?,([\w\W]+)/,
+        mime_type, is_base_64, data;
+    // window.atob(encodedData);
+    if (regexp.test(this.url)) {
+      mime_type = regexp.exec(this.url)[1];
+      is_base_64 = regexp.exec(this.url)[2];
+      data = regexp.exec(this.url)[3];
+      if (is_base_64 === ';base64') {
+        this.respond(200, {
+          'Content-Type': mime_type,
+        }, window.atob(data));
+      } else {
+        this.respond(200, {
+          'Content-Type': mime_type,
+        }, data);
+      }
+    } else {
+      this.respond(404, {}, "");
+    }
+  };
+
   dispatch = function () {
     // XXX Local hack
     var ls_regexp = /^browser:\/\/localstorage\/([\w\W]+)/,
@@ -1121,17 +1145,20 @@
     }
   };
 
-  $.ajaxSetup({                                                                     
-    xhr: function () {                                                              
-      var result;                                                                   
-      if (/^browser:\/\//.test(this.url)) {                                         
-        result = new BrowserHttpRequest();                                          
-        result.dispatch = dispatch;                                                 
-      } else {                                                                      
-        result = default_xhr();                                                     
-      }                                                                             
-      return result;                                                                
-    }                                                                               
+  $.ajaxSetup({
+    xhr: function () {
+      var result;
+      if (/^browser:\/\//.test(this.url)) {
+        result = new BrowserHttpRequest();
+        result.dispatch = dispatch;
+      } else if (/^data:\/\//.test(this.url)) {
+        result = new BrowserHttpRequest();
+        result.dispatch = dispatch_data;
+      } else {
+        result = default_xhr();
+      }
+      return result;
+    }
   });
 
 }(jQuery, window));
