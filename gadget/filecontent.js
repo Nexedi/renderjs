@@ -63,10 +63,26 @@
 // 
 //       if (fileToDisplay) {
 
+        var param1 = "data://application/hal+json;base64," + 
+          window.btoa(JSON.stringify({
+          _links: {
+            self: {href: ""},
+            storage: {href: 'browser://browse/ls/'},
+            preview: {href: 'preview_by_hash_change.html'},
+          }}));
+
+        var param2 = "data://application/hal+json;base64," + 
+          window.btoa(JSON.stringify({
+          _links: {
+            self: {href: ""},
+            storage: {href: 'browser://browse/ss/'},
+            preview: {href: 'preview_by_postmessage.html'},
+          }}));
+
         $("body").append(
           '<iframe src="' +
           // XXX Hardcoded gadget to load
-          'filebrowser_and_preview.html' + "?file=browser%3A%2F%2Fbrowse%2Fls%2F" +
+          'filebrowser_and_preview.html' + "?file=" + param1 +
           '">' +
           '<p>Your browser does not support iframes.</p>' +
           '</iframe">');
@@ -74,7 +90,7 @@
         $("body").append(
           '<iframe src="' +
           // XXX Hardcoded gadget to load
-          'filebrowser_and_preview.html' + "?file=browser%3A%2F%2Fbrowse%2Fss%2F" +
+          'filebrowser_and_preview.html' + "?file=" + param2 +
           '">' +
           '<p>Your browser does not support iframes.</p>' +
           '</iframe">');

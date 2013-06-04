@@ -54,35 +54,48 @@
 
     if (searchString) {
       fileToDisplay = getParameter(searchString, "file");
-      fileToDisplayData = "data://application/hal+json;base64," + 
-        window.btoa(JSON.stringify({
-        _links: {
-          self: {href: fileToDisplay},
-          storage: {href: fileToDisplay},
-          display: {href: 'browser://plumb/parentwindow/'},
-        }}));
 
-      if (fileToDisplay) {
+      $.ajax({
+        method: 'GET',
+        // XXX Hardcoded
+        url: fileToDisplay,
+        context: $('body'),
+        error: function (jqXHR, textStatus, errorThrown) {
+          $(this).text(errorThrown);
+        },
+        success: function (value, textStatus, jqXHR) {
+          fileToDisplayData = "data://application/hal+json;base64," + 
+            window.btoa(JSON.stringify({
+            _links: {
+              self: {href: value._links.storage.href},
+              storage: {href: value._links.storage.href},
+              display: {href: 'browser://plumb/parentwindow/'},
+            }}));
 
-        $("body").html(
-          '<iframe src="' +
-          // XXX Hardcoded gadget to load
-          'filebrowser.html?file=' + fileToDisplayData +
-          '">' +
-          '<p>Your browser does not support iframes.</p>' +
-          '</iframe">');
+          if (fileToDisplay) {
 
-        $("body").append(
-          '<iframe src="' +
-          // XXX Hardcoded gadget to load
-          'preview.html' +
-          '">' +
-          '<p>Your browser does not support iframes.</p>' +
-          '</iframe">');
+            $("body").html(
+              '<iframe src="' +
+              // XXX Hardcoded gadget to load
+              'filebrowser.html?file=' + fileToDisplayData +
+              '">' +
+              '<p>Your browser does not support iframes.</p>' +
+              '</iframe">');
 
-      } else {
-        $("body").text("No parameter found in url");
-      }
+            $("body").append(
+              '<iframe src="' +
+              // XXX Hardcoded gadget to load
+              value._links.preview.href +
+              '">' +
+              '<p>Your browser does not support iframes.</p>' +
+              '</iframe">');
+
+          } else {
+            $("body").text("No parameter found in url");
+          }
+        },
+      });
+
     } else {
       $("body").text("No parameter found in url (2)");
     }
