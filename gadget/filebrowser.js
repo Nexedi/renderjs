@@ -41,8 +41,20 @@
                  $(this).append("<li><button id='" + i + "'>" +
                    value._links.contents[i].href + "</button></li>");
                  $(this).find("#" + i.toString()).on('click', function(e, target) {
-                   // XXX What to do with the url info?
-                   console.log($(this).text());
+                   $.ajax({
+                     // XXX Hardcoded post and url
+                     // Why using postMessage?
+                     method: "POST",
+                     url: "browser://plumb/topwindow/",
+                     context: $(this),
+                     data: $(this).text(),
+                     error: function (jqXHR, textStatus, errorThrown) {
+                       console.log("Plumbing failed: " + errorThrown);
+                     },
+//                     success: function (value, textStatus, jqXHR) {
+//                       console.log(value);
+//                     },
+                   });
                  });
               }
               $(this).append("</ul>");
@@ -61,7 +73,6 @@
 
   $(document).ready(function () {
     mapUrl(window.location);
-    window.top.postMessage({"type":"foo", "bar":"hello"}, window.location);
   });
 
 }(document, jQuery));

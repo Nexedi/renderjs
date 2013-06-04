@@ -1057,9 +1057,10 @@
   
   dispatch = function () {
     // XXX Local hack
-    var ls_regexp = /browser:\/\/localstorage\/([\w\W]+)/,
-      browse_file_regexp = /browser:\/\/browse\/ls\/([\w\W]+)/,
-      browse_directory_regexp = /browser:\/\/browse\/ls\//,
+    var ls_regexp = /^browser:\/\/localstorage\/([\w\W]+)/,
+      browse_file_regexp = /^browser:\/\/browse\/ls\/([\w\W]+)/,
+      browse_directory_regexp = /^browser:\/\/browse\/ls\//,
+      plumb_regexp = /^browser:\/\/plumb\/([\w\W]+)\//,
       key;
     if (ls_regexp.test(this.url)) {
       key = ls_regexp.exec(this.url)[1];
@@ -1101,6 +1102,19 @@
       this.respond(200, {
         'Content-Type': 'application/hal+json'
       }, JSON.stringify(response));
+    } else if (plumb_regexp.test(this.url)) {
+      key = plumb_regexp.exec(this.url)[1];
+      if (this.method === "POST") {
+        if (key === "topwindow") {
+          // XXX hardcoded * necessarity to send in case of file URL
+          // Fix needed!!!
+          window.top.postMessage(this.body, "*");
+        } else {
+          this.respond(404, {}, "");
+        }
+      } else {
+        this.respond(405, {}, "");
+      }
     } else {
       this.respond(404, {}, "");
     }
