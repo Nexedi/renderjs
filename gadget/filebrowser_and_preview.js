@@ -41,8 +41,10 @@
           '</iframe">');
 
       } else {
-        $(this).text("No parameter found in url");
+        $("body").text("No parameter found in url");
       }
+    } else {
+      $("body").text("No parameter found in url (2)");
     }
   };
 
