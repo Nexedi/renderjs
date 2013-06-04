@@ -1053,7 +1053,8 @@
   dispatch = function () {
     // XXX Local hack
     var ls_regexp = /browser:\/\/localstorage\/([\w\W]+)/,
-      browse_regexp = /browser:\/\/browse\/ls\/([\w\W]+)/,
+      browse_file_regexp = /browser:\/\/browse\/ls\/([\w\W]+)/,
+      browse_directory_regexp = /browser:\/\/browse\/ls\//,
       key;
     if (ls_regexp.test(this.url)) {
       key = ls_regexp.exec(this.url)[1];
@@ -1070,16 +1071,31 @@
       } else {
         this.respond(405, {}, "");
       }
-    } else if (browse_regexp.test(this.url)) {
-      key = browse_regexp.exec(this.url)[1];
+    } else if (browse_file_regexp.test(this.url)) {
+      key = browse_file_regexp.exec(this.url)[1];
       this.respond(200, {
         'Content-Type': 'application/hal+json'
       }, JSON.stringify({
         _links: {
-          self: {href: 'browser://browse/ls/' + key},
+          self: {href: this.url},
           enclosure: {href: 'browser://localstorage/' + key},
         }
       }));
+    } else if (browse_directory_regexp.test(this.url)) {
+      var response = {
+        _links: {
+          self: {href: this.url},
+          contents: [],
+        }
+      };
+
+      for (var key in localStorage){
+         response._links.contents.push({href: 'browser://browse/ls/' + key});
+      }
+
+      this.respond(200, {
+        'Content-Type': 'application/hal+json'
+      }, JSON.stringify(response));
     } else {
       this.respond(404, {}, "");
     }
