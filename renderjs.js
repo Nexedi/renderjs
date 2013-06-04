@@ -1152,7 +1152,7 @@
       }, JSON.stringify({
         _links: {
           self: {href: this.url},
-          enclosure: {href: 'browser://locasstorage/' + key},
+          enclosure: {href: 'browser://sessionstorage/' + key},
         }
       }));
     } else if (browse_ss_directory_regexp.test(this.url)) {
