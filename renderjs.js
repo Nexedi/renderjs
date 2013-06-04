@@ -1042,4 +1042,60 @@
       priv.initialize();
     }
   });
+
+  //////////////////////////////////////////////
+  // Fake xhr to access local resource
+  //////////////////////////////////////////////
+
+  var default_xhr = $.ajaxSettings.xhr,
+    dispatch;
+  
+  dispatch = function () {
+    // XXX Local hack
+    var ls_regexp = /browser:\/\/localstorage\/([\w\W]+)/,
+      browse_regexp = /browser:\/\/browse\/ls\/([\w\W]+)/,
+      key;
+    if (ls_regexp.test(this.url)) {
+      key = ls_regexp.exec(this.url)[1];
+      if (this.method === "POST") {
+        localStorage[key] = this.requestBody;
+        this.respond(200, {}, "");
+      } else if (this.method === "GET") {
+        this.respond(200, {
+          "Content-Type": "text/plain"
+        }, localStorage[key]);
+      } else if (this.method === "DELETE") {
+        localStorage.removeItem(key);
+        this.respond(200, {}, "");
+      } else {
+        this.respond(405, {}, "");
+      }
+    } else if (browse_regexp.test(this.url)) {
+      key = browse_regexp.exec(this.url)[1];
+      this.respond(200, {
+        'Content-Type': 'application/hal+json'
+      }, JSON.stringify({
+        _links: {
+          self: {href: 'browser://browse/ls/' + key},
+          enclosure: {href: 'browser://localstorage/' + key},
+        }
+      }));
+    } else {
+      this.respond(404, {}, "");
+    }
+  };
+
+  $.ajaxSetup({                                                                     
+    xhr: function () {                                                              
+      var result;                                                                   
+      if (/^browser:\/\//.test(this.url)) {                                         
+        result = new BrowserHttpRequest();                                          
+        result.dispatch = dispatch;                                                 
+      } else {                                                                      
+        result = default_xhr();                                                     
+      }                                                                             
+      return result;                                                                
+    }                                                                               
+  });
+
 }(jQuery, window));
