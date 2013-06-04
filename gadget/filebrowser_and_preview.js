@@ -50,17 +50,24 @@
 
   var mapUrl = function (url) {
     var searchString = url.href.split("?")[1],
-      fileToDisplay;
+      fileToDisplay, fileToDisplayData;
 
     if (searchString) {
       fileToDisplay = getParameter(searchString, "file");
+      fileToDisplayData = "data://application/hal+json;base64," + 
+        window.btoa(JSON.stringify({
+        _links: {
+          self: {href: 'browser://browse/ls/'},
+          storage: {href: 'browser://browse/ls/'},
+          display: {href: 'browser://plumb/parentwindow/'},
+        }}));
 
       if (fileToDisplay) {
 
         $("body").html(
           '<iframe src="' +
           // XXX Hardcoded gadget to load
-          'filebrowser.html?file=' + fileToDisplay +
+          'filebrowser.html?file=' + fileToDisplayData +
           '">' +
           '<p>Your browser does not support iframes.</p>' +
           '</iframe">');

@@ -1058,7 +1058,7 @@
 
   dispatch_data = function () {
     // data:[<mediatype>][;base64],<data>
-    var regexp = /^data:\/\/([\w\/]+)?(;base64)?,([\w\W]+)/,
+    var regexp = /^data:\/\/([\w\/+]+)?(;base64)?,([\w\W]+)/,
         mime_type, is_base_64, data;
     // window.atob(encodedData);
     if (regexp.test(this.url)) {
@@ -1129,10 +1129,10 @@
     } else if (plumb_regexp.test(this.url)) {
       key = plumb_regexp.exec(this.url)[1];
       if (this.method === "POST") {
-        if (key === "topwindow") {
+        if (key === "parentwindow") {
           // XXX hardcoded * necessarity to send in case of file URL
           // Fix needed!!!
-          window.top.postMessage(this.requestBody, "*");
+          window.parent.postMessage(this.requestBody, "*");
           this.respond(204, {}, "");
         } else {
           this.respond(404, {}, "");
