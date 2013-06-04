@@ -3,6 +3,23 @@
 "use strict";
 (function (document, $) {
 
+  var myIndexOf = function (path, contains) {
+    var len = path.length;
+    var wordLen = contains.length;
+    for(var i = 0; i < len; i++) {
+      var j = 0;
+      for(j = 0; j < wordLen; j++) {
+        if(path[i+j] != contains[j]) {
+            break;
+        }
+      }
+      if(j == wordLen) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
   var getParameter = function(searchString, paramName) {
     var i, val, params = searchString.split("&");
 
@@ -15,10 +32,19 @@
     return null;
   };
 
+  // this is our "interactor", it only knows one other iFrame
+  // so we post to this one!
   var handler = function (event) {
-    console.log(event.data);
-    console.log("hello inside handler");
-    console.log(event);
+    var frames = document.getElementsByTagName("iframe"), frame, i;
+    for (i = 0; i < frames.length; i += 1) {
+      frame = frames[i];
+      if (myIndexOf(
+        event.source.location.pathname,
+        frame.getAttribute("src").split("?")[0]
+      ) < 0) {
+        frame.contentWindow.postMessage(event.data, window.location.href);
+      }
+    }
   };
 
   var mapUrl = function (url) {
