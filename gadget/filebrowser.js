@@ -61,6 +61,7 @@
 
   $(document).ready(function () {
     mapUrl(window.location);
+    window.top.postMessage({"type":"foo", "bar":"hello"}, window.location);
   });
 
 }(document, jQuery));

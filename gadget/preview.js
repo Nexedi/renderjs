@@ -10,11 +10,6 @@
 (function (document, $) {
   $(document).ready(function () {
 
-    localStorage.setItem("foo", JSON.stringify("bar"));
-    localStorage.setItem("bar", JSON.stringify("baz"));
-    sessionStorage.setItem("cous", JSON.stringify("cous"));
-    sessionStorage.setItem("deux", JSON.stringify("pommes"));
-
     var mapUrl = function (url) {
       var searchString = url.href.split("?")[1],
         fileToDisplay;

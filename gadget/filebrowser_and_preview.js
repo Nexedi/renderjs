@@ -15,6 +15,11 @@
     return null;
   };
 
+  var handler = function (event) {
+    console.log("hello inside handler");
+    console.log(event);
+  };
+
   var mapUrl = function (url) {
     var searchString = url.href.split("?")[1],
       fileToDisplay;
@@ -50,6 +55,12 @@
 
   $(document).ready(function () {
     mapUrl(window.location);
+
+    if (window.addEventListener){
+      window.addEventListener("message", handler, false)
+    } else {
+      window.attachEvent("onmessage", handler)
+    }
   });
 
 }(document, jQuery));
