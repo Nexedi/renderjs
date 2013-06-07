@@ -83,10 +83,6 @@
     } else {
       window.attachEvent("onmessage", handler)
     }
-//     $(window).on('hashchange', function() {
-//       console.log("LE HASH CHANGED");
-//     });
-//     $(window).trigger("hashchange");
   });
 
 }(document, jQuery));

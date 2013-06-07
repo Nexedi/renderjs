@@ -1,10 +1,3 @@
-// > grab URL with parameters of file to open
-// > call addGadget with those parameters?
-// > display a file from some storage (local/session)
-// > storage type will also be a parameter in the url?
-// return "browser://localstorage/foo"
-// file=browser%3A%2F%2Flocalstorage%2Ffoo
-
 /*global document, jQuery */
 "use strict";
 (function (document, $) {
@@ -24,44 +17,21 @@
   };
 
   var handler = function (event) {
-    ajaxGet(event.data, function(value, status, jqXHR) {
-      ajaxGet(value._links.enclosure.href, function(value, status, jqXHR) {
-        if (value === "") {
-          window.document.body.innerHTML = "file not found";
-        } else {
-          window.document.body.innerHTML = value;
-        }
-      });
-    });
-  }
-
-  var mapUrl = function (url) {
-    var searchString = url.href.split("?")[1],
-      fileToDisplay;
-
-    if (searchString) {
-      fileToDisplay = getParameter(searchString, "file");
-      if (fileToDisplay) {
-        $.ajax({
-          method: 'GET',
-          url: fileToDisplay,
-          context: $('body'),
-          error: function (jqXHR, textStatus, errorThrown) {
-            $(this).text(errorThrown);
-          },
-          success: function (value, textStatus, jqXHR) {
-            if (value === "") {
-              $(this).text("file not found");
-            } else {
-              $(this).text(value);
-            }
-          },
+    var type = event.data.type,
+      method = type ? type.split("/")[0] : undefined;
+    // prevent both renderJs and page events triggering on "run"
+    if (type === undefined || method !== "run") {
+      ajaxGet(event.data, function(value, status, jqXHR) {
+        ajaxGet(value._links.enclosure.href, function(value, status, jqXHR) {
+          if (value === "") {
+            window.document.body.innerHTML = "file not found";
+          } else {
+            window.document.body.innerHTML = value;
+          }
         });
-      }
-    } else {
-      $(this).text("no file to display");
+      });
     }
-  };
+  }
 
   var getParameter = function(searchString, paramName) {
     var i, val, params = searchString.split("&");
@@ -75,8 +45,58 @@
     return null;
   };
 
-  $(document).ready(function () {  
-    // mapUrl(window.location);
+  var mapUrl = function (searchString) {
+    var fileToDisplay = getParameter(searchString, "file"),
+      scope,
+      register,
+      service;
+
+    if (fileToDisplay) {
+      $.ajax({
+        method: 'GET',
+        url: fileToDisplay,
+        context: $('body'),
+        error: function (jqXHR, textStatus, errorThrown) {
+          $(this).text(errorThrown);
+        },
+        success: function (value, textStatus, jqXHR) {
+
+          scope = value._links.scope.href.slice(0,-1).split(/[/]+/).pop();
+          register = value._links.call.href
+            .replace("{method}", "register")
+            .replace("{scope}", scope )
+            .replace("{interaction}", "");
+          service = {
+            "type": "service/test",
+            "src": encodeURIComponent(window.location.href),
+            "rel": "preview",
+            "self": window.frameElement.id
+          };
+
+          $.ajax({
+            method: 'POST',
+            url: register,
+            context: $(this),
+            data: JSON.stringify(service),
+            error: function (jqXHR, textStatus, errorThrown) {
+              console.log("registration failed: " + errorThrown);
+            },
+            success: function (value, textStatus, jqXHR) {
+              // console.log("registration successful");
+            }
+          });
+        }
+      });
+    }
+  }
+
+  $(document).ready(function () {
+    var search = window.location.search;
+    if (search) {
+      mapUrl(search.slice(1));
+    } else {
+      $("body").text("No parameter found in url");
+    }
 
     if (window.addEventListener){
       window.addEventListener("message", handler, false)

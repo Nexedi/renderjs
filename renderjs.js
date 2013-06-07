@@ -9,6 +9,7 @@
 //    to publish their services
 // -> find a way to prevent a gadget from reloading a plugin that's already
 //    active on the page
+// -> for browser history, we would have to change the URL with a hash
 
 
 // DISCUSSION POINTS:
@@ -466,6 +467,8 @@
         "options": {
           // passing "options":options will procude a DataCloneError, so
           // this is the only way (it seems) to pass the options object.
+          // beware frameElement does not work in cors, so actually
+          // THIS NEEDS A FIX!
           "parentFrame": window.frameElement.getAttribute("id"),
           "id": options.id,
           "src": options.src,
@@ -509,6 +512,7 @@
       "directories": spec.src || [],
       "map": []
     };
+
     // listen for service postings to THIS renderJs instance
     if (window.addEventListener){
       window.addEventListener("message", priv.serviceHandler, false)
@@ -556,6 +560,8 @@
         priv.returnResult(event);
         break;
       }
+    } else {
+      // no matching type!
     }
   };
 
@@ -578,14 +584,79 @@
 
   // => run a service and post the result
   priv.runService = function (event) {
-    var result = window[event.data.service].apply(this, event.data.parameters);
+    var result;
 
-    window.top.postMessage({
-      "type": "result",
-      "result": result,
-      "trackingId" : event.data.trackingId,
-      "callbackId": event.data.callbackId,
-    }, event.origin);
+    // URL handling
+    if (event.data.url) {
+      // let's go
+      $.ajax({
+        url: event.data.parameters[0],
+        method: 'GET',
+        error: function (jqXHR, textStatus, errorThrown) {
+          console.log("could not run service/interaction: " + errorThrown);
+        },
+        success: function (value, textStatus, jqXHR) {
+          $.ajax({
+            method: 'GET',
+            url: value._links.enclosure.href,
+            context: $('body'),
+            error: function (jqXHR, textStatus, errorThrown) {
+              $(this).text(errorThrown);
+            },
+            success: function (value2, textStatus, jqXHR) {
+              // this should be a deferred callback....
+              if (value === "") {
+                window.document.body.innerHTML = "file not found";
+              } else {
+                window.document.body.innerHTML = value2;
+              }
+            }
+          });
+        }
+      });
+
+    } else {
+      result = window[event.data.service].apply(this, event.data.parameters);
+
+      // only callback if we have to - should also be done via AJAX
+      if (event.data.callbackId) {
+        window.top.postMessage({
+          "type": "result",
+          "result": result,
+          "trackingId" : event.data.trackingId,
+          "callbackId": event.data.callbackId,
+        }, event.origin);
+      }
+    }
+  };
+
+  // => construct an iFrame selector from an array of ids
+  priv.assembleSelectorForService = function (selector) {
+    var targetWindow;
+    // for plain nested gadgets (no iFrame/sandbox) this will return
+    // only an empty array
+    // for iFrames/sandbox, selector will be an array of ids from
+    // which we have to construct our window element like so:
+    // http://bit.ly/12m3wJD
+    // http://mzl.la/17EeDiN
+    // final selector should look like this:
+    // window.frames["3a6b8d97"].contentWindow
+    //   .frames["d63aca68"].contentWindow
+    //   .frames["foo"].contentWindow
+    if (selector.length === 0) {
+      targetWindow = window;
+    } else {
+      try {
+        targetWindow = selector.reduce(function(tgt, o) {
+          return tgt && o[1] ?
+            tgt.frames[0] :
+              tgt.frames[o[0]].contentWindow || tgt.frames[o[0]];
+        }, window);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    return targetWindow;
   };
 
   // => request a service provided by a gadget
@@ -595,10 +666,14 @@
       event.data.type.split("/")[1]
     ),
       selector,
-      targetWindow;
+      targetWindow,
+      options;
 
     if (callService) {
-      // services are stored by URL (not id), so we need to find the service
+      // services are stored by URL (not id), because if inside an iFrame
+      // we cannot access the frame id, because of CORS.
+      // The only accessible parameter is the window.location.href URL, so
+      // services need to be stored with URL.
       // in our gadget tree by using the URL provided by the service...
       // and return an id path, so we can create a selector
       selector = priv.constructSelectorForService(
@@ -607,44 +682,41 @@
         []
       );
 
-      // for plain nested gadgets (no iFrame/sandbox) this will return
-      // only an empty array
-      // for iFrames/sandbox, selector will be an array of ids from
-      // which we have to construct our window element like so:
-      // http://bit.ly/12m3wJD
-      // http://mzl.la/17EeDiN
-      // final selector should look like this:
-      // window.frames["3a6b8d97"].contentWindow
-      //   .frames["d63aca68"].contentWindow
-      //   .frames["foo"].contentWindow
-      if (selector.length === 0) {
-        targetWindow = window;
-      } else {
-        try {
-          targetWindow = selector.reduce(function(tgt, o) {
-            return tgt && o[1] ?
-              tgt.frames[0] :
-                tgt.frames[o[0]].contentWindow || tgt.frames[o[0]];
-          }, window);
-        } catch (error) {
-          console.log(error);
-        }
-      }
-
-      // and request the service
-      targetWindow.postMessage({
+      options = {
         "type": "run",
         "trackingId": trackingId,
         "callbackId": event.data.callbackId,
         "service": event.data.service,
-        "parameters": event.data.parameters
-      }, event.origin);
+        "parameters": event.data.parameters,
+        "url": callService.url || undefined
+      }
+
+      // we should not directly postMessage...
+      if (callService.url === "") {
+        targetWindow = priv.assembleSelectorForService(selector);
+        targetWindow.postMessage(options, event.origin);
+      } else {
+        // we need the selector array to construct our targetWindow
+        // because we cannot pass a window object through an ajax call...
+        options.selector = selector;
+        // let's go
+        $.ajax({
+          url: callService.url,
+          method: 'POST',
+          data: JSON.stringify(options),
+          error: function (jqXHR, textStatus, errorThrown) {
+            console.log("call to targetWindow failed: " + errorThrown);
+          },
+//           success: function (value, textStatus, jqXHR) {
+//             console.log("call to targetWindow successful");
+//           }
+        });
+      }
     }
   };
 
   // => check whether a service is available
   priv.findServiceInMap = function (requestedService, scope) {
-    // scope... use for ???
     var i,
       service,
       passback = null;
@@ -652,7 +724,13 @@
     for (i = 0; i < that.gadgetService.map.length; i += 1) {
       service = that.gadgetService.map[i];
       if (service.rel === requestedService) {
-        passback = service;
+        if (scope) {
+          if (scope === service.scope) {
+            passback = service;
+          }
+        } else {
+          passback = service;
+        }
       }
     }
     return passback;
@@ -678,16 +756,6 @@
 
   // => register gadget in index and tree
   priv.registerGadget = function (data, options) {
-    // create index
-    if (that.gadgetIndex === undefined) {
-      priv.createGadgetIndex();
-    }
-
-    // create tree
-    if (that.gadgetTree === undefined) {
-      priv.createGadgetTree();
-    }
-
     // index ~ cache
     priv.addGadgetToIndex(data, options);
 
@@ -713,7 +781,8 @@
           options = {
             "rel": service[j].rel,
             "type": service[j].type,
-            "src": service[j].src || window.location.href.split("?")[0]
+            "src": service[j].src || window.location.href.split("?")[0],
+            "url": ""
           };
           $(root).addService(options);
         }
@@ -800,7 +869,8 @@
                 "src": element.getAttribute("src") ||
                   window.location.href.split("?")[0],
                 "type": element.getAttribute("type"),
-                "rel": element.getAttribute("rel")
+                "rel": element.getAttribute("rel"),
+                "url": ""
               });
             }
             break;
@@ -895,6 +965,12 @@
     // configuration or to retrieve the root when inside an iFrame
     var spec = priv.mapUrlString(window.location.search);
 
+    // create index
+    priv.createGadgetIndex();
+
+    // create tree
+    priv.createGadgetTree();
+
     // all instances of renderJs should have an serviceMap
     priv.createServiceMap(spec);
 
@@ -932,19 +1008,22 @@
       callback = deferred;
 
     // store callback to be retrieved by response handler
-    priv.trackCallback(callbackId, callback, callbackFunction);
+    if (callbackFunction) {
+      priv.trackCallback(callbackId, callback, callbackFunction);
+      // set a deferred, so the callback can run when everything is done
+      deferred.done(function(result, callbackFunction) {
+        if (callbackFunction) {
+          callbackFunction(result);
+        }
+      });
+      options.callbackId = callbackId;
+    }
 
     // set type
     if (options.type === undefined) {
       options.type = "request/any";
     }
 
-    deferred.done(function(result, callbackFunction) {
-      if (callbackFunction) {
-        callbackFunction(result);
-      }
-    });
-    options.callbackId = callbackId;
     window.top.postMessage(options, window.location.href);
   };
 
@@ -1088,7 +1167,18 @@
       browse_ss_file_regexp = /^browser:\/\/browse\/ss\/([\w\W]+)/,
       browse_ss_directory_regexp = /^browser:\/\/browse\/ss\//,
       plumb_regexp = /^browser:\/\/plumb\/([\w\W]+)\//,
-      key;
+
+      // internal API (scope, interaction are optional)
+      // child > parent = call/{method}/{scope}/{interaction}/
+      // parent > child = delegate/{method}/{scope}/{interaction}/
+      // gadget > global = request/{method}/{scope}/{interaction}/
+      call_regexp = /^browser:\/\/call\/([\w\W]+)\//,
+      delegate_regexp = /^browser:\/\/delegate\/([\w\W]+)\//,
+      request_regexp = /^browser:\/\/request\/([\w\W]+)\//,
+      // vars
+      key, config, provider, param, value, targetWindow;
+
+    // localStorage handler
     if (ls_regexp.test(this.url)) {
       key = ls_regexp.exec(this.url)[1];
       if (this.method === "POST") {
@@ -1130,6 +1220,7 @@
         'Content-Type': 'application/hal+json'
       }, JSON.stringify(response));
 
+    // Session storage handler
     } else if (ss_regexp.test(this.url)) {
       key = ss_regexp.exec(this.url)[1];
       if (this.method === "POST") {
@@ -1162,27 +1253,126 @@
           contents: [],
         }
       };
-
       for (var key in sessionStorage){
          response._links.contents.push({href: 'browser://browse/ss/' + key});
       }
-
       this.respond(200, {
         'Content-Type': 'application/hal+json'
       }, JSON.stringify(response));
 
 
     } else if (plumb_regexp.test(this.url)) {
+      console.log("PLUMB");
       key = plumb_regexp.exec(this.url)[1];
       if (this.method === "POST") {
         if (key === "parentwindow") {
-          // XXX hardcoded * necessarity to send in case of file URL
-          // Fix needed!!!
+          // as before...
           window.parent.postMessage(this.requestBody, "*");
           this.respond(204, {}, "");
         } else {
           this.respond(404, {}, "");
         }
+      } else {
+        this.respond(405, {}, "");
+      }
+
+
+    // this looks up requests inside renderJs and
+    // triggers the respective postMessage
+    // should we use the key here or not and maybe pass the scope
+    // as parameter of the service object?
+    } else if (request_regexp.test(this.url)) {
+      // key = request_regexp.exec(this.url)[1];
+      if (this.method === "POST") {
+        // if (key === "map") {
+          config = JSON.parse(this.requestBody);
+          var options = {
+            "type":"request/" + config.scope,
+            "service" : config.service,
+            "parameters": config.parameters
+          };
+          window.postMessage(options, "*");
+
+          this.respond(204, {}, "");
+        //} else {
+        //  this.respond(404, {}, "");
+        //}
+      } else {
+        this.respond(405, {}, "");
+      }
+
+    // this handles communication from child > parent
+    // using browser://call/{method}/{interaction/service}
+    } else if (call_regexp.test(this.url)) {
+      param = call_regexp.exec(this.url)[1].split("/")
+      key = param[0];
+      value = param[1];
+
+      if (this.method === "POST") {
+        if (key === "register") {
+          // still inside child frame
+          // add to tree, so lookup is possible when service is requested
+          config = JSON.parse(this.requestBody);
+          window.parent.postMessage({
+            "type": "tree/update",
+            "options": {
+              "id": config.self,
+              "src": config.src,
+              "children": []
+            }
+          }, "*");
+
+          // generate a url to be called once the service is requested
+          // this is a parent > child URL, so we delegate
+          // Need provider and rel here, because later we can remove
+          // from data being sent along with this URL
+          provider = config.self || "any";
+
+          // update config
+          config.url = 'browser://delegate/' + provider + '/' + config.rel
+          config.scope = value || "any";
+
+          // register service
+          window.parent.postMessage(config, "*");
+
+          this.respond(204, {}, "");
+
+        } else if (key === "service") {
+          // inside child frame, request service to be run
+          var sendToParent = "data://application/hal+json;base64," +
+            window.btoa(JSON.stringify({
+            _links: {
+              self: {href: this.url},
+              request: {href: this.requestBody}
+            }}));
+
+          window.parent.postMessage(sendToParent, "*");
+        } else {
+          this.respond(404, {}, "");
+        }
+      } else {
+        this.respond(405, {}, "");
+      }
+
+    // this handles communication from parent > child
+    // using browser://delegate/{window_id}/{interaction/service}
+    // the id is only to reconfirm, because for nested windows, we need
+    // to reconstruct the complate selector
+    } else if (delegate_regexp.test(this.url)) {
+      // key = delegate_regexp.exec(this.url)[1];
+      if (this.method === "POST") {
+//      if (key === "map") {
+          config = JSON.parse(this.requestBody);
+          // get the target
+          targetWindow = priv.assembleSelectorForService(config.selector);
+          // cleanup
+          delete config.selector;
+          // post, this will call both the internal and on page handler!
+          targetWindow.postMessage(config, "*");
+          this.respond(204, {}, "");
+//      } else {
+//        this.respond(404, {}, "");
+//      }
       } else {
         this.respond(405, {}, "");
       }
