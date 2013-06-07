@@ -1165,7 +1165,6 @@
       ss_regexp = /^browser:\/\/sessionstorage\/([\w\W]+)/,
       browse_ss_file_regexp = /^browser:\/\/browse\/ss\/([\w\W]+)/,
       browse_ss_directory_regexp = /^browser:\/\/browse\/ss\//,
-      plumb_regexp = /^browser:\/\/plumb\/([\w\W]+)\//,
 
       // internal API (scope, interaction are optional)
       // child > parent = call/{method}/{scope}/{interaction}/
@@ -1258,23 +1257,6 @@
       this.respond(200, {
         'Content-Type': 'application/hal+json'
       }, JSON.stringify(response));
-
-
-    } else if (plumb_regexp.test(this.url)) {
-      console.log("PLUMB");
-      key = plumb_regexp.exec(this.url)[1];
-      if (this.method === "POST") {
-        if (key === "parentwindow") {
-          // as before...
-          window.parent.postMessage(this.requestBody, "*");
-          this.respond(204, {}, "");
-        } else {
-          this.respond(404, {}, "");
-        }
-      } else {
-        this.respond(405, {}, "");
-      }
-
 
     // this looks up requests inside renderJs and
     // triggers the respective postMessage
