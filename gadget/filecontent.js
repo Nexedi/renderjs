@@ -9,12 +9,12 @@
   sessionStorage.setItem("schnick", "schnack");
 
   var setup = function () {
-    // this will have to run automatically should renderJs have an easy API
+    // not an easy API...
+    // can this be done automatically?
     var instance1 = "data://application/hal+json;base64," +
       window.btoa(JSON.stringify({
       _links: {
         self: {href: ''},
-        // not sure if scope should be passed as a link or JSON parameter
         scope: {href: 'browser://browse/ls/'},
         target: {href: 'preview_by_hash_change.html'},
         call: {href: ''}

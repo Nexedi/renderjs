@@ -817,8 +817,7 @@
           ),
           "sandbox" : priv.getAttribute(gadget, 'sandbox') || false,
           "iframe" : priv.getAttribute(gadget, 'iframe') || false,
-          "wrapper": gadget,
-          "directory": spec
+          "wrapper": gadget
         };
 
         // add gadget
@@ -904,7 +903,7 @@
         options.parent.replaceWith(newHTML);
       } else {
         newParentElement = options.parent;
-        $(newHTML).prependTo(options.parent);
+        $(newHTML).appendTo(options.parent);
       }
       if (callback) {
         callback();
@@ -931,7 +930,7 @@
         options.parent.replaceWith(newHTML);
       } else {
         newParentElement = options.parent;
-        $(newHTML).prependTo(options.parent);
+        $(newHTML).appendTo(options.parent);
       }
 
       // select iframe
@@ -1025,12 +1024,11 @@
     window.top.postMessage(options, window.location.href);
   };
 
-  // => load gadget
+  // => add a gadget
   that.addGadget = $.fn.addGadget = function (options) {
-    var addressArray = window.location.href.split("?"),
-      element = this[0];
+    var element = this[0];
 
-    // set parent
+    // check if we can remove the parent
     if (element === document || element === window || element === document.body) {
       options.parent = document.body;
       options.replaceParent = false;
@@ -1038,43 +1036,31 @@
       options.parent = this;
       options.replaceParent = true;
     }
+
     // set uuid
     if (options.id === undefined) {
       options.id = priv.generateUuid();
     }
-    // set directory (root)
-    // if no ?-param is available, we can only set to href
-    if (options.directory === undefined) {
-      if (addressArray.length > 1) {
-        options.directory = {
-          "root": priv.decodeURI(addressArray[1].split("=")[1])
-        };
-      } else {
-        options.directory = {
-          "root": that.gadgetService ?
-              that.gadgetService.root :
-              window.location.href
-        };
-      }
-    }
+
     // set offline
+
     // set cors
 
-    // LOADING
-    // module
+    // ======================== LOADING ========================
+    // module/requireJs
     if (options.module && require !== undefined) {
       require([priv.extractModuleName(options.src)], function (response) {
         priv.appendGadget(response, options);
       });
+
     // iFrame
     } else if (options.iframe) {
       priv.appendGadget(undefined, options);
-    // via Ajax (default)
+
+    // straight ajax (default)
     } else {
       $.ajax({
         url: options.src,
-        // not sure this is helpful or not
-        cache: true,
         method: options.method || "GET",
         success: function (data) {
           priv.appendGadget(data, options);

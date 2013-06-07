@@ -2,37 +2,6 @@
 "use strict";
 (function (document, $) {
 
-  var myIndexOf = function (path, contains) {
-    var len = path.length;
-    var wordLen = contains.length;
-    for(var i = 0; i < len; i++) {
-      var j = 0;
-      for(j = 0; j < wordLen; j++) {
-        if(path[i+j] != contains[j]) {
-            break;
-        }
-      }
-      if(j == wordLen) {
-        return i;
-      }
-    }
-    return -1;
-  };
-
-  var generateUuid = function () {
-    var S4 = function () {
-      /* 65536 */
-      var i, string = Math.floor(
-        Math.random() * 0x10000
-      ).toString(16);
-      for (i = string.length; i < 4; i += 1) {
-        string = "0" + string;
-      }
-      return string;
-    };
-    return S4() + S4();
-  };
-
   var getParameter = function(searchString, paramName) {
     var i, val, params = searchString.split("&");
 
@@ -106,22 +75,13 @@
           $(this).text(errorThrown);
         },
         success: function (value, textStatus, jqXHR) {
-          var access;
-          // detour to request, while working on the 2nd preview window
-          if (value._links.target.href === "preview_by_postmessage.html") {
-            access = "request";
-          } else {
-            access = "plumb";
-          }
 
           // merge again once working!
           browserAPI = "data://application/hal+json;base64," +
             window.btoa(JSON.stringify({
             _links: {
-              self: {href: value._links.scope.href},
+              self: {href:''},
               scope: {href: value._links.scope.href},
-              display: {href: 'browser://' + access + '/parentwindow/'},
-              // pass API-url so child can call parent
               call: {href:'browser://call/{method}/{scope}/{interaction}'}
             }}));
 
@@ -130,27 +90,18 @@
             _links: {
               self: {href:''},
               scope: {href: value._links.scope.href},
-              display: {href: ''},
               call: {href:'browser://call/{method}/{scope}/{interaction}'}
             }}));
 
-          $("body").html(
-            '<iframe src="' +
-            // XXX Hardcoded gadget to load
-            'filebrowser.html?file=' + browserAPI +
-            '" id="' + generateUuid() +
-            '">' +
-            '<p>Your browser does not support iframes.</p>' +
-            '</iframe">');
+          $("body").addGadget({
+            "src": 'filebrowser.html?file=' + browserAPI,
+            "iframe": "true"
+          });
 
-          $("body").append(
-            '<iframe src="' +
-            // XXX Hardcoded gadget to load
-            value._links.target.href + '?file=' + previewAPI +
-            '" id="' + generateUuid() +
-            '">' +
-            '<p>Your browser does not support iframes.</p>' +
-            '</iframe">');
+          $("body").addGadget({
+            "src": value._links.target.href + '?file=' + previewAPI,
+            "iframe": "true"
+          });
         }
       });
     } else {
