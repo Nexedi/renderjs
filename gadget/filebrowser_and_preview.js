@@ -88,17 +88,6 @@
           });
         }
       });
-
-//       var frames = document.getElementsByTagName("iframe"), frame, i;
-//       for (i = 0; i < frames.length; i += 1) {
-//         frame = frames[i];
-//         if (myIndexOf(
-//           event.source.location.pathname,
-//           frame.getAttribute("src").split("?")[0]
-//         ) < 0) {
-//           frame.contentWindow.postMessage(event.data, "*");
-//         }
-//       }
     }
   };
 

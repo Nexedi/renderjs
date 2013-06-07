@@ -914,15 +914,13 @@
       // find recursive services
       $(newParentElement).findService();
     } else {
-      // IFRAME handler
+      // =============== IFRAME  ==================
       newHTML = document.createElement("iframe");
-      newHTML.setAttribute(
-        "src",
-        options.src + "?base=" + priv.encodeURI(options.directory.root)
-      );
+      newHTML.setAttribute("src", options.src);
       newHTML.setAttribute("frameborder", 0);
       newHTML.setAttribute("seamless", "seamless");
       newHTML.setAttribute("id", options.id);
+      newHTML.innerHTML = '<p>Your browser does not support iframes.</p>'
 
       // append or replace
       if (options.wrapper) {
@@ -988,15 +986,15 @@
 
   // => publish a service to this instance (and root instance)
   that.addService = $.fn.addService = function (options) {
-    var adressArray = window.location.href.split("?"), targetUrl;
-    options.src = options.src || adressArray[0];
+    var addressArray = window.location.href.split("?"), targetUrl;
+    options.src = options.src || addressArray[0];
 
     // posts to URL passed (need for CORS?)
     // otherwise window.top.location.href) would also work
-    if (adressArray.length === 1) {
-      targetUrl = priv.decodeURI(adressArray[0]);
+    if (addressArray.length === 1) {
+      targetUrl = priv.decodeURI(addressArray[0]);
     } else {
-      targetUrl = priv.decodeURI(adressArray[1].split("=")[1]);
+      targetUrl = priv.decodeURI(addressArray[1].split("=")[1]);
     }
     window.top.postMessage(options, targetUrl);
   };
@@ -1029,10 +1027,11 @@
 
   // => load gadget
   that.addGadget = $.fn.addGadget = function (options) {
-    var adressArray = window.location.href.split("?");
+    var addressArray = window.location.href.split("?"),
+      element = this[0];
 
     // set parent
-    if (this[0] === document || this[0] === window) {
+    if (element === document || element === window || element === document.body) {
       options.parent = document.body;
       options.replaceParent = false;
     } else {
@@ -1046,9 +1045,9 @@
     // set directory (root)
     // if no ?-param is available, we can only set to href
     if (options.directory === undefined) {
-      if (adressArray.length > 1) {
+      if (addressArray.length > 1) {
         options.directory = {
-          "root": priv.decodeURI(adressArray[1].split("=")[1])
+          "root": priv.decodeURI(addressArray[1].split("=")[1])
         };
       } else {
         options.directory = {

@@ -1,10 +1,3 @@
-// > grab URL with parameters of file to open
-// > call addGadget with those parameters?
-// > display a file from some storage (local/session)
-// > storage type will also be a parameter in the url?
-// return "browser://localstorage/foo"
-// file=browser%3A%2F%2Flocalstorage%2Ffoo
-
 /*global document, jQuery */
 "use strict";
 (function (document, $) {
