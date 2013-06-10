@@ -489,13 +489,17 @@
   };
 
   // => interaction gadget and listener
-  // if initializing config is provided in the URL, we may have an src=[]
-  // of links to additional functional libraries (?), which should be
-  // available here. So we should load them.
+  // TODO: how to extend to include external HTML pages/external methods
   priv.createServiceMap = function (spec) {
+    var rootSrc = (spec === undefined || spec._links.self.href === "") ?
+        window.location.href : spec._links.self.href
+
+    // create service object
     that.gadgetService = {
-      "root": spec.root || window.location.href,
-      "directories": spec.src || [],
+      "root": rootSrc,
+      // directories should be links to external HTML pages containing
+      // <links> with callable methods?
+      "directories": [],
       "map": []
     };
 
@@ -983,89 +987,69 @@
   // => initialize
   priv.initialize = function () {
 
-    // both root and iFrame try to map location.search, either for initial
-    // configuration or to retrieve the root when inside an iFrame
-    var spec = that.mapUrl(window.location.search);
+    // check if root gadget URL has ?-configuration attached
+    that.mapUrl(window.location.search, function (spec) {
 
-    // create index
-    priv.createGadgetIndex();
+      // all renderJs instances have a serviceMap = directory of available methods
+      priv.createServiceMap(spec);
 
-    // create tree
-    priv.createGadgetTree();
+      // trigger => find HTML gadgets in root document
+      priv.findGadgetinHTML(spec);
 
-    // all instances of renderJs should have an serviceMap
-    priv.createServiceMap(spec);
+      // trigger => find HTML coded interactions in root document
+      priv.findServiceInHTML(spec);
 
-    // trigger => find HTML gadgets in root document
-    priv.findGadgetinHTML(spec);
+      // create index
+      priv.createGadgetIndex();
 
-    // trigger => find HTML coded interactions in root document
-    priv.findServiceInHTML(spec);
+      // create tree
+      priv.createGadgetTree();
+
+    }, true);
 
     // expose API
     window.renderJs = that;
   };
 
-  // ================ public API (call on renderJs and $(elem) ===========
-  // => mapURL searchstring
-  that.mapUrl = function (spec, internal) {
-    var key,
-      obj,
-      parsedJSON,
-      configuration = {};
+  // => map data-URL internally
+  priv.mapUrlInternal = function (queryString) {
+    var dataUrl = queryString.slice(1).split("=")[1];
 
-    if (spec !== undefined && spec !== "") {
-      obj = spec.slice(1).split("=");
-      key = obj[0];
-
-      switch (key) {
-      case "string":
-      case "url":
-        configuration.root = priv.decodeURI(obj[1]);
-        break;
-      case "json":
-        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
-        configuration.root = parsedJSON.root || window.location.pathname;
-        configuration.src = priv.decodeURIArray(parsedJSON.src) || [];
-        break;
-      case "hal":
-        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
-        configuration.root = parsedJSON._links.self || window.location.pathname;
-        configuration.src = priv.decodeURIArray(parsedJSON.src) || [];
-        break;
-      case "file":
-        $.ajax({
-          method: 'GET',
-          url: obj[1],
-          context: $('body'),
-          fail: function (jqXHR, textStatus, errorThrown) {
-            configuration = {
-              "errorThrown":errorThrown,
-              "textStatus": textStatus,
-              "jqXHR": jqXHR
-            }
-          },
-          done: function (value, textStatus, jqXHR) {
-            configuration = {
-              "value":value,
-              "textStatus": textStatus,
-              "jqXHR": jqXHR
-            }
-          }
-        });
-        break;
-      default:
-        // no allowable-type - ignore configuration-parameter!
-        configuration.root = window.location.href;
-        configuration.src = [];
-        break;
-      }
-    } else {
-      configuration = {"root": window.location.href};
-    }
-    return configuration;
+    return $.ajax({
+      method: 'GET',
+      url: dataUrl,
+      context: $('body')
+    })
+    .fail(function (jqXHR, textStatus, errorThrown) {
+      return jqXHR, textStatus, errorThrown;
+    })
+    .then(function(value, textStatus, jqXHR) {
+      // preprocessing, if needed
+      return value, textStatus, jqXHR;
+    });
   };
-  
+
+  // => "global" errorHandler
+  priv.errorHandler = function (message, internal) {
+    return (internal === true) ? undefined : message +" specified", "405", {};
+  };
+
+  // ================ public API (call on renderJs and $(elem) ===========
+
+  // => public API to map a URL via Ajax and run the result through a callback
+  that.mapUrl = function (url, callback, internal) {
+    var queryString = typeof url === "string" ? url : url.search;
+    if (queryString) {
+      priv.mapUrlInternal(queryString).done(
+        callback ? callback : priv.errorHandler("no callback", internal)
+      );
+    } else {
+      // we still need to run a callback, if only internally?
+      internal ? (callback ? callback() : priv.errorHandler("no callback")) :
+        priv.errorHandler("no query parameter")
+    }
+  };
+
   // => publish a service to this instance (and root instance)
   that.addService = $.fn.addService = function (options) {
     var addressArray = window.location.href.split("?"), targetUrl;
@@ -1247,28 +1231,6 @@
     // {command}/{method}/{scope}/{interaction}/
     var internalRequest = priv.mapBrowserURL(this.url);
 
-    if (internalRequest.command === "call") {
-//       if (this.method === "POST") {
-// 
-//       } else {
-//         this.respond(405, {}, "");
-//       }
-    } else if (internalRequest.command === "delegate") {
-//       if (this.method === "POST") {
-// 
-//       } else {
-//         this.respond(405, {}, "");
-//       }
-    } else if (internalRequest.command === "request") {
-//       if (this.method === "POST") {
-// 
-//       } else {
-//         this.respond(405, {}, "");
-//       }
-    } else {
-//       this.respond(404, {}, "");
-    }
-
 
     // =================== previous ====================
     // localStorage handler
@@ -1389,17 +1351,6 @@
           // still inside child frame
           // add to tree, so lookup is possible when service is requested
           config = JSON.parse(this.requestBody);
-//           // we don't need this here!
-//           // but first get the internal router to work, so we only
-//           // handle data-uris
-//           window.parent.postMessage({
-//             "type": "tree/update",
-//             "options": {
-//               "id": config.self,
-//               "src": config.src,
-//               "children": []
-//             }
-//           }, "*");
 
           // generate a url to be called once the service is requested
           // this is a parent > child URL, so we delegate
