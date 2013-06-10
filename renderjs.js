@@ -1029,24 +1029,24 @@
     });
   };
 
-  // => "global" errorHandler
-  priv.errorHandler = function (message, internal) {
-    return (internal === true) ? undefined : message +" specified", "405", {};
-  };
-
   // ================ public API (call on renderJs and $(elem) ===========
 
   // => public API to map a URL via Ajax and run the result through a callback
   that.mapUrl = function (url, callback, internal) {
     var queryString = typeof url === "string" ? url : url.search;
+
     if (queryString) {
-      priv.mapUrlInternal(queryString).done(
-        callback ? callback : priv.errorHandler("no callback", internal)
-      );
+      priv.mapUrlInternal(queryString)
+        .done(callback ? callback : ("no callback specified", "405", {}));
     } else {
-      // we still need to run a callback, if only internally?
-      internal ? (callback ? callback() : priv.errorHandler("no callback")) :
-        priv.errorHandler("no query parameter")
+      // we still need to run a callback if specified
+      if (callback) {
+        callback(internal ? undefined :
+          {"error": "no querystring specified"}, "405", {}
+        );
+      } else {
+        return "no callback specified", "405", {};
+      }
     }
   };
 
