@@ -373,39 +373,22 @@
     }
   };
 
-  // => mapping URL query-string (configuration
-  priv.mapUrlString = function (spec) {
-    var key, obj, parsedJSON, config = {};
-    if (spec !== undefined && spec !== "") {
-      obj = spec.slice(1).split("=");
-      key = obj[0];
-      switch (key) {
-      case "string":
-      case "url":
-        config.root = priv.decodeURI(obj[1]);
-        break;
-      case "json":
-        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
-        config.root = parsedJSON.root || window.location.pathname;
-        config.src = priv.decodeURIArray(parsedJSON.src) || [];
-        break;
-      case "hal":
-        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
-        config.root = parsedJSON._links.self || window.location.pathname;
-        config.src = priv.decodeURIArray(parsedJSON.src) || [];
-        break;
-      case "data":
-        break;
-      default:
-        // no allowable-type - ignore config-parameter!
-        config.root = window.location.href;
-        config.src = [];
-        break;
-      }
-    } else {
-      config = {"root": window.location.href};
+  // => map internal browser:// urls
+  // API browser://{command}/{method}/{scope}/{interaction}/
+  priv.mapBrowserURL = function (url) {
+    var api = ['command', 'method', 'scope', 'interaction'], internalRequest;
+    try {
+      internalRequest = url.split("/")
+        .filter( String )
+        .splice(1)
+        .reduce( function( previous, current, index ){
+          previous[ api[index] ] = current;
+          return previous;
+        },{});
+    } catch(e) {
+      console.log("internal URL could not be mapped");
     }
-    return config;
+    return internalRequest;
   };
 
   // => create Index of gadgets on page (excluding gadgets in iFrame/Sandbox)
@@ -439,7 +422,7 @@
     if (options.parentFrame === undefined) {
       treeNode.children.unshift({
         "id": options.id,
-        "src": options.src,
+        "src": priv.makeUrlAbsolute(priv.decodeURI(options.src)),
         "foreign" : priv.isForeignUrl(options.src),
         "children": []
       });
@@ -482,6 +465,8 @@
   priv.constructSelectorForService = function (src, node, selector) {
     var i, result;
     selector = selector || [];
+    // the error is in the gadgetTree!
+
     // we must not push "root" into the array to make reduce work
     if (node.id !== "root") {
       selector.push([node.id, node.foreign]);
@@ -489,6 +474,7 @@
     if (node.src === src) {
       return selector;
     }
+
     for (i = 0; i < node.children.length; i += 1) {
       result = priv.constructSelectorForService(
         src,
@@ -522,9 +508,9 @@
   };
 
   // => manages all interactions (listens to incoming postMessages)
-  // need a switch, because only one "message" listener can be set
   priv.serviceHandler = function (event) {
-    var type = event.data.type, route, trackingId;
+
+    var type = event.data.type, route;
     if (type) {
       route = event.data.type.split("/");
 
@@ -535,20 +521,11 @@
 
       // route
       switch (route[0]) {
-      case "service":
+      case "register":
         priv.registerNewService(event);
         break;
       case "request":
-        trackingId = priv.generateUuid();
-        // track this request, so we know where to send the response
-        priv.trackRequest(trackingId, event.originalTarget);
-        // request the service
-        priv.requestServiceFromGadget(event, trackingId);
-        break;
-      case "tree":
-        if (route[1] === "update") {
-          priv.addGadgetToTree(event.data.options, that.gadgetTree);
-        }
+        priv.requestServiceFromGadget(event);
         break;
       case "run":
         priv.runService(event);
@@ -559,9 +536,48 @@
       case "reply":
         priv.returnResult(event);
         break;
+      // not part of the request-response cylce, but if the gadgetTree
+      // is global at the top, we need to inform the top about gadgets to add
+      case "tree":
+        if (route[1] === "update") {
+          priv.addGadgetToTree(event.data.options, that.gadgetTree);
+        }
+        break;
       }
     } else {
-      // no matching type!
+      // switch to using URLs here
+      // global get!
+      $.ajax({
+        method: "GET",
+        url: event.data,
+        error: function (jqXHR, textStatus, errorThrown) {
+          console.log("request failed: " + errorThrown);
+        },
+        success: function (value, textStatus, jqXHR) {
+          // switch here!
+
+          var scope = value._links.self.href.split("/").slice(0,-1).pop(),
+          service = {
+            "service" : value._links.self.href.split(/[/]+/).pop(),
+            "parameters" : [value._links.request.href],
+            "scope" : scope
+          },
+          request = 'browser://request/' + scope + '/';
+
+          $.ajax({
+            method: "POST",
+            url: request,
+            context: $(this),
+            data: JSON.stringify(service),
+            error: function (jqXHR, textStatus, errorThrown) {
+              console.log("request for service failed");
+            },
+            //  success: function () {
+            //    console.log("service requested from renderJS");
+            //  }
+          });
+        }
+      });
     }
   };
 
@@ -660,14 +676,18 @@
   };
 
   // => request a service provided by a gadget
-  priv.requestServiceFromGadget = function (event, trackingId) {
+  priv.requestServiceFromGadget = function (event) {
     var callService = priv.findServiceInMap(
       event.data.service,
       event.data.type.split("/")[1]
     ),
       selector,
       targetWindow,
-      options;
+      options,
+      trackingId = priv.generateUuid();
+
+    // track this request, so we know where to send the response
+    priv.trackRequest(trackingId, event.originalTarget);
 
     if (callService) {
       // services are stored by URL (not id), because if inside an iFrame
@@ -677,7 +697,7 @@
       // in our gadget tree by using the URL provided by the service...
       // and return an id path, so we can create a selector
       selector = priv.constructSelectorForService(
-        callService.src,
+        priv.decodeURI(callService.src),
         that.gadgetTree,
         []
       );
@@ -750,6 +770,7 @@
       }
     }
     if (addInteraction) {
+      delete event.data.type;
       that.gadgetService.map.push(event.data);
     }
   };
@@ -769,6 +790,7 @@
       services,
       service,
       options,
+      src,
       i,
       j;
 
@@ -778,10 +800,11 @@
       for (i = 0; i < services.length; i += 1) {
         service = JSON.parse(priv.getAttribute(services[i], 'service'));
         for (j = 0; j < service.length; j += 1) {
+          src = service[j].src || window.location.href.split("?")[0];
           options = {
             "rel": service[j].rel,
-            "type": service[j].type,
-            "src": service[j].src || window.location.href.split("?")[0],
+            "type": service[j].type || "register/any",
+            "src": priv.makeUrlAbsolute(priv.decodeURI(src)),
             "url": ""
           };
           $(root).addService(options);
@@ -837,7 +860,8 @@
       cleanedString,
       content,
       i,
-      element;
+      element,
+      src;
 
     // update gadgetIndex
     priv.registerGadget(gadgetData, options);
@@ -863,10 +887,12 @@
           element = content[i];
           switch (element.tagName) {
           case "LINK":
-            if (element.getAttribute("type").split("/")[0] === "service") {
+            if (element.getAttribute("type").split("/")[0] === "register") {
+              // need to make sure we store absolute URLs for services, too!
+              src = element.getAttribute("src") ||
+                window.location.href.split("?")[0];
               $(element).addService({
-                "src": element.getAttribute("src") ||
-                  window.location.href.split("?")[0],
+                "src": priv.makeUrlAbsolute(priv.decodeURI(src)),
                 "type": element.getAttribute("type"),
                 "rel": element.getAttribute("rel"),
                 "url": ""
@@ -960,7 +986,7 @@
 
     // both root and iFrame try to map location.search, either for initial
     // configuration or to retrieve the root when inside an iFrame
-    var spec = priv.mapUrlString(window.location.search);
+    var spec = that.mapUrl(window.location.search);
 
     // create index
     priv.createGadgetIndex();
@@ -982,11 +1008,69 @@
   };
 
   // ================ public API (call on renderJs and $(elem) ===========
+  // => mapURL searchstring
+  that.mapUrl = function (spec, internal) {
+    var key,
+      obj,
+      parsedJSON,
+      configuration = {};
 
+    if (spec !== undefined && spec !== "") {
+      obj = spec.slice(1).split("=");
+      key = obj[0];
+
+      switch (key) {
+      case "string":
+      case "url":
+        configuration.root = priv.decodeURI(obj[1]);
+        break;
+      case "json":
+        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
+        configuration.root = parsedJSON.root || window.location.pathname;
+        configuration.src = priv.decodeURIArray(parsedJSON.src) || [];
+        break;
+      case "hal":
+        parsedJSON = JSON.parse(priv.decodeURI(obj[1]));
+        configuration.root = parsedJSON._links.self || window.location.pathname;
+        configuration.src = priv.decodeURIArray(parsedJSON.src) || [];
+        break;
+      case "file":
+        $.ajax({
+          method: 'GET',
+          url: obj[1],
+          context: $('body'),
+          fail: function (jqXHR, textStatus, errorThrown) {
+            configuration = {
+              "errorThrown":errorThrown,
+              "textStatus": textStatus,
+              "jqXHR": jqXHR
+            }
+          },
+          done: function (value, textStatus, jqXHR) {
+            configuration = {
+              "value":value,
+              "textStatus": textStatus,
+              "jqXHR": jqXHR
+            }
+          }
+        });
+        break;
+      default:
+        // no allowable-type - ignore configuration-parameter!
+        configuration.root = window.location.href;
+        configuration.src = [];
+        break;
+      }
+    } else {
+      configuration = {"root": window.location.href};
+    }
+    return configuration;
+  };
+  
   // => publish a service to this instance (and root instance)
   that.addService = $.fn.addService = function (options) {
     var addressArray = window.location.href.split("?"), targetUrl;
-    options.src = options.src || addressArray[0];
+    options.src = priv.makeUrlAbsolute(priv.decodeURI(options.src)) || addressArray[0];
 
     // posts to URL passed (need for CORS?)
     // otherwise window.top.location.href) would also work
@@ -995,6 +1079,7 @@
     } else {
       targetUrl = priv.decodeURI(addressArray[1].split("=")[1]);
     }
+    // TODO: this should be a URL link
     window.top.postMessage(options, targetUrl);
   };
 
@@ -1152,16 +1237,41 @@
       browse_ss_file_regexp = /^browser:\/\/browse\/ss\/([\w\W]+)/,
       browse_ss_directory_regexp = /^browser:\/\/browse\/ss\//,
 
-      // internal API (scope, interaction are optional)
-      // child > parent = call/{method}/{scope}/{interaction}/
-      // parent > child = delegate/{method}/{scope}/{interaction}/
-      // gadget > global = request/{method}/{scope}/{interaction}/
       call_regexp = /^browser:\/\/call\/([\w\W]+)\//,
       delegate_regexp = /^browser:\/\/delegate\/([\w\W]+)\//,
       request_regexp = /^browser:\/\/request\/([\w\W]+)\//,
-      // vars
+
       key, config, provider, param, value, targetWindow;
 
+    // =================== cleanup ====================
+    // internal API
+    // {command}/{method}/{scope}/{interaction}/
+    var internalRequest = priv.mapBrowserURL(this.url);
+
+    if (internalRequest.command === "call") {
+//       if (this.method === "POST") {
+// 
+//       } else {
+//         this.respond(405, {}, "");
+//       }
+    } else if (internalRequest.command === "delegate") {
+//       if (this.method === "POST") {
+// 
+//       } else {
+//         this.respond(405, {}, "");
+//       }
+    } else if (internalRequest.command === "request") {
+//       if (this.method === "POST") {
+// 
+//       } else {
+//         this.respond(405, {}, "");
+//       }
+    } else {
+//       this.respond(404, {}, "");
+    }
+
+
+    // =================== previous ====================
     // localStorage handler
     if (ls_regexp.test(this.url)) {
       key = ls_regexp.exec(this.url)[1];
@@ -1280,14 +1390,17 @@
           // still inside child frame
           // add to tree, so lookup is possible when service is requested
           config = JSON.parse(this.requestBody);
-          window.parent.postMessage({
-            "type": "tree/update",
-            "options": {
-              "id": config.self,
-              "src": config.src,
-              "children": []
-            }
-          }, "*");
+//           // we don't need this here!
+//           // but first get the internal router to work, so we only
+//           // handle data-uris
+//           window.parent.postMessage({
+//             "type": "tree/update",
+//             "options": {
+//               "id": config.self,
+//               "src": config.src,
+//               "children": []
+//             }
+//           }, "*");
 
           // generate a url to be called once the service is requested
           // this is a parent > child URL, so we delegate
@@ -1300,11 +1413,11 @@
           config.scope = value || "any";
 
           // register service
-          window.parent.postMessage(config, "*");
+          window.top.postMessage(config, "*");
 
           this.respond(204, {}, "");
 
-        } else if (key === "service") {
+        } else if (key === "request") {
           // inside child frame, request service to be run
           var sendToParent = "data://application/hal+json;base64," +
             window.btoa(JSON.stringify({
@@ -1313,7 +1426,7 @@
               request: {href: this.requestBody}
             }}));
 
-          window.parent.postMessage(sendToParent, "*");
+          window.top.postMessage(sendToParent, "*");
         } else {
           this.respond(404, {}, "");
         }
