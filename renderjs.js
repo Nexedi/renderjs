@@ -11,35 +11,6 @@
 //    active on the page
 // -> for browser history, we would have to change the URL with a hash
 
-
-// DISCUSSION POINTS:
-// (1)
-// (2) If not used for interactions or routing, what's the purpose of
-//     gadgetIndex?
-// (3) Do we dumb-store in the index or perform some sort of validation
-//     before adding a gadget to an index?
-// (4)
-// (5) Should findGadget() = find recursive gadgets, also work with a single
-//     gadget id, like findGadget({"id":"1ewnel73"}), I guess not as we
-//     are using random uuids internally only
-// (6)
-// (7)
-// (8)
-// (9) When hard-coding services (see content.html), the "url" parameter can
-//     be omitted which would default to current iFrame (window) or root?
-// (10)
-// (11)is passing the root URL through the URL a security vulnerablity?
-// (12)should findGadget and findService be API methods? They will scan the
-//     DOM for services/gadgets, but this should actually be done (and is done)
-//     automatically
-// (13)we need to use an id to identify <frames> on a page, currently set as
-//     uuid by renderJs. We could also use data-id or remove the id and try
-//     to match by src (url), but this will be worse in terms of performance
-// (14)what do to about service parameters. A service that requires parameters
-//     a and b passed to return c should somewhere also specify this. Do we
-//     need a service JSON/HAL API? or where should this information be made
-//     availabel
-
 // Info:
 // iframe communication:
 // http://bit.ly/11gjl1e
@@ -66,7 +37,7 @@
   var priv = {},
     that = {};
 
-  // ==================  utility methods ==================
+  // ==================  helpers (needed) ==================
 
   // extend $.deferred to allow multiple calls and resolves
   // thx router.js
@@ -145,6 +116,8 @@
   priv.removeWhiteSpace = /\s+/mg;
   priv.removeWhiteSpaceBetweenElements = />\s+</mg;
 
+  // ================ ===== helpers (remove asap) ============================
+  // TODO: make renderJs work without these! 
   // => convert all URLs to absolute URLs
   // thx JQM - http://code.jquery.com/mobile/latest/jquery.mobile.js
 
@@ -1031,7 +1004,14 @@
 
   // ================ public API (call on renderJs and $(elem) ===========
 
-  // => public API to map a URL via Ajax and run the result through a callback
+  /**
+   * convert an url with ?file=base64 into object
+   * @method mapUrl
+   * @param  {string} url/searchstring > window.location.search
+   * @param  {function} callback
+   * @param  {boolean} internal > if function was called internally
+   * @return {div} ajax data|jqXHR, textStatus, jqXHR|errorThrown | undefined
+   */
   that.mapUrl = function (url, callback, internal) {
     var queryString = typeof url === "string" ? url : url.search;
 
@@ -1050,23 +1030,33 @@
     }
   };
 
-  // => publish a service to this instance (and root instance)
+  /**
+   * add a service to the parent (and root) renderJs.gadgetService.map
+   * @method addService
+   * @param  {object} options > addService will be called internally, too!!
+   */
   that.addService = $.fn.addService = function (options) {
     var addressArray = window.location.href.split("?"), targetUrl;
     options.src = priv.makeUrlAbsolute(priv.decodeURI(options.src)) || addressArray[0];
 
     // posts to URL passed (need for CORS?)
     // otherwise window.top.location.href) would also work
+    // TODO: clean this up
     if (addressArray.length === 1) {
       targetUrl = priv.decodeURI(addressArray[0]);
     } else {
       targetUrl = priv.decodeURI(addressArray[1].split("=")[1]);
     }
-    // TODO: this should be a URL link
+    // TODO: make this a link, ajaxPOST, which will then be called from dispatch()
     window.top.postMessage(options, targetUrl);
   };
 
-  // => request a service to be run
+  /**
+   * request a service to be run
+   * @method addService
+   * @param  {options} options identifying service and parameters
+   * @param  {function} callback, stored in $.deferred(!) to allow firing a postMessage returns answer
+   */
   that.requestService = $.fn.requestService = function (options, callbackFunction) {
     var deferred = new $.StatelessDeferred(),
       callbackId = priv.generateUuid(),
@@ -1089,10 +1079,15 @@
       options.type = "request/any";
     }
 
+    // TODO: make this a link, ajaxPOST, which will then be called from dispatch()
     window.top.postMessage(options, window.location.href);
   };
 
-  // => add a gadget
+  /**
+   * add a gadget to the DOM
+   * @method addGadget
+   * @param  {options} options > addGadget will be called internally, too!!
+   */
   that.addGadget = $.fn.addGadget = function (options) {
     var element = this[0];
 
@@ -1114,18 +1109,18 @@
 
     // set cors
 
-    // ======================== LOADING ========================
-    // module/requireJs
+    // ======================== gadget loading ========================
+    // module/requireJs (nothing done)
     if (options.module && require !== undefined) {
       require([priv.extractModuleName(options.src)], function (response) {
         priv.appendGadget(response, options);
       });
 
-    // iFrame
+    // iFrame (working)
     } else if (options.iframe) {
       priv.appendGadget(undefined, options);
 
-    // straight ajax (default)
+    // straight ajax (default, working)
     } else {
       $.ajax({
         url: options.src,
@@ -1140,7 +1135,11 @@
     }
   };
 
-  // => find gadgets inside a newly added gadget
+  /**
+   * recursively find hardcoded gadgets
+   * @method findGadget
+   * @param  {object} sentRoot object in which new gadgets should be found
+   */
   that.findGadget = $.fn.findGadget = function (sentRoot) {
     var root = sentRoot || this,
       spec = {};
@@ -1153,7 +1152,11 @@
     priv.findGadgetinHTML(spec, root);
   };
 
-  // => recursive call - find services inside newly added gadget
+  /**
+   * recursively find hardcoded services/methods
+   * @method findService
+   * @param  {object} sentRoot object in which new services should be found
+   */
   that.findService = $.fn.findService = function (sentRoot) {
     var root = sentRoot || this,
       spec = {};
@@ -1166,20 +1169,23 @@
     priv.findServiceInHTML(spec, root);
   };
 
-  // ==================  ENTRY =============
-  // => start here
+
+  // ======================== entry point ========================
   // don't use doc.ready, but otherwise cannot load references to elements in
   // body from <SCRIPT> in <HEAD>
   $(document).ready(function() {
     // prevent renderJs reloads from different URLs!
     // this does not solve the problem of re-requesting dependencies
     // with ?timestamp=_123241231231 when injecting elements into a page
-    // without iFrame
+    // with plain AJAX!
     if (window.renderJs === undefined) {
       priv.initialize();
     }
   });
 
+
+  // ======================== stuff done with Romain ========================
+  // TODO: integrate
   //////////////////////////////////////////////
   // Fake xhr to access local resource
   //////////////////////////////////////////////
