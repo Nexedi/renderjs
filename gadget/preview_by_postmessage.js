@@ -2,20 +2,6 @@
 "use strict";
 (function (document, $) {
 
-  var ajaxGet = function (src, cb) {
-    $.ajax({
-      method: 'GET',
-      url: src,
-      context: $('body'),
-      error: function (jqXHR, textStatus, errorThrown) {
-        $(this).text(errorThrown);
-      },
-      success: function (value, textStatus, jqXHR) {
-        cb(value, textStatus, jqXHR);
-      }
-    });
-  };
-
   var getParameter = function(searchString, paramName) {
     var i, val, params = searchString.split("&");
 
