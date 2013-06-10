@@ -16,23 +16,6 @@
     });
   };
 
-  var handler = function (event) {
-    var type = event.data.type,
-      method = type ? type.split("/")[0] : undefined;
-    // prevent both renderJs and page events triggering on "run"
-    if (type === undefined || method !== "run") {
-      ajaxGet(event.data, function(value, status, jqXHR) {
-        ajaxGet(value._links.enclosure.href, function(value, status, jqXHR) {
-          if (value === "") {
-            window.document.body.innerHTML = "file not found";
-          } else {
-            window.document.body.innerHTML = value;
-          }
-        });
-      });
-    }
-  }
-
   var getParameter = function(searchString, paramName) {
     var i, val, params = searchString.split("&");
 
@@ -102,12 +85,6 @@
       mapUrl(search.slice(1));
     } else {
       $("body").text("No parameter found in url");
-    }
-
-    if (window.addEventListener){
-      window.addEventListener("message", handler, false)
-    } else {
-      window.attachEvent("onmessage", handler)
     }
   });
 

@@ -509,7 +509,6 @@
 
   // => manages all interactions (listens to incoming postMessages)
   priv.serviceHandler = function (event) {
-
     var type = event.data.type, route;
     if (type) {
       route = event.data.type.split("/");

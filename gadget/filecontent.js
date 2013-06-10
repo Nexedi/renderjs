@@ -9,22 +9,19 @@
   sessionStorage.setItem("schnick", "schnack");
 
   var setup = function () {
-    // not an easy API...
-    // can this be done internally?
 
-    // TODO:
-    // "call" default API need not be passed,
-    // "self" can be added automatically
-    // "scope" (previous "storage") don't like... too gadget-specific?
-    // "target" (previous "display") don't like, as above
+    // TODO: I don't like scope/target for passing too specific information
+    // like scope = which storage to use and target = which file to load in
+    // the next target
+    // TODO: Should be in window.location.href, not declared here
+    // TODO: how to pass multiple instances of _links? allow at all?
 
     var instance1 = "data://application/hal+json;base64," +
       window.btoa(JSON.stringify({
       _links: {
         self: {href: ''},
         scope: {href: 'browser://browse/ls/'},
-        target: {href: 'preview_by_hash_change.html'},
-        call: {href: ''}
+        target: {href: 'preview_by_hash_change.html'}
       }}));
 
     var instance2 = "data://application/hal+json;base64," +
@@ -32,8 +29,7 @@
       _links: {
         self: {href: ''},
         scope: {href: 'browser://browse/ss/'},
-        target: {href: 'preview_by_postmessage.html'},
-        call: {href: ''}
+        target: {href: 'preview_by_postmessage.html'}
       }}));
 
     $("body").addGadget({

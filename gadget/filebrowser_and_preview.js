@@ -70,12 +70,6 @@
     } else {
       $("body").text("No parameter found in url");
     }
-
-//     if (window.addEventListener){
-//       window.addEventListener("message", handler, false)
-//     } else {
-//       window.attachEvent("onmessage", handler)
-//     }
   });
 
 }(document, jQuery));
