@@ -1,6 +1,6 @@
 /*global document, jQuery */
-"use strict";
 (function (document, $) {
+  "use strict";
 
   // sample contents
   localStorage.setItem("foo", "bar");
@@ -10,7 +10,14 @@
 
   var setup = function () {
     // not an easy API...
-    // can this be done automatically?
+    // can this be done internally?
+
+    // TODO:
+    // "call" default API need not be passed,
+    // "self" can be added automatically
+    // "scope" (previous "storage") don't like... too gadget-specific?
+    // "target" (previous "display") don't like, as above
+
     var instance1 = "data://application/hal+json;base64," +
       window.btoa(JSON.stringify({
       _links: {

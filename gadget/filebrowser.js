@@ -36,7 +36,7 @@
             .replace("{scope}", scope )
             .replace("{interaction}", "");
           service = {
-            "type": "service/test",
+            "type": "register/any",
             "src": encodeURIComponent(window.location.href),
             "rel": "browse",
             "self": window.frameElement.id
@@ -69,7 +69,7 @@
             success: function (value2, textStatus, jqXHR) {
               var content_type = jqXHR.getResponseHeader("Content-Type") || "",
                 request = value._links.call.href
-                  .replace("{method}", "service")
+                  .replace("{method}", "request")
                   .replace("{scope}", scope )
                   .replace("{interaction}", "preview");
 

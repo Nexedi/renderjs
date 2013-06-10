@@ -67,7 +67,7 @@
             .replace("{scope}", scope )
             .replace("{interaction}", "");
           service = {
-            "type": "service/test",
+            "type": "register/any",
             "src": encodeURIComponent(window.location.href),
             "rel": "preview",
             "self": window.frameElement.id
@@ -85,6 +85,12 @@
               // console.log("registration successful");
             }
           });
+
+//           renderJs.addService(service, function (response, error) {
+//             console.log("registration happened");
+//             console.log(error);
+//             console.log(response);
+//           });
         }
       });
     }
