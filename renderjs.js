@@ -1,6 +1,6 @@
 /*! RenderJs v0.2  */
 /*global $, localStorage, jIO */
-/*jslint evil: true, indent: 2, maxerr: 3 */
+/*jslint evil: true, indent: 2, maxerr: 3, maxlen: 79 */
 "use strict";
 /*
  * RenderJs - Generic Gadget library renderer.
@@ -64,7 +64,8 @@ var RenderJs = (function () {
           RenderJs.bootstrap($('body'));
         }
         var root_gadget = RenderJs.GadgetIndex.getRootGadget();
-        if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND || RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
+        if (RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND ||
+            RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE) {
           // We might have a page without gadgets.
           // Be careful, right now we can be in this case because
           // asynchronous gadget loading is not finished
@@ -93,7 +94,8 @@ var RenderJs = (function () {
         var gadget_id, is_gadget;
         gadget_id = root.attr("id");
         is_gadget = root.attr("data-gadget") !== undefined;
-        // this will make RenderJs fire "ready" event when all gadgets are loaded.
+        // this will make RenderJs fire "ready" event when all
+        // gadgets are loaded.
         RenderJs.setReady(false);
         if (is_gadget && gadget_id !== undefined) {
           // bootstart root gadget only if it is indeed a gadget
@@ -129,7 +131,8 @@ var RenderJs = (function () {
          * Set gadget data and recursively load it in case it holds another
          * gadgets.
          */
-        // set current gadget as being loaded so gadget instance itself knows which gadget it is
+        // set current gadget as being loaded so gadget instance itself
+        // knows which gadget it is
         setSelfGadget(RenderJs.GadgetIndex.getGadgetById(gadget.attr("id")));
         gadget.append(data);
         // reset as no longer current gadget
@@ -141,12 +144,16 @@ var RenderJs = (function () {
       getSelfGadget: function () {
         /*
          * Get current gadget being loaded
-         * This function must be used with care as it relies on Javascript nature of being a single
-         * threaded application. Currently current gadget is set in a global RenderJs variable
-         * before its HTML is inserted into DOM and if multiple threads were running (which is not the case currently)
-         * this could lead to reace conditions and unreliable getSelfGadget results.
-         * Additionally this function is available only at gadget's script load time - i.e.
-         * it can't be used in after that calls. In this case gagdget can save this value internally.
+         * This function must be used with care as it relies on
+         * Javascript nature of being a single threaded application.
+         * Currently current gadget is set in a global RenderJs variable
+         * before its HTML is inserted into DOM and if multiple threads
+         * were running (which is not the case currently)
+         * this could lead to reace conditions and unreliable getSelfGadget
+         * results.
+         * Additionally this function is available only at gadget's script
+         * load time - i.e. it can't be used in after that calls.
+         * In this case gagdget can save this value internally.
          */
         return current_gadget;
       },
@@ -321,7 +328,8 @@ var RenderJs = (function () {
               }
             }
           });
-          // asynchronous update happens and respective thread will update status
+          // asynchronous update happens and respective thread will update
+          // status
           return true;
         }
         return false;
@@ -473,7 +481,8 @@ var RenderJs = (function () {
             visible_dom.removeClass("not_selected");
           },
 
-          addNewTabGadget: function (dom_id, gadget_id, gadget, gadget_data_handler,
+          addNewTabGadget: function (dom_id, gadget_id, gadget,
+                                     gadget_data_handler,
                                     gadget_data_source, bootstrap) {
             /*
              * add new gadget and render it
@@ -696,12 +705,16 @@ var RenderJs = (function () {
             */
             var dom_list, gadget_id;
             if (force === 1) {
-              // we explicitly want to re-init elements even if already this is done before
+              // we explicitly want to re-init elements even if already this
+              // is done before
               dom_list = $("div[data-gadget-connection]");
             } else {
-              // XXX: improve and save 'bound' on javascript representation of a gadget not DOM
+              // XXX: improve and save 'bound' on javascript representation
+              // of a gadget not DOM
               dom_list = $("div[data-gadget-connection]")
-                     .filter(function () { return $(this).data("bound") !== true; })
+                     .filter(function () {
+                  return $(this).data("bound") !== true;
+                })
                      .data('bound', true);
             }
             dom_list.each(function (index, element) {
@@ -812,7 +825,8 @@ var RenderJs = (function () {
 
       RouteGadget : (function () {
         /*
-         * A gadget that defines possible routes (i.e. URL changes) between gadgets.
+         * A gadget that defines possible routes (i.e. URL changes)
+         * between gadgets.
          */
         var route_list = [];
         return {
@@ -852,13 +866,15 @@ var RenderJs = (function () {
                 // default is 1 -i.e.first level
                 priority = 1;
               }
-              RenderJs.RouteGadget.add(gadget_route.source, handler_func, priority);
+              RenderJs.RouteGadget.add(gadget_route.source,
+                                       handler_func, priority);
             });
           },
 
           add: function (path, handler_func, priority) {
             /*
-             * Add a route between path (hashable) and a handler function (part of Gadget's API).
+             * Add a route between path (hashable) and a handler function
+             * (part of Gadget's API).
              */
             var body = $("body");
             body
