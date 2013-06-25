@@ -1,6 +1,6 @@
 # files
-RENDERJS		= renderjs.js
-RENDERJS_MIN		= renderjs.min.js
+RENDERJS = renderjs.js
+RENDERJS_MIN = renderjs.min.js
 
 include config.mk
 
