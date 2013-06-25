@@ -1,5 +1,5 @@
 /*! RenderJs v0.2  */
-/*global console, require, $, localStorage, document, jIO */
+/*global $, localStorage, jIO */
 /*jslint evil: true, indent: 2, maxerr: 3 */
 "use strict";
 /*
@@ -37,12 +37,6 @@ var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 * @default "true"
 */
 var RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE = true;
-
-// fallback for IE
-if (console === undefined || console.log === undefined) {
-  var console = {};
-  console.log = function () {};
-}
 
 /**
 Provides the base RenderJs class
