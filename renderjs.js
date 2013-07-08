@@ -1,17 +1,527 @@
 /*! RenderJs v0.2  */
-/*global $, localStorage, jIO */
+/*global $, jQuery, localStorage, jIO, window, document */
 /*jslint evil: true, indent: 2, maxerr: 3, maxlen: 79 */
 "use strict";
 /*
- * RenderJs - Generic Gadget library renderer.
+ * renderJs - Generic Gadget library renderer.
  * http://www.renderjs.org/documentation
  */
+
+(function (document, window, $) {
+
+  var gadget_model_dict = {},
+    gadget_scope_dict = {},
+    javascript_registration_dict = {},
+    stylesheet_registration_dict = {},
+    root_gadget,
+    rootrenderJS,
+    renderJS,
+    declareGadget,
+    declareJavascript,
+    methods;
+
+  function RenderJSGadget() {
+    this.title = "";
+    this.interface_list = [];
+    this.path = "";
+    this.html = "";
+    this.required_css_list = [];
+    this.required_js_list = [];
+  }
+
+  // Returns the list of gadget prototype
+  RenderJSGadget.prototype.getInterfaceList = function () {
+    var dfr = $.Deferred(),
+      gadget = this,
+      context = $(this);
+    setTimeout(function () {
+      dfr.resolveWith(context, [gadget.interface_list]);
+    });
+    return dfr.promise();
+  };
+
+  // Returns a list of CSS required by the gadget
+  RenderJSGadget.prototype.getRequiredCSSList = function () {
+    var dfr = $.Deferred(),
+      gadget = this,
+      context = $(this);
+    setTimeout(function () {
+      dfr.resolveWith(context, [gadget.required_css_list]);
+    });
+    return dfr.promise();
+  };
+
+  // Returns a list of JS required by the gadget
+  RenderJSGadget.prototype.getRequiredJSList = function () {
+    var dfr = $.Deferred(),
+      gadget = this,
+      context = $(this);
+    setTimeout(function () {
+      dfr.resolveWith(context, [gadget.required_js_list]);
+    });
+    return dfr.promise();
+  };
+
+  // Returns the path of the code of a gadget
+  RenderJSGadget.prototype.getPath = function () {
+    var dfr = $.Deferred(),
+      gadget = this,
+      context = $(this);
+    setTimeout(function () {
+      dfr.resolveWith(context, [gadget.path]);
+    });
+    return dfr.promise();
+  };
+
+  // Returns the title of a gadget
+  RenderJSGadget.prototype.getTitle = function () {
+    var dfr = $.Deferred(),
+      gadget = this,
+      context = $(this);
+    setTimeout(function () {
+      dfr.resolveWith(context, [gadget.title]);
+    });
+    return dfr.promise();
+  };
+
+  // Returns the HTML of a gadget
+  RenderJSGadget.prototype.getHTML = function () {
+    var dfr = $.Deferred(),
+      gadget = this,
+      context = $(this);
+    setTimeout(function () {
+      dfr.resolveWith(context, [gadget.html]);
+    });
+    return dfr.promise();
+  };
+
+//   RenderJSGadget.prototype.declareMethod = function (name, callback) {
+//     // Register the potentially loading javascript
+//     var script_element = $('script').last(),
+//       src = script_element.attr('src');
+//     if (src !== undefined) {
+//       if (javascript_registration_dict[src] === undefined) {
+//         // First time loading the JS file.
+//         // Remember all declareMethod calls
+//         javascript_registration_dict[src] = {
+//           loaded: false,
+//           method_list: [[name, callback]],
+//         };
+//         script_element.load(function () {
+//           javascript_registration_dict[src].loaded = true;
+//         });
+//       } else if (!javascript_registration_dict[src].loaded) {
+//       javascript_registration_dict[src].method_list.push([name, callback]);
+//       }
+//     }
+// 
+//     // Add the method on the gadget prototype
+//     RenderJSGadget.prototype[name] = callback;
+//     return this;
+//   };
+// 
+//   $.parseGadgetHTML = function (data) {
+//     // var xml = $.parseXML(data);
+//     // var xml = $(data);
+//     // console.log(xml);
+//     return data;
+// //     return new RenderJSGadget();
+//   };
+// 
+//   function RenderJS() {
+//   }
+
+  methods = {
+    loadGadgetFromDom: function () {
+      $(this).find('[data-gadget-path]').each(function (index, value) {
+        $(this).renderJS('declareGadget', $(this).attr('data-gadget-path'), {
+          scope: $(this).attr('data-gadget-scope'),
+        })
+          .done(function (value) {
+            var parsed_xml;
+            // Check that context is still attached to the DOM
+            // XXX Usefull?
+            if ($(this).closest(document.body).length) {
+              parsed_xml = $($.parseXML(value));
+
+              // Inject the css
+              // XXX Manage relative URL
+              $.each(parsed_xml.find('link[rel=stylesheet]'),
+                     function (i, link) {
+                  $('head').append(
+                    '<link rel="stylesheet" href="' +
+                      $(link).attr('href') +
+                      '" type="text/css" />'
+                  );
+                });
+
+
+              // Inject the js
+              // XXX Manage relative URL
+              $.each(parsed_xml.find('script[type="text/javascript"]'),
+                     function (i, script) {
+//                   $('head').append(
+//                     '<script type="text/javascript" href="' +
+//                       $(script).attr('src') +
+//                       '" />'
+//                   );
+                  // Prevent infinite recursion if loading render.js
+                  // more than once
+                  if ($('head').find('script[src="' + $(script).attr('src')
+                                 + '"]').length === 0) {
+                    var headID = document.getElementsByTagName("head")[0],
+                      newScript = document.createElement('script');
+                    newScript.type = 'text/javascript';
+                    newScript.src = $(script).attr('src');
+                    headID.appendChild(newScript);
+                  }
+                });
+
+              // Inject the html
+              // XXX parseXML does not support <div /> (without 2 tags)
+              $(this).html(parsed_xml.find('body').clone());
+              // XXX No idea why it is required to make it work
+              // Probably because of parseXML
+              $(this).html($(this).html())
+                     .renderJS('loadGadgetFromDom');
+            }
+          });
+      });
+    },
+
+  };
+
+  $.fn.renderJS = function (method) {
+    var result;
+    if (methods.hasOwnProperty(method)) {
+      result = methods[method].apply(
+        this,
+        Array.prototype.slice.call(arguments, 1)
+      );
+    } else {
+      $.error('Method ' + method +
+              ' does not exist on jQuery.renderJS');
+    }
+    return result;
+  };
+
+//   // Define a local copy of renderJS
+//   renderJS = function (selector) {
+//     // The renderJS object is actually just the init constructor 'enhanced'
+//     return new renderJS.fn.init(selector, rootrenderJS);
+//   };
+//   renderJS.fn = renderJS.prototype = {
+//     constructor: renderJS,
+//     init: function (selector, rootrenderJS) {
+//       var result;
+//       // HANDLE: $(""), $(null), $(undefined), $(false)
+//       if (!selector) {
+//         console.log("no selector");
+//         result = this;
+// //       // HANDLE: $(DOMElement)
+// //       } else if (selector.nodeType) {
+// //         this.context = this[0] = selector;
+// //         this.length = 1;
+// //         result = this;
+// //       } else if (selector === this) {
+// //         result = this.constructor();
+//       } else {
+// //         throw new Error("Not implemented selector " + selector);
+//         result = this.constructor();
+//       }
+//       return result;
+//     },
+//   };
+//   // Give the init function the renderJS prototype for later instantiation
+//   renderJS.fn.init.prototype = renderJS.fn;
+// 
+//   jQuery.fn.extend({
+//     attr: function (name, value) {
+//       return jQuery.access(this, jQuery.attr, name, value,
+//                            arguments.length > 1);
+//     },
+//   });
+
+  renderJS = function (selector) {
+    var result;
+    if (typeof selector === "string") {
+      result = gadget_scope_dict[selector];
+    } else {
+      result = root_gadget;
+    }
+    return result;
+  };
+
+  renderJS.declareJS = function (url) {
+//     // Prevent infinite recursion if loading render.js
+//     // more than once
+//     if ($('head').find('script[src="' + $(script).attr('src')
+//                    + '"]').length === 0) {
+//       var headID = document.getElementsByTagName("head")[0],
+//         newScript = document.createElement('script');
+//       newScript.type = 'text/javascript';
+//       newScript.src = $(script).attr('src');
+//       headID.appendChild(newScript);
+//     }
+    var dfr,
+      origin_dfr;
+    if (javascript_registration_dict.hasOwnProperty(url)) {
+      origin_dfr = $.Deferred();
+      setTimeout(function () {
+        origin_dfr.resolveWith($(this), []);
+      });
+      dfr = origin_dfr.promise();
+    } else {
+      dfr = $.ajax({
+        url: url,
+        dataType: "script",
+        cache: true,
+      }).done(function (script, textStatus) {
+        javascript_registration_dict[url] = null;
+      });
+    }
+    return dfr;
+  };
+
+  renderJS.declareCSS = function (url) {
+    // https://github.com/furf/jquery-getCSS/blob/master/jquery.getCSS.js
+    var origin_dfr = $.Deferred(),
+      head,
+      link;
+    if (stylesheet_registration_dict.hasOwnProperty(url)) {
+      setTimeout(function () {
+        origin_dfr.resolveWith($(this), []);
+      });
+    } else {
+      head = document.getElementsByTagName('head')[0];
+      link = document.createElement('link');
+
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = url;
+
+      origin_dfr.done(function () {
+        stylesheet_registration_dict[url] = null;
+      });
+
+      head.appendChild(link);
+
+      setTimeout(function () {
+        origin_dfr.resolveWith($(this), []);
+      });
+
+    }
+    return origin_dfr.promise();
+  };
+
+  renderJS.declareGadgetKlass = function (url) {
+    var dfr = $.Deferred(),
+      parsed_html;
+    if (gadget_model_dict.hasOwnProperty(url)) {
+      dfr.resolveWith($(this), [gadget_model_dict[url]]);
+    } else {
+      $.ajax(url)
+        .done(function (value, textStatus, jqXHR) {
+          var klass, tmp_constructor, key;
+          if ((jqXHR.getResponseHeader("Content-Type") || "")
+                === 'text/html') {
+
+            try {
+              if (!gadget_model_dict.hasOwnProperty(url)) {
+                // Class inheritance
+                tmp_constructor = function () {
+                  RenderJSGadget.call(this);
+                };
+                tmp_constructor.prototype = new RenderJSGadget();
+                tmp_constructor.prototype.constructor = tmp_constructor;
+                tmp_constructor.prototype.path = url;
+                parsed_html = renderJS.parseGadgetHTML(value);
+                for (key in parsed_html) {
+                  if (parsed_html.hasOwnProperty(key)) {
+                    tmp_constructor.prototype[key] = parsed_html[key];
+                  }
+                }
+                gadget_model_dict[url] = tmp_constructor;
+              }
+              dfr.resolveWith($(this), [gadget_model_dict[url]]);
+            } catch (e) {
+              dfr.rejectWith($(this), [jqXHR, "HTML Parsing failed"]);
+            }
+          } else {
+            dfr.rejectWith($(this), [jqXHR, "Unexpected content type"]);
+          }
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+          dfr.rejectWith($(this), [jqXHR, textStatus, errorThrown]);
+        });
+    }
+    return dfr.promise();
+  };
+
+  // For test purpose only
+  renderJS.clearGadgetKlassList = function () {
+    gadget_model_dict = {};
+  };
+
+  renderJS.parseGadgetHTML = function (html) {
+    var parsed_xml,
+      result,
+      settings = {
+        title: "",
+        interface_list: [],
+        html: "",
+        required_css_list: [],
+        required_js_list: [],
+      };
+    if (html.constructor === String) {
+
+      parsed_xml = $($.parseXML(html));
+
+      settings.title = parsed_xml.find('head > title').first().text();
+
+      // XXX Manage relative URL during extraction of URLs
+      $.each(parsed_xml.find('head > link[rel=stylesheet]'),
+             function (i, link) {
+          settings.required_css_list.push($(link).attr('href'));
+        });
+
+      $.each(parsed_xml.find('head > script[type="text/javascript"]'),
+             function (i, script) {
+          settings.required_js_list.push($(script).attr('src'));
+        });
+
+      $.each(parsed_xml.find(
+        'head > link[rel="http://www.renderjs.org/rel/interface"]'
+      ), function (i, link) {
+        settings.interface_list.push($(link).attr('href'));
+      });
+
+      settings.html = parsed_xml.find('html > body').first().html() || "";
+      result = settings;
+    } else {
+      throw new Error(html + " is not a string");
+    }
+    return result;
+  };
+  window.rJS = window.renderJS = renderJS;
+  window.RenderJSGadget = RenderJSGadget;
+
+  ///////////////////////////////////////////////////
+  // Internal functions
+  ///////////////////////////////////////////////////
+//   declareGadget = function (url, settings) {
+//     // XXX Return promise
+//     var dfr = $.Deferred(),
+//       jqxhr = $.ajax(url, {context: $(this)})
+//         .done(function (value, textStatus, jqXHR) {
+//           if ((jqXHR.getResponseHeader("Content-Type") || "")
+//                 === 'text/html') {
+//             dfr.resolveWith($(this),
+//                             [$.parseGadgetHTML(value), textStatus, jqXHR]);
+//           } else {
+//             dfr.rejectWith($(this), [jqXHR, "Unexpected content type"]);
+//           }
+//         })
+//         .fail(function (jqXHR, textStatus, errorThrown) {
+//           dfr.rejectWith($(this), [jqXHR, textStatus, errorThrown]);
+//         });
+//     console.log("Declaring gadget " + url);
+// //     console.log(settings.context.html());
+//     return dfr.promise();
+//   };
+
+//   declareJavascript = function () {
+//     console.log($(this).attr('src') + " JS loaded");
+//   };
+
+  ///////////////////////////////////////////////////
+  // jQuery plugin registration
+  ///////////////////////////////////////////////////
+  $.fn.declareGadget = function (url, settings) {
+    settings.context = $(this);
+    return declareGadget(url, settings);
+  };
+
+  ///////////////////////////////////////////////////
+  // Bootstrap process. Register the self gadget.
+  ///////////////////////////////////////////////////
+  // XXX Parse HTML, remember loaded JS, title, css
+  // XXX Create root gadget
+//   gadget_model_dict = {window.location: RenderJSGadgetFactory()},
+//     javascript_registration_dict = {},
+
+  // Do not wait for document.ready, as the JS file loading have to be checked
+//   $.each(document.getElementsByTagName("script"), function (i, elmt) {
+//     console.log("Set onload " + i);
+//     elmt.onload = declareGadget;
+//   });
+
+//     newScript = document.createElement('script');
+//   newScript.type = 'text/javascript';
+//   newScript.src = $(script).attr('src');
+//   newScript.onreadystatechange = function () {
+//   $(document).on('load', declareJavascript).each(function () {
+//     console.log($(this).attr('src') + " prepared for loading");
+//   });
+
+//   $('body').declareGadget(window.location, {
+//     scope: "root",
+//   });
+
+
+//   root_gadget = new RenderJSGadget();
+//   $(document).ready(function () {
+//     $('link[rel=stylesheet]').each(function (i, link) {
+//       root_gadget.required_css_list.push($(link).attr('href'));
+//     });
+//     $('script[type="text/javascript"]').each(function (i, script) {
+//       root_gadget.required_js_list.push($(script).attr('src'));
+//     });
+//     root_gadget.html = $("body").html();
+//     root_gadget.path = window.location.href;
+//     root_gadget.title = $(document).attr('title');
+//     gadget_scope_dict.root = root_gadget;
+// 
+//     $("body").renderJS('loadGadgetFromDom');
+// 
+//     setTimeout(function () {
+//       root_gadget.getTitle().done(function (title) {
+//         console.log("Root: " + title);
+//       });
+// 
+//       renderJS("slider").getTitle().done(function (title) {
+//         console.log("Slider: " + title);
+//       });
+// 
+//       renderJS("first").getTitle().done(function (title) {
+//         console.log("First: " + title);
+//       });
+// 
+//       renderJS("second").getTitle().done(function (title) {
+//         console.log("Second: " + title);
+//       });
+//     }, 500);
+// 
+// 
+//     // XXX Display sub gadgets title 
+//   });
+
+
+//   $(document).ready(function () {
+//     root_gadget = $('body').declareGadget(window.location, {
+//       scope: "root",
+//     });
+//   });
+//     // XXX Load gadgets defined in the html
+//     $('body').renderJS('loadGadgetFromDom');
+
+}(document, window, jQuery));
 
 
 /**
 * By default RenderJs will render all gadgets when page is loaded
 * still it's possible to override this and use explicit gadget rendering.
-* 
+*
 * @property RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING
 * @type {Boolean}
 * @default "true"
@@ -22,7 +532,7 @@ var RENDERJS_ENABLE_IMPLICIT_GADGET_RENDERING = true;
 /**
 * By default RenderJs will examine and bind all interaction gadgets
 * available.
-* 
+*
 * @property RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND
 * @type {Boolean}
 * @default "true"
@@ -31,7 +541,7 @@ var RENDERJS_ENABLE_IMPLICIT_INTERACTION_BIND = true;
 
 /**
 * By default RenderJs will examine and create all routes
-* 
+*
 * @property RENDERJS_ENABLE_IMPLICIT_ROUTE_CREATE
 * @type {Boolean}
 * @default "true"

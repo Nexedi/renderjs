@@ -1,0 +1,4 @@
+handle relative url #parseGadgetHTML TODO
+how to manage local script tag #parseGadgetHTML TODO
+check that gadget/dom context is kept in promise TODO
+keep css file media query #declareCSS TODO

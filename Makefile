@@ -10,9 +10,10 @@ all: lint test build doc
 $(RENDERJS_MIN): $(RENDERJS)
 	$(UGLIFY_CMD) "$<" > "$@"
 
-${BUILDDIR}/$(RENDERJS).lint: $(RENDERJS)
+${BUILDDIR}/$(RENDERJS).lint: $(RENDERJS) test/renderjs_test2.js
 	@mkdir -p $(@D)
-	$(LINT_CMD) "$<"
+	$(LINT_CMD) "$(RENDERJS)"
+	$(LINT_CMD) "test/renderjs_test2.js"
 	touch $@
 
 ${BUILDDIR}/index.html.ok: test/index.html
