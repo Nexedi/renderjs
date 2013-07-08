@@ -2,7 +2,7 @@
 require.config({
   baseUrl: "../..",
   paths: {
-    jqm: "lib/jqm/jquery.mobile-1.3.0-rc.1.min"
+    jqm: "lib/jqm/jquery.mobile-1.3.1.js"
   },
 });
 
