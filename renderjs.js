@@ -32,10 +32,9 @@
   // Returns the list of gadget prototype
   RenderJSGadget.prototype.getInterfaceList = function () {
     var dfr = $.Deferred(),
-      gadget = this,
-      context = $(this);
+      gadget = this;
     setTimeout(function () {
-      dfr.resolveWith(context, [gadget.interface_list]);
+      dfr.resolve(gadget.interface_list);
     });
     return dfr.promise();
   };
@@ -43,10 +42,9 @@
   // Returns a list of CSS required by the gadget
   RenderJSGadget.prototype.getRequiredCSSList = function () {
     var dfr = $.Deferred(),
-      gadget = this,
-      context = $(this);
+      gadget = this;
     setTimeout(function () {
-      dfr.resolveWith(context, [gadget.required_css_list]);
+      dfr.resolve(gadget.required_css_list);
     });
     return dfr.promise();
   };
@@ -54,10 +52,9 @@
   // Returns a list of JS required by the gadget
   RenderJSGadget.prototype.getRequiredJSList = function () {
     var dfr = $.Deferred(),
-      gadget = this,
-      context = $(this);
+      gadget = this;
     setTimeout(function () {
-      dfr.resolveWith(context, [gadget.required_js_list]);
+      dfr.resolve(gadget.required_js_list);
     });
     return dfr.promise();
   };
@@ -65,10 +62,9 @@
   // Returns the path of the code of a gadget
   RenderJSGadget.prototype.getPath = function () {
     var dfr = $.Deferred(),
-      gadget = this,
-      context = $(this);
+      gadget = this;
     setTimeout(function () {
-      dfr.resolveWith(context, [gadget.path]);
+      dfr.resolve(gadget.path);
     });
     return dfr.promise();
   };
@@ -76,10 +72,9 @@
   // Returns the title of a gadget
   RenderJSGadget.prototype.getTitle = function () {
     var dfr = $.Deferred(),
-      gadget = this,
-      context = $(this);
+      gadget = this;
     setTimeout(function () {
-      dfr.resolveWith(context, [gadget.title]);
+      dfr.resolve(gadget.title);
     });
     return dfr.promise();
   };
@@ -87,10 +82,9 @@
   // Returns the HTML of a gadget
   RenderJSGadget.prototype.getHTML = function () {
     var dfr = $.Deferred(),
-      gadget = this,
-      context = $(this);
+      gadget = this;
     setTimeout(function () {
-      dfr.resolveWith(context, [gadget.html]);
+      dfr.resolve(gadget.html);
     });
     return dfr.promise();
   };
@@ -243,13 +237,7 @@
 //   });
 
   renderJS = function (selector) {
-    var result;
-    if (typeof selector === "string") {
-      result = gadget_scope_dict[selector];
-    } else {
-      result = root_gadget;
-    }
-    return result;
+    throw new Error("Unknown selector '" + selector + "'");
   };
 
   renderJS.declareJS = function (url) {
@@ -268,7 +256,7 @@
     if (javascript_registration_dict.hasOwnProperty(url)) {
       origin_dfr = $.Deferred();
       setTimeout(function () {
-        origin_dfr.resolveWith($(this), []);
+        origin_dfr.resolve();
       });
       dfr = origin_dfr.promise();
     } else {
@@ -290,7 +278,7 @@
       link;
     if (stylesheet_registration_dict.hasOwnProperty(url)) {
       setTimeout(function () {
-        origin_dfr.resolveWith($(this), []);
+        origin_dfr.resolve();
       });
     } else {
       head = document.getElementsByTagName('head')[0];
@@ -307,7 +295,7 @@
       head.appendChild(link);
 
       setTimeout(function () {
-        origin_dfr.resolveWith($(this), []);
+        origin_dfr.resolve();
       });
 
     }
@@ -318,7 +306,7 @@
     var dfr = $.Deferred(),
       parsed_html;
     if (gadget_model_dict.hasOwnProperty(url)) {
-      dfr.resolveWith($(this), [gadget_model_dict[url]]);
+      dfr.resolve(gadget_model_dict[url]);
     } else {
       $.ajax(url)
         .done(function (value, textStatus, jqXHR) {
@@ -343,16 +331,16 @@
                 }
                 gadget_model_dict[url] = tmp_constructor;
               }
-              dfr.resolveWith($(this), [gadget_model_dict[url]]);
+              dfr.resolve(gadget_model_dict[url]);
             } catch (e) {
-              dfr.rejectWith($(this), [jqXHR, "HTML Parsing failed"]);
+              dfr.reject(jqXHR, "HTML Parsing failed");
             }
           } else {
-            dfr.rejectWith($(this), [jqXHR, "Unexpected content type"]);
+            dfr.reject(jqXHR, "Unexpected content type");
           }
         })
         .fail(function (jqXHR, textStatus, errorThrown) {
-          dfr.rejectWith($(this), [jqXHR, textStatus, errorThrown]);
+          dfr.reject(jqXHR, textStatus, errorThrown);
         });
     }
     return dfr.promise();
@@ -416,14 +404,13 @@
 //         .done(function (value, textStatus, jqXHR) {
 //           if ((jqXHR.getResponseHeader("Content-Type") || "")
 //                 === 'text/html') {
-//             dfr.resolveWith($(this),
-//                             [$.parseGadgetHTML(value), textStatus, jqXHR]);
+//             dfr.resolve($.parseGadgetHTML(value), textStatus, jqXHR);
 //           } else {
-//             dfr.rejectWith($(this), [jqXHR, "Unexpected content type"]);
+//             dfr.reject(jqXHR, "Unexpected content type");
 //           }
 //         })
 //         .fail(function (jqXHR, textStatus, errorThrown) {
-//           dfr.rejectWith($(this), [jqXHR, textStatus, errorThrown]);
+//           dfr.reject(jqXHR, textStatus, errorThrown);
 //         });
 //     console.log("Declaring gadget " + url);
 // //     console.log(settings.context.html());
