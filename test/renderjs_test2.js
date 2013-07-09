@@ -937,4 +937,116 @@
       });
   });
 
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareMethod
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadget.declareMethod");
+  test('is chainable', function () {
+    // Check that declareMethod is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+
+    gadget = new Klass();
+    equal(gadget.testFoo, undefined);
+    result = gadget.declareMethod('testFoo', function () {
+      var a;
+    });
+    // declareMethod is chainable
+    equal(result, gadget);
+  });
+
+  test('creates methods on the prototype', function () {
+    // Check that declareMethod create a callable on the prototype
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget, called, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+
+    gadget = new Klass();
+    equal(gadget.testFoo, undefined);
+    gadget.declareMethod('testFoo', function (value) {
+      called = value;
+    });
+    // Method is added on the instance class prototype
+    equal(RenderJSGadget.prototype.testFoo, undefined);
+    ok(gadget.testFoo !== undefined);
+    ok(Klass.prototype.testFoo !== undefined);
+    equal(Klass.prototype.testFoo, gadget.testFoo);
+
+    // method can be called
+    gadget.testFoo("Bar");
+    equal(called, "Bar");
+  });
+
+  test('returns a promise when synchronous function', function () {
+    // Check that declareMethod returns a promise when defining
+    // a synchronous function
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+
+    gadget = new Klass();
+    gadget.declareMethod('testFoo', function (value) {
+      return value;
+    });
+
+    // method can be called
+    stop();
+    gadget.testFoo("Bar")
+      .done(function (param) {
+        equal(param, "Bar");
+      })
+      .fail(function () {
+        ok(false, "Should not fail when synchronous");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('returns the callback promise if it exists', function () {
+    // Check that declareMethod returns the promise created by the callback
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+
+    gadget = new Klass();
+    gadget.declareMethod('testFoo', function (value) {
+      var dfr = $.Deferred();
+      setTimeout(function () {
+        dfr.reject(value);
+      });
+      return dfr.promise();
+    });
+
+    // method can be called
+    stop();
+    gadget.testFoo("Bar")
+      .done(function () {
+        ok(false, "Callback promise is rejected");
+      })
+      .fail(function (param) {
+        equal(param, "Bar");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
 }(document, jQuery, renderJS, QUnit, sinon));

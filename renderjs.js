@@ -28,91 +28,59 @@
   RenderJSGadget.prototype.required_css_list = [];
   RenderJSGadget.prototype.required_js_list = [];
 
-  // Returns the list of gadget prototype
-  RenderJSGadget.prototype.getInterfaceList = function () {
-    var dfr = $.Deferred(),
-      gadget = this;
-    setTimeout(function () {
-      dfr.resolve(gadget.interface_list);
-    });
-    return dfr.promise();
+  RenderJSGadget.prototype.declareMethod = function (name, callback) {
+// // Register the potentially loading javascript
+// var script_element = $('script').last(),
+//   src = script_element.attr('src');
+// if (src !== undefined) {
+//   if (javascript_registration_dict[src] === undefined) {
+//     // First time loading the JS file.
+//     // Remember all declareMethod calls
+//     javascript_registration_dict[src] = {
+//       loaded: false,
+//       method_list: [[name, callback]],
+//     };
+//     script_element.load(function () {
+//       javascript_registration_dict[src].loaded = true;
+//     });
+//   } else if (!javascript_registration_dict[src].loaded) {
+//     javascript_registration_dict[src].method_list.push([name, callback]);
+//   }
+// }
+
+    this.constructor.prototype[name] = function () {
+      return $.when(callback.apply(this, arguments));
+    };
+    // Allow chain
+    return this;
   };
 
-  // Returns a list of CSS required by the gadget
-  RenderJSGadget.prototype.getRequiredCSSList = function () {
-    var dfr = $.Deferred(),
-      gadget = this;
-    setTimeout(function () {
-      dfr.resolve(gadget.required_css_list);
+  RenderJSGadget.prototype
+    .declareMethod('getInterfaceList', function () {
+      // Returns the list of gadget prototype
+      return this.interface_list;
+    })
+    .declareMethod('getRequiredCSSList', function () {
+      // Returns a list of CSS required by the gadget
+      return this.required_css_list;
+    })
+    .declareMethod('getRequiredJSList', function () {
+      // Returns a list of JS required by the gadget
+      return this.required_js_list;
+    })
+    .declareMethod('getPath', function () {
+      // Returns the path of the code of a gadget
+      return this.path;
+    })
+    .declareMethod('getTitle', function () {
+      // Returns the title of a gadget
+      return this.title;
+    })
+    .declareMethod('getHTML', function () {
+      // Returns the HTML of a gadget
+      return this.html;
     });
-    return dfr.promise();
-  };
 
-  // Returns a list of JS required by the gadget
-  RenderJSGadget.prototype.getRequiredJSList = function () {
-    var dfr = $.Deferred(),
-      gadget = this;
-    setTimeout(function () {
-      dfr.resolve(gadget.required_js_list);
-    });
-    return dfr.promise();
-  };
-
-  // Returns the path of the code of a gadget
-  RenderJSGadget.prototype.getPath = function () {
-    var dfr = $.Deferred(),
-      gadget = this;
-    setTimeout(function () {
-      dfr.resolve(gadget.path);
-    });
-    return dfr.promise();
-  };
-
-  // Returns the title of a gadget
-  RenderJSGadget.prototype.getTitle = function () {
-    var dfr = $.Deferred(),
-      gadget = this;
-    setTimeout(function () {
-      dfr.resolve(gadget.title);
-    });
-    return dfr.promise();
-  };
-
-  // Returns the HTML of a gadget
-  RenderJSGadget.prototype.getHTML = function () {
-    var dfr = $.Deferred(),
-      gadget = this;
-    setTimeout(function () {
-      dfr.resolve(gadget.html);
-    });
-    return dfr.promise();
-  };
-
-//   RenderJSGadget.prototype.declareMethod = function (name, callback) {
-//     // Register the potentially loading javascript
-//     var script_element = $('script').last(),
-//       src = script_element.attr('src');
-//     if (src !== undefined) {
-//       if (javascript_registration_dict[src] === undefined) {
-//         // First time loading the JS file.
-//         // Remember all declareMethod calls
-//         javascript_registration_dict[src] = {
-//           loaded: false,
-//           method_list: [[name, callback]],
-//         };
-//         script_element.load(function () {
-//           javascript_registration_dict[src].loaded = true;
-//         });
-//       } else if (!javascript_registration_dict[src].loaded) {
-//       javascript_registration_dict[src].method_list.push([name, callback]);
-//       }
-//     }
-// 
-//     // Add the method on the gadget prototype
-//     RenderJSGadget.prototype[name] = callback;
-//     return this;
-//   };
-// 
 //   $.parseGadgetHTML = function (data) {
 //     // var xml = $.parseXML(data);
 //     // var xml = $(data);
