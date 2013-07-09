@@ -81,17 +81,6 @@
       return this.html;
     });
 
-//   $.parseGadgetHTML = function (data) {
-//     // var xml = $.parseXML(data);
-//     // var xml = $(data);
-//     // console.log(xml);
-//     return data;
-// //     return new RenderJSGadget();
-//   };
-// 
-//   function RenderJS() {
-//   }
-
   methods = {
     loadGadgetFromDom: function () {
       $(this).find('[data-gadget-path]').each(function (index, value) {
@@ -386,10 +375,6 @@
 //     console.log("Declaring gadget " + url);
 // //     console.log(settings.context.html());
 //     return dfr.promise();
-//   };
-
-//   declareJavascript = function () {
-//     console.log($(this).attr('src') + " JS loaded");
 //   };
 
   ///////////////////////////////////////////////////
