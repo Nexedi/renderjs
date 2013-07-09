@@ -755,6 +755,19 @@
       });
   });
 
+  test('default value', function () {
+    // Check that getInterfaceList return a Promise
+    var gadget = new RenderJSGadget();
+    stop();
+    gadget.getInterfaceList()
+      .done(function (result) {
+        deepEqual(result, []);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getRequiredCSSList
   /////////////////////////////////////////////////////////////////
@@ -767,6 +780,19 @@
     gadget.getRequiredCSSList()
       .done(function (result) {
         equal(result, "foo");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('default value', function () {
+    // Check that getRequiredCSSList return a Promise
+    var gadget = new RenderJSGadget();
+    stop();
+    gadget.getRequiredCSSList()
+      .done(function (result) {
+        deepEqual(result, []);
       })
       .always(function () {
         start();
@@ -791,11 +817,24 @@
       });
   });
 
+  test('default value', function () {
+    // Check that getRequiredJSList return a Promise
+    var gadget = new RenderJSGadget();
+    stop();
+    gadget.getRequiredJSList()
+      .done(function (result) {
+        deepEqual(result, []);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getPath
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getPath");
-  test('returns interface_list', function () {
+  test('returns path', function () {
     // Check that getPath return a Promise
     var gadget = new RenderJSGadget();
     gadget.path = "foo";
@@ -809,11 +848,24 @@
       });
   });
 
+  test('default value', function () {
+    // Check that getPath return a Promise
+    var gadget = new RenderJSGadget();
+    stop();
+    gadget.getPath()
+      .done(function (result) {
+        equal(result, "");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getTitle
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getTitle");
-  test('returns interface_list', function () {
+  test('returns title', function () {
     // Check that getTitle return a Promise
     var gadget = new RenderJSGadget();
     gadget.title = "foo";
@@ -827,11 +879,24 @@
       });
   });
 
+  test('default value', function () {
+    // Check that getTitle return a Promise
+    var gadget = new RenderJSGadget();
+    stop();
+    gadget.getTitle()
+      .done(function (result) {
+        equal(result, "");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getHTML
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getHTML");
-  test('returns interface_list', function () {
+  test('returns html', function () {
     // Check that getHTML return a Promise
     var gadget = new RenderJSGadget();
     gadget.html = "foo";
@@ -839,6 +904,19 @@
     gadget.getHTML()
       .done(function (result) {
         equal(result, "foo");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('default value', function () {
+    // Check that getHTML return a Promise
+    var gadget = new RenderJSGadget();
+    stop();
+    gadget.getHTML()
+      .done(function (result) {
+        equal(result, "");
       })
       .always(function () {
         start();

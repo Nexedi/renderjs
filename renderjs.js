@@ -20,14 +20,13 @@
     declareJavascript,
     methods;
 
-  function RenderJSGadget() {
-    this.title = "";
-    this.interface_list = [];
-    this.path = "";
-    this.html = "";
-    this.required_css_list = [];
-    this.required_js_list = [];
-  }
+  function RenderJSGadget() {}
+  RenderJSGadget.prototype.title = "";
+  RenderJSGadget.prototype.interface_list = [];
+  RenderJSGadget.prototype.path = "";
+  RenderJSGadget.prototype.html = "";
+  RenderJSGadget.prototype.required_css_list = [];
+  RenderJSGadget.prototype.required_js_list = [];
 
   // Returns the list of gadget prototype
   RenderJSGadget.prototype.getInterfaceList = function () {
