@@ -1,5 +1,5 @@
 /*! RenderJs v0.2  */
-/*global $, jQuery, localStorage, jIO, window, document */
+/*global $, jQuery, localStorage, jIO, window, document, DOMParser */
 /*jslint evil: true, indent: 2, maxerr: 3, maxlen: 79 */
 "use strict";
 /*
@@ -7,7 +7,7 @@
  * http://www.renderjs.org/documentation
  */
 
-(function (document, window, $) {
+(function (document, window, $, DOMParser) {
 
   var gadget_model_dict = {},
     gadget_scope_dict = {},
@@ -362,8 +362,12 @@
       };
     if (html.constructor === String) {
 
-      parsed_xml = $($.parseXML(html));
-
+      // https://developer.mozilla.org/en-US/docs/HTML_in_XMLHttpRequest
+      // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
+      // https://developer.mozilla.org/en-US/docs/Code_snippets/HTML_to_DOM
+      // parsed_xml = $($.parseXML(html));
+      // parsed_xml = $('<div/>').html(html);
+      parsed_xml = $((new DOMParser()).parseFromString(html, "text/html"));
       settings.title = parsed_xml.find('head > title').first().text();
 
       // XXX Manage relative URL during extraction of URLs
@@ -501,7 +505,7 @@
 //     // XXX Load gadgets defined in the html
 //     $('body').renderJS('loadGadgetFromDom');
 
-}(document, window, jQuery));
+}(document, window, jQuery, DOMParser));
 
 
 /**

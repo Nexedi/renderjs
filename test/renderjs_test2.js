@@ -253,6 +253,20 @@
     deepEqual(settings.required_js_list, [], "JS not found");
   });
 
+  test('Non valid XML (HTML in fact...)', function () {
+    // Check default value returned by parseGadgetHTML
+    deepEqual(renderJS.parseGadgetHTML('<!doctype html><html><head>' +
+      '<title>Test non valid XML</title>' +
+      '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' +
+      '</head><body><p>Non valid XML</p></body></html>'), {
+      title: "Test non valid XML",
+      interface_list: [],
+      required_css_list: [],
+      required_js_list: [],
+      html: "<p>Non valid XML</p>",
+    });
+  });
+
   /////////////////////////////////////////////////////////////////
   // declareGadgetKlass
   /////////////////////////////////////////////////////////////////
