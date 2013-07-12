@@ -14,7 +14,11 @@ all: external lint test build doc
 external: lib/sinon/sinon.js \
      lib/jquery/jquery.js \
      lib/qunit/qunit.js \
-     lib/qunit/qunit.css
+     lib/qunit/qunit.css \
+     lib/jio/jio.js \
+     lib/jio/md5.js \
+     lib/jio/complex_queries.js \
+     lib/jio/localstorage.js
 
 lib/sinon/sinon.js:
 	@mkdir -p $(@D)
@@ -22,11 +26,27 @@ lib/sinon/sinon.js:
 
 lib/jquery/jquery.js:
 	@mkdir -p $(@D)
-	curl -s -o $@ http://code.jquery.com/jquery-2.0.3.js
+	curl -s -o $@ http://code.jquery.com/jquery-1.9.1.js
 
 lib/qunit/qunit.%:
 	@mkdir -p $(@D)
 	curl -s -o $@ http://code.jquery.com/qunit/qunit-1.12.0$(suffix $@)
+
+lib/jio/jio.js:
+	@mkdir -p $(@D)
+	curl -s -o $@ http://git.erp5.org/gitweb/jio.git/blob_plain/refs/heads/master:/jio.js
+
+lib/jio/md5.js:
+	@mkdir -p $(@D)
+	curl -s -o $@ http://git.erp5.org/gitweb/jio.git/blob_plain/refs/heads/master:/lib/md5/md5.js
+
+lib/jio/localstorage.js:
+	@mkdir -p $(@D)
+	curl -s -o $@ http://git.erp5.org/gitweb/jio.git/blob_plain/refs/heads/master:/src/jio.storage/localstorage.js
+
+lib/jio/complex_queries.js:
+	@mkdir -p $(@D)
+	curl -s -o $@ http://git.erp5.org/gitweb/jio.git/blob_plain/refs/heads/master:/complex_queries.js
 
 $(RENDERJS_MIN): $(RENDERJS)
 	$(UGLIFY_CMD) "$<" > "$@"
@@ -49,4 +69,4 @@ lint: ${BUILDDIR}/$(RENDERJS).lint
 doc:
 	$(YUIDOC_CMD) .
 clean:
-	rm -rf $(RENDERJS_MIN) ${BUILDDIR} lib/sinon lib/jquery lib/qunit
+	rm -rf $(RENDERJS_MIN) ${BUILDDIR} lib/sinon lib/jquery lib/qunit lib/jio
