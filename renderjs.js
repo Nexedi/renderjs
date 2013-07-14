@@ -424,7 +424,10 @@
         settings.interface_list.push($(link).attr('href'));
       });
 
-      settings.html = parsed_xml.find('html > body').first().html() || "";
+      settings.html = parsed_xml.find('html > body').first().html();
+      if (settings.html === undefined) {
+        settings.html = "";
+      }
       result = settings;
     } else {
       throw new Error(html + " is not a string");
