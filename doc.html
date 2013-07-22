@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="generator" content="GWrite (WYSIWYG editor)">
+    <title>Documentation Index</title>
+    <style>
+img{
+    border: 2px;
+    border-style: solid;
+    border-color: #c3d9ff;
+    padding: 5px;
+}
+h1, h2, h3, h4, h5, h6 {
+    color: #7DA721;
+    font-weight: bold;
+}
+p{
+    text-indent: 0em;
+    text-align: justify;
+}
+blockquote{
+    background-color:#EEFFFF;
+    border-left: 5px solid green;
+    padding-left: 5px;
+    margin: 0px;
+    padding: 5px;
+}
+pre{
+    background-color:#EEEEFF;
+    display: block;
+    border-left: 1px solid green;
+    margin: 0px;
+    margin-top: 14px;    padding: 5px;
+}
+code{
+    text-indent: 0em;
+    text-align: left;
+    background-color:#EEEEFF;
+    margin: 0px;
+    margin-top: 14px;
+    padding: 5px;
+}
+    </style>
+  </head>
+  <body>
+    <div style="width: 730px !important;">
+
+<h1>Documentation Index</h1>
+<p>To be generated</p>
+
+<h1 id="g1">What is renderJS?</h1>
+
+<p>renderJS is a JavaScript library which helps modularizing your HTML5 code
+and your JavaScript applications. It uses the HTML5 standard as an easy way to specify self-contained components which consist of HTML5 code, CSS code and
+Javascript code. It helps reusing components in different applications just as easily as linking an HTML5 page to another. It also helps combining multiple
+reusable component within the same single page application.</p>
+
+<p>The main focus of renderJS is graphic user interface (GUI) components such
+as editors, viewers, fields or widgets. renderJS can also be used to define
+reusable components with no GUI such as translators or format converters.</p>
+
+<h2>A Simple Example</h2>
+
+<p>Let us suppose we want to add a text editor to an HTML5 page,
+here is how we proceed:</p>
+
+<code>&lt;html&gt;<br/>
+&nbsp;&nbsp;&lt;head&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;title&gt;Simple example&lt;/title&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;<br/>
+&nbsp;&nbsp;&lt;/head&gt;<br/>
+&nbsp;&nbsp;&lt;body&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gtText editor displays below:&lt;/p&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;div data-gadget-path="http://www.renderjs.org/editor/rtl/index.html"&gt;&lt;/div&gt;<br/>
+&nbsp;&nbsp;&lt;/body&gt;<br/>
+&lt;/html&gt;
+</code>
+
+<p>renderJS takes care if managing all dependencies and rendering.</p>
+
+<h2 id="g1.3">How does it work?</h2>
+
+<p>renderJS is separated into 3 parts: renderJS library, renderJS interfaces
+and renderJS core gadgets.</p>
+
+<p><b>renderJS library</b> provides a simple way to load inside an existing
+HTML5 page third-party components which follow the renderJS specification.
+It implements a recursive macro language in pure HTML5. This macro language
+ provides a way to embed and combine recursively components from different
+ sources.</p>
+
+<p><b>renderJS core interfaces</b>
+(<a href="http://www.renderjs.org/interface/">http://www.renderjs.org/interface/</a>)
+provide the documentation to common interfaces shared by all renderJS components.
+It defines in particular the renderable interface for all components which can
+be rendered in a page such as editors, viewers, fields or widgets.</p>
+
+<p><b>renderJS core gadgets</b>
+(<a href="http://www.renderjs.org/interface/">http://www.renderjs.org/gadget/core/</a>)
+provide a reference implementation of renderJS interfaces. It provides in particular
+the default implementation of renderJS router and renderJS catalog. renderJS router
+is used to manage interactions between user and components or between components
+themselves. renderJS catalog provides a way to search for components which meet a
+given interface.</p>
+
+<h2 id="g1.3.1">Getting started</h2>
+
+<p>This walkthrough is designed to get you started using a basic renderJS instance.</p>
+
+<p>Download renderJS library, renderJS core as well as the dependencies required to start using core components.</p>
+
+<table border="1">
+  <thead>
+    <tr>
+      <th>
+        <p>Script</p>
+      </th>
+      <th>
+        <p>Description</p>
+      </th>
+      <th>
+        <p>Source</p>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <p>renderJS</p>
+      </td>
+      <td>
+        <p>The renderJS library</p>
+      </td>
+      <td>
+        <p>render.js</p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p>jquery</p>
+      </td>
+      <td>
+        <p>The JQuery library version XXX </p>
+      </td>
+      <td>
+        <p>jquery.js</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Add the renderJS script to your HTML page:</p>
+
+<code>
+&lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;<br/>
+&lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+</code>
+
+<h2 id="g1.3.1">renderJS fundamentals</h2>
+
+<p>renderJS can be used either by adding HTML5 tags to your page or by invoking Javascript methods.</p>
+
+<p>The renderJS script provides 10 HTML5 tags which can be added to any HTML5 page.</p>
+
+<table border="1">
+  <thead>
+    <tr>
+      <th>
+        <p>Method</p>
+      </th>
+      <th>
+        <p>Sample Call</p>
+      </th>
+      <th>
+        <p>Description</p>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <th>
+      <p>data-gadget-path</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-path="hello-world.html"&gt;&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Embeds the HTML5 code of a gadget in a page, loads CSS and Javascript
+      depencies and call render() method on the gadget if it is defined.</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-slot</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-slot="main"&gt;<br>
+&nbsp;&nbsp;&lt;p&gt;This content is&lt;/p&gt;
+<br>
+&nbsp;&nbsp;&lt;p&gt;Going to be replaced/p&gt;
+<br>
+&lt;/div&gt;
+      </code>
+    </td>
+    <td>
+      <p>Defines the porting of the DOM tree in the HTML5 code of a gadget which
+      is going to be replaced after render() method is called</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-fill</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-path="hello-layout.html"&gt;
+<br>
+&nbsp;&nbsp;&lt;div data-gadget-fill="main"&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;div data-gadget-path="hello-world.html"/&gt;
+<br>
+&nbsp;&nbsp;&lt;/div&gt;
+<br>
+&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Fills given slot in DOM parent gadget with HTML5 content defined in DOM child tree. Filling is applied recursively.</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-scope</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-path="hello-layout.html" data-gadget-scope="hello"&gt;&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Associates a gadget to a namespace which can later be used to retrieve a gadget by URL or programmatically</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-state</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-path="html-viewer.html" data-gadget-state="{'text_content':'&lt;p&gt;Some content&lt;/p&gt;'"&gt;&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Defines the state of the gadget as serialized JSON string with properties. This state can be used to implement persistency of a gadget and ability to
+move it from one page to another.</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-cache</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-path="hello-layout.html" data-gadget-cache="form"&gt;&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Defines the caching policy of a gadget. Caching itself is implemented by a "Cache services" gadget.</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-sandbox</p>
+    </th>
+    <td>
+      <code>&lt;div  data-gadget-path="hello-layout.html"  data-gadget-sandbox="iframe"&gt;&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Defines the sandboxing type of a gadget (iframe, safejs, etc.).</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-public</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-path="hello-layout.html" data-gadget-public="bang"&gt;&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Declares which methods or events of a gadget are public.</p>
+    </td>
+  </tr>
+  <tr>
+    <th>
+      <p>data-gadget-routed</p>
+    </th>
+    <td>
+      <code>&lt;div data-gadget-path="hello-layout.html" data-gadget-routed="a.someMethod:bang; b.anotherEvent:bang"&gt;&lt;/div&gt;</code>
+    </td>
+    <td>
+      <p>Declares which methods or events of a gadget are forwarded to the router. </p>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<p>The renderJS Javascript API replicates and extends HTML5 tags.</p>
+
+<table border="1">
+
+<thead>
+  <tr>
+    <th>
+      <p>Method</p>
+    </th>
+    <th>
+      <p>Parameters</p>
+    </th>
+    <th>
+      <p>Returns</p>
+    </th>
+    <th>
+      <p>Description</p>
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      <p>€(scope_selector)</p>
+    </td>
+    <td>
+      <code>selector</code>
+    </td>
+    <td>
+      <p>Gadget selection.</p>
+    </td>
+    <td>
+      <p>Select all gadgets matching the scope selector.</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <p>€(scope_selector).declareGadget</p>
+      <p>&nbsp;OR</p>
+      <p><a href="http://api.jquery.com/category/selectors/">$(selector)</a>.declareGadget</p>
+    </td>
+    <td>
+      <ul>
+<li>url, // the path of the gadget definition ex. "slide-gadget.html'</li>
+<li>[settings] // A set of key/value pairs
+      <ul>
+<li>state, // gadget state</li>
+<!--li>parent, // a handle to the parent gadget (option)</li-->
+<li>scope, // some scope for all URLs published ????</li>
+<li>position, // useful to try to order gadgets inside an element</li>
+<li>sandbox, // defines the sandboxing type</li>
+<!--li>callback, // a callback to call to register </li-->
+</ul></li>
+</ul>
+    </td>
+    <td>
+      <p><a href="http://api.jquery.com/Types/#Promise">Promise</a> (for callback)</p>
+    </td>
+    <td>
+      <p>Declares that a given gadget with given parameters should exist as the
+      parent of another gadget and should be attached to a given DOM position.</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <p>€(scope_selector).remove</p>
+    </td>
+    <td>
+<code>
+scope
+</code>
+    </td>
+    <td>
+      <p><a href="http://api.jquery.com/Types/#Promise">Promise</a> (for callback)</p>
+    </td>
+    <td>
+      <p>Remove the set of matched gadgets</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <p>€(scope_selector).declareMethod</p>
+    </td>
+    <td>
+      <ul>
+<li>method name</li>
+<li>function</li>
+</ul>
+    </td>
+    <td>
+      <p>Chainable gagdet selector</p>
+    </td>
+    <td>
+      <p>Declares a public method of a gadget.</p>
+    </td>
+  </tr>
+</tbody>
+</table>
+
+
+<h1>Step by step tutorials</h1>
+
+<p>We will learn here how to create a gadget, how to use a gadget and how
+to make gadgets interact.</p>
+
+<h2>Tutorial 1: Hello Viewer</h2>
+
+<p>Many people just want to use renderJS in order to display and edit content and leverage the rich library of gadgets of OfficeJS which renderJS is based.</p>
+
+<p>Here how to do.</p>
+
+<p>Let us add an HTML document to our web server in <code>/var/www/html/hello_viewer/test.html</code></p>
+
+<p>Let us add an SVG document to our web server in <code>/var/www/html/hello_viewer/test.svg</code></p>
+
+<p>We are going to display both documents in the page using whichever editor is available to display it.</p>
+
+
+<p>We create the HTML file <code>/var/www/html/hello_viewer/test.html</code> with the following code.</p>
+
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Hello Viewer Application&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript&gt;Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Include two universal viewers --&gt;
+    &lt;p&gt;Display first viewer with HTML file&lt;/p&gt;
+    &lt;div data-gadget-path="http://officejs.org/editor/universal/index.html"
+         data-gadget-sandbox="iframe"
+         data-gadget-state="{'src': '/hello_viewer/test.html'}" /&gt;
+    &lt;p&gt;Display second viewer with SVG file&lt;/p&gt;
+    &lt;div data-gadget-path="http://officejs.org/editor/universal/index.html"
+         data-gadget-sandbox="iframe"
+         data-gadget-state="{'src': '/hello_viewer/test.svg'}" /&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<p>Here is the result:</p>
+
+[DRAWING]
+
+<p>We only use here a single gadget: the universal editor. This gadget has two instances. Each instance is able to download a file, guess its mime type and select
+the most appropriate viewer to display it. It removes the burden to select a viewer from the developer. We have used the tag <code>data-gadget-sandbox</code> on
+both gadgets in order to make sure that an iframe sandbox prevent CSS conflicts which most viewers generate because of poor namespacing.</p>
+
+
+
+
+<h2>Tutorial 2: Hello World</h2>
+
+<p>Let us now create a simple gadget from scratch. This gadget displays the text "Hello World". We first create a directory in our web server.</p>
+
+<code>/var/www/html/gadget/hello_world</code>
+
+<p>Then we create the file <code>/var/www/html/gadget/hello_world/index.html</code> that will contain the gadget code.</p>
+
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Hello World&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;p&gt;Hello World&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<p>We can display the gadget by opening the URL</p>
+
+<code>http://localhost/gadget/hello_world/index.html</code>
+
+<p>Which displays the "Hello World" test in a blank page:</p>
+
+[DRAWING]
+
+<p>We will now embed the "Hello World" the gadget in a renderJS application.</p>
+
+<p>Let us create the file <code>/var/www/html/gadget/hello_application/index.html</code> which will contain the HTML5 application.</p>
+
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Hello World Application&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript&gt;Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Include Hello World gadget --&gt;
+    &lt;div data-gadget-path="../hello_world/index.html" /&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<p>Let us now check the result:</p>
+
+[DRAWING]
+
+<p>And the HTML5 code which was generated:</p>
+
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Hello World Application&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head/&gt;
+  &lt;body/&gt;
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript&gt;Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Include Hello World gadget --&gt;
+    &lt;div data-gadget-path="../hello_world/index.html"
+         data-gadget-scope="Hello World"&gt;
+      &lt;p>Hello World&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<p>
+This example shows the basic feature of renderJS: the ability to dynamically include in a page code defined in another page. You can consider in this example
+that renderJS is a kind of macro system which runs on the client side rather than on the server side. You will also take note that renderJS generated the tag
+"data-gadget-scope" automatically by taking the default value provided by the title of the gadget.
+</p>
+
+<p>Let us now add some behaviour to our gadget. We create a script <code>/var/www/html/gadget/hello_world/hello.js</code> with the following code</p>
+
+<pre>
+€(this).declareMethod("foo", function () {
+     // replace body paragraph with Bang! word
+     $(this).find('p').text("Bang!");
+  });
+</pre>
+
+<p>We now need to attach a dependency to this script in the gadget definition. We are going also to use the <code>data-gadget-public</code> tag.</p>
+
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Hello World&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="hello.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body data-gadget-public="foo"&gt;
+    &lt;p&gt;Hello World&lt;/p&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<p>If we open our Web browser to <code>http://localhost/gadget/hello_world/index.html</code>, we can view the Hello Word gadget itself:</p>
+
+[DRAWING]
+
+<p>Now, if we type the URL <code>http://localhost/gadget/hello_world/index.html#foo</code>, we get something new:</p>
+
+[DRAWING]
+
+<p>What happens here is that the <code>data-gadget-public</code> has declared the method <code>foo</code> as a public method that can be invoked through a
+hashtag. This is simular to the concept of method publication in application servers such as Zope, Flash.
+
+<code>http://localhost/gadget/hello_application/index.html#hello/foo</code>. Here is the result:</p>
+
+[DRAWING]
+
+<p>The content "Hello World" was replaced by "Bang!". This example shows the concept of recursive publication of gadgets provided by renderJS. By using the
+<code>data-gadget-scope</code> tag, every public method of a gadget can be accessed through a simple URL.</p>
+
+
+<h2>Tutorial 3: a slider gadget containing two forms and an interactor</h2>
+
+<p>We will now show a more complex example to illustrate the advanced macro capabilities of renderJS and the concept of interactor.</p>
+
+<p>Let us create a slider field where the slider widget itself can contain any gadgets, such as forms, date fields, animated sprite, etc.</p>
+
+[DRAWING]
+
+<p>Let us first define the HTML5 code of the gadget in <code>/var/www/gadget/slider/index.html</code></p>
+
+<pre>
+&lt;html&gt;
+
+  &lt;!-- Define dependencies and supported interfaces --&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title>Slider Gadget&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;link rel="stylesheet" src="slider.css"/&gt;
+    &lt;script src="slider.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;link rel="http://www.renderjs.org/rel/interface"
+          src="http://www.renderjs.org/interface/renderable"/&gt;
+    &lt;link rel="http://www.renderjs.org/rel/interface"
+          src="http://www.renderjs.org/interface/field"/&gt;
+  &lt;/head&gt;
+
+  &lt;!-- Sample display made by HTML designer --&gt;
+  &lt;body&gt;
+    &lt;noscript&gt;Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Sample display made by HTML designer --&gt;
+    &lt;div class="slider"&gt;
+      &lt;div class="slider_element"&gt;
+        &lt;!-- The content of this div is replaced dynamically by the call to render() --&gt;
+        &lt;div data-gadget-slot="main"> &lt;!-- main is the default --&gt;
+          &lt;!-- This part is destroyed and replaced by render() --&gt;
+          &lt;form&gt;
+            &lt;input type="text" /&gt;
+          &lt;/form&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+
+&lt;/html&gt;
+</pre>
+
+<p>We can now define the CSS of <code>slider.css</code>:</p>
+
+<pre>
+    .slider {
+      background-color: black;
+      display: inline-block;
+      height: 0.5em;
+      margin: 0.5em 0;
+      position: relative;
+      width: 20em;
+    }
+    .slider_element {
+      background-clip: padding-box;
+      background-color: #A1A1A1;
+      border-radius: 0.75em 0.75em 0.75em 0.75em;
+      border-width: 0;
+      cursor: pointer;
+      left: 50%;
+      line-height: 1em;
+      padding: 0.25em;
+      position: absolute;
+      top: -1em;
+    }
+    form input {
+      cursor: pointer;
+      max-width: 2em;
+    }
+</pre>
+
+<p>The Javascript code of <code>slider.js</code> looks like this:</p>
+
+<pre>
+XXX TO BE COMPLETED
+</pre>
+
+<p>This example introduces some new concepts of renderJS. The <code>data-gadget-slot</code> slot defines a placeholder in the gadget which can be filled with
+another gadget at render time. It is now filled with a single form with a single field. We will show later how to dynamically replace this single form with two
+forms.</p>
+
+<p>Another important concept introduced in this example is the notion of interface. The relation type <code>http://www.renderjs.org/rel/interface</code> defines
+an interface relation, following the concepts of link relation used increasingly in modern REST applications based on the <a
+href="http://en.wikipedia.org/wiki/HATEOAS">HATEOAS</a> approach. We define here that our gadget follows the renderable interface and the field interface.</p>
+
+<p>Interfaces are self-documented online:</p>
+
+<pre>
+# http://www.renderjs.org/interface/renderable
+
+A gadget is meant to be rendered as part of the DOM tree of an HTML5 page.
+
+€(selector).render() [returns Promise]
+
+Renders the gadget in the given DOM context.
+</pre>
+
+<pre>
+# http://www.renderjs.org/interface/field
+
+A renderJS gadget which provides a way for user to display information and
+collect information.
+
+€(selector).getValue() [returns Promise]
+
+Returns the value of given gadget.
+
+€(selector).setValue(value) [returns Promise]
+* value -- value to set
+
+Sets the value of a given gadget.
+</pre>
+
+<p>Let us now create a small application which embeds two forms inside a slider gadget and created an interaction between forms and the slider.</p>
+
+<p>We should first create a form gadget in <code>/var/www/gadget/slider/form.html</code></p>
+
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Form Gadget&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="form.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;link rel="http://www.renderjs.org/rel/interface"
+          src="http://www.renderjs.org/interface/renderable"/&gt;
+    &lt;link rel="http://www.renderjs.org/rel/interface"
+          src="http://www.renderjs.org/interface/field"/&gt;
+  &lt;/head&gt;
+  &lt;body data-gadget-public="setValue"&gt;
+    &lt;form&gt;
+      &lt;input type="text" /&gt;
+    &lt;/form&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+<p>and define the <code>form.js</code> script which implements the field API for the form itself.</p>
+
+<pre>
+€(this)
+  .declareMethod("getValue", function () {
+       // Deferred object is returned automatically by renderJS
+       return $(this).find('input').val();
+    })
+  .declareMethod("setValue", function (value) {
+       // Deferred object is returned automatically by renderJS
+       $(this).find('input').val(value);
+    });
+</pre>
+
+<p>It is time now to assemble all parts into an application: a slide gadget and two instances of the form in <code>/var/www/gadget/slider/example.html</code></p>
+
+<pre>
+&lt;html&gt;
+
+  &lt;head>
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Slider Example Application&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript&gt;Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Page structure --&gt;
+    &lt;div data-gadget-path="slider.html"&gt;
+      &lt;div data-gadget-fill="main"&gt;
+        &lt;!-- First Form --&gt;
+        &lt;div data-gadget-path="form.html"
+             data-gadget-scope="first"/&gt;
+        &lt;!-- Second Form --&gt;
+        &lt;div data-gadget-path="form.html"
+             data-gadget-scope="second"/&gt;
+      &lt;/div>
+    &lt;/div>
+  &lt;/body>
+
+&lt;/html>
+</pre>
+
+<p>This example shows a typical example of the <code>data-gadget-scope</code> tag in order to distinguish to instances of the same gadget. It also shows how the
+<code>data-gadget-fill</code> tag operates by filling the <code>data-gadget-slot</code> named "main" in the Slider gadget.</p>
+
+
+<p>Let us display the result by opening the URL <code>http://localhost/gadget/slider/sample.html</code>:</p>
+
+[DISPLAY]
+
+<p>Let us illustrate how the <code>data-gadget-public</code> tag works in combination with <code>data-gadget-scope</code>.</p>
+
+<p>And if we call <code>http://localhost/gadget/slider/sample.html#first/setValue?value=3</code>
+
+[DISPLAY]
+
+<p>The second form changes with value set to 3.</p>
+
+<p>If we call <code>http://localhost/gadget/slider/sample.html#second/setValue?value=7</code>
+
+[DISPLAY]
+
+<p>The second form changes with value set to 7.</p>
+
+<p>We will now make the slider and forms interact so that moving the slider updates both forms and changing any form moves the slider. In order to achieve this,
+we need to add a interactor gadget to the application. The code of the application will look like this.</p>
+
+
+<pre>
+&lt;html&gt;
+
+  &lt;head>
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Slider Example Application&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript&gt;Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Page structure --&gt;
+    &lt;div data-gadget-path="slider.html"
+         data-gadget-scope="slider"
+         data-gadget-routed="setValue:interactor/notifyUpdatedValue?value={$value}" &gt;
+      &lt;div data-gadget-fill="main"&gt;
+        &lt;!-- First Form --&gt;
+        &lt;div data-gadget-path="form.html"
+             data-gadget-scope="first"
+             data-gadget-routed="setValue:interactor/notifyUpdatedValue?value={$value}" /&gt;
+        &lt;!-- Second Form --&gt;
+        &lt;div data-gadget-path="form.html"
+             data-gadget-scope="second"
+             data-gadget-routed="setValue:interactor/notifyUpdatedValue?value={$value}" /&gt;
+      &lt;/div>
+    &lt;/div>
+    &lt;div data-gadget-path="interactor.html"
+         data-gadget-scope="interactor"
+         data-gadget-public="notifyUpdatedValue" /&gt;
+  &lt;/body>
+
+&lt;/html>
+</pre>
+
+<p>What we just did here is to use the tag <code>data-gadget-public</code> which simulates the call to a URL each time a method of a gadget is invokes. For
+example, if <code>setValue</code> is invoked on the first single field form, then we simulate a call to the URL <code>interactor/notifyUpdatedValue</code> and
+pass to it the parameters of setValue which ere interested in.</p>
+
+<p>We can now define the interactor HTML5 code for <code>interactor.html</code>:</p>
+
+<pre>
+&lt;html/&gt;
+  &lt;head/&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Slide Interactor&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="interactor.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head/&gt;
+  &lt;body/&gt;
+    &lt;!-- Warning message if no javascript --/&gt;
+    &lt;noscript&gt;Please turn on Javascript.&lt;/noscript&gt;
+  &lt;/body/&gt;
+&lt;/html/&gt;
+</pre>
+
+<p>and its javascript code:</p>
+
+<pre>
+€(this).declareMethod("notifyUpdatedValue", function (value) {
+   var slider = €("slider"),
+     first = slider.find("first"),
+     second = slider.find("second"),
+   slider.getValue().done(function (current_value) {
+     if (current_value !== value) {
+       slider.setValue(value);
+     }
+   });
+   first.getValue().done(function (current_value) {
+     if (current_value !== value) {
+       first.setValue(value);
+     }
+   });
+   second.getValue().done(function (current_value) {
+     if (current_value !== value) {
+       second.setValue(value);
+     }
+   });
+});
+</pre>
+
+<p>Now each time the user moves the slider, the forms are updated and each time forms are updated, the slider is moved.</p>
+
+
+<h2>Tutorial 4: using Javascript only</h2>
+
+<p>TBD, mainly by calling declareGadget, declarePublic and declareRouted</p>
+
+<h1>HTML5 Tags</h1>
+
+<h2>data-gadget-path</h2>
+
+<p>TBD</p>
+
+<pre>
+</pre>
+
+<h2>data-gadget-scope</h2>
+
+<p>TBD</p>
+
+<pre>
+</pre>
+
+<h2>data-gadget-state</h2>
+
+<p>TBD</p>
+
+<pre>
+</pre>
+
+<h2>data-gadget-cache</h2>
+
+<p>TBD</p>
+
+<pre>
+</pre>
+
+<h2>data-gadget-sandbox</h2>
+
+<p>TBD</p>
+
+<pre>
+</pre>
+
+<h2>data-gadget-slot</h2>
+
+<p>TBD</p>
+
+<pre>
+</pre>
+
+<h2>data-gadget-fill</h2>
+
+<p>TBD</p>
+
+<pre>
+</pre>
+
+<h2>data-gadget-public</h2>
+
+<p>Makes a given method of the gadget accessible through the router.</p>
+
+<p>The simple form does not require any parameter:</p>
+
+<pre>
+&lt;div data-gadget-path="a.html"
+     data-gadget-public="someMethodOfA"
+     data-gadget-scope="a"/&gt;
+</pre>
+
+<p>can be invoked by a GET as:</p>
+
+<pre>#a/someMethodOfA</pre>
+
+<p>A more complex form adds name translation:</p>
+
+<pre>
+&lt;div data-gadget-path="a.html"
+     data-gadget-public="someOtherName:someMethodOfA"
+     data-gadget-scope="a"/&gt;
+</pre>
+
+<p>can be invoked by a GET as:</p>
+
+<pre>#a/someOtherName</pre>
+
+<p>It is also possible to publish a method as a POST:</p>
+
+<pre>
+&lt;div data-gadget-path="a.html"
+     data-gadget-public="POST:someOtherName:someMethodOfA"
+     data-gadget-scope="a"/&gt;
+</pre>
+
+<p>can be invoked by a POST on the page with _route parameter set in the HTTP request to.</p>
+
+<pre>_route: a/someOtherName</pre>
+
+<h2>data-gadget-routed</h2>
+
+<p>Routes a given method or event to the router.</p>
+
+<p>In the first example, the interactor gadget defines routes on other gadgets. It is the preferred approach in terms of encapsulation but may cause security
+issues in the future.</p>
+
+<pre>
+&lt;html>
+
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Sample Application with 2 gadgets and interactor&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript>Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Page structure --&gt;
+    &lt;div data-gadget-path="a.html" data-gadget-scope="a"/&gt;
+    &lt;div data-gadget-path="b.html" data-gadget-scope="b"/&gt;
+    &lt;!-- tell the router that calling browser://interact/bang should call bang --&gt;
+    &lt;!-- wrap on a.someMehod a call to browser://interact/bang --&gt;
+    &lt;!-- wrap on b.anotherEvent a call to browser://interact/bang --&gt;
+    &lt;div data-gadget-path="interactor.html" data-gadget-scope="interactor"
+         data-gadget-public="bang:bang; "
+         data-gadget-routed="a.someMethod:bang; b.anotherEvent:bang"&gt;
+    &lt;/div>
+  &lt;/body>
+
+&lt;/html>
+</pre>
+
+<p>In the second example, each gadget defines its own routes.</p>
+
+<pre>
+&lt;html>
+
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Sample Application with 2 gadgets and interactor&lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+
+  &lt;body&gt;
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript>Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Page structure --&gt;
+    &lt;div data-gadget-path="a.html" data-gadget-scope="a"
+         data-gadget-routed="someMethod:interactor/bang"/&gt;
+    &lt;div data-gadget-path="b.html" data-gadget-scope="b"
+         data-gadget-routed="someMethod:interactor/bang"/&gt;
+    &lt;!-- tell the router that calling browser://interact/bang should call bang --&gt;
+    &lt;!-- wrap on a.someMehod a call to browser://interact/bang --&gt;
+    &lt;!-- wrap on b.anotherEvent a call to browser://interact/bang --&gt;
+    &lt;div data-gadget-path="interactor.html" data-gadget-scope="interactor"
+         data-gadget-public="bang:bang;"&gt;
+    &lt;/div>
+  &lt;/body>
+
+&lt;/html>
+</pre>
+
+<h1>API</h1>
+
+<h2>Core</h2>
+
+<p>renderJS core consists of 3 global methods.</p>
+
+<pre>
+€(scope_selector).declareGadget OR $(selector).declareGadget
+
+* url -- the path of the gadget definition ex. "slide-gadget.html'
+* [settings] // A set of key/value pairs
+  * state -- the state of the gadget (JSON)
+  * scope -- it defines the URL path where the gadget is publishable and the way to retrieve for its parent
+  * position -- useful to try to order gadgets inside an element
+  * sandbox -- the type of sandboxing (iframe, safefs)
+
+Declares the existence of a gadget by creating or updating it if necessary.
+
+€(scope_selector)
+
+Select all gadgets matching the scope selector.
+
+€(scope_selector).remove
+
+Remove the set of matched gadgets
+</pre>
+
+<h1>Interfaces</h1>
+
+<p>renderJS provides a standard way to define interfaces using text files.</p>
+
+<pre>
+#http://standard/path/to/interface
+
+Some description of the interface in plain English in one
+or more lines of text.
+
+methodName
+* parameter1 -- description [OPTIONAL]
+* parameter2 -- description [OPTIONAL]
+
+Description of the method in in one or more lines of text.
+
+anotherMethodName
+* parameter1 -- description [OPTIONAL]
+* parameter2 -- description [OPTIONAL]
+
+Description of the method in in one or more lines of text.
+</pre>
+
+<p>All interfaces should returns promise because <b>everything in renderJS</b> is asynchronous.</p>
+
+<h2>Gadget</h2>
+
+<pre>
+# http://www.renderjs.org/interface/gadget
+
+The Gadget interface defines gadget introspection.
+It should be implemented by every gadget.
+
+getInterfaceList()
+
+Return the list of URL of interfaces of a gadget
+
+getPath()
+
+Returns the path of the HTML5 code of a gadget
+
+getTitle()
+
+Returns the title of a gadget
+
+getRequiredCSSList()
+
+Returns a list of CSS required by the gadget
+
+getRequiredJSList()
+
+Returns a list of JS required by the gadget
+</pre>
+
+<h2>Catalog</h2>
+
+<p>The Catalog interface defines how to search gadgets badget on gadget metadata.</p>
+
+<pre>
+# http://www.renderjs.org/interface/catalog
+
+The Catalog interface defines a single method to search gadgets based
+on their metadata. Its API mimics the API of JIO.
+
+allDocs(filter)
+* filter -- JSON dict which defines a predicate on metadata
+
+allDocs returns a list of dictionnaries of the form:
+{
+  "path" :      "http://some/path/to/the/gadget/source",
+  "title" :     "Gadget Title",
+  "link" :      "http://some/link/to/the/gadget",
+  "interface" : "http://officejs.org/interface/field",
+}
+
+Additional parameters can be added to the list in order to
+extend the Catalog. For example, mime types and a priority
+could be added:
+
+{
+  "path" :      "http://some/path/to/the/gadget/source",
+  "title" :     "Gadget Title",
+  "link" :      "http://some/link/to/the/gadget",
+  "interface" : "http://officejs.org/interface/field",
+  "mime_type" : "text/svg",
+  "priority" :  3,
+}
+</pre>
+
+<h2>Router</h2>
+
+<pre>
+# http://www.renderjs.org/interface/router
+
+The Router interface describes how to make gadgets
+communicate and interact eachother. It is based on the
+idea of link and the possibility for two gadgets located
+in different sandboxes or on different runtime to communicate.
+
+makeLink(gadget, method, link_type)
+* gadget -- a gadget or a handle to a gadget
+* method -- the method of the gadget or the method ID [OPTIONAL]
+* link_type -- the type of link (GET, POST, PUT).a list of mime types which the gadget supports
+at least on certain platforms. This method can be used
+to build a platform independent catalog of viewer gadgets.
+</pre>
+
+
+<h2>Editor</h2>
+
+<pre>
+# http://www.renderjs.org/interface/editor
+
+The Editor interface provides a way to interact
+with content in real time through menu actions.
+It enables different editors with different menus
+to share more commonality in their appearance.
+
+setEditableState
+* editable -- true or false
+
+Turns on or off the ability to edit content.
+
+setMenuVisibility
+* visibility -- true or false
+
+Shows of hides the default menu of the editor.
+
+getMenuItemTree
+
+Returns the tree of menu actions supported by the
+editor. Each menu action is described as a JSON dict
+with the following format.
+
+{
+  "id":     "open",
+  "title":  "Open...",
+  "dialog": true,
+}
+
+triggerAction
+* action
+
+Simulates an action on a menu item.
+
+notifyChange
+* location -- the location of the content
+* value -- the value of the content which is changed
+
+Each time some content is changes (title, paragraph, etc.)
+notifyChange is invoked with two parameters, once which describes
+the location of the content which was changed and the other the
+new value if any. If undefined value is passed, it is considered
+as a way to specify that location was deleted.
+
+setContent
+* location -- the location of the content
+* value -- the value of the content which is changed
+
+Updates content (by merging if needed).
+</pre>
+
+
+<h2>Text Editor</h2>
+
+<pre>
+# http://www.renderjs.org/interface/text-editor
+
+The Text Editor interface provides common text
+processing features.
+
+searchAndReplace
+* search_pattern --
+* replace_pattern --
+
+Replaces one string by another.
+
+getParagraphItemList
+* paragraph_type -- can be chapter or an HTML tag
+
+Returns a list of JSON dicts which describe each chapter
+in a text editor. This is useful for example to display
+a list of chapters outside the text editor.
+
+goToPosition
+* position -- the position to set the editor to. Position is an
+              arbitrary value defined by getParagraphItemList
+
+Moves text editor to a given position.
+</pre>
+
+
+<h2>Table Editor</h2>
+
+<pre>
+# http://www.renderjs.org/interface/image-editor
+
+The Table Editor interface provides a simple way to
+access or change lines, columns and cells in a table.
+</pre>
+
+<h1>Application Standard Services</h1>
+
+<p>Any application needs at least a gadget catalog and a router. By default, renderJS creates a standard router and a standard catalog. It is however possible to
+overload default services with your own as shown in the example below.</p>
+
+<pre>
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /&gt;
+    &lt;title&gt;Gadget Container Slider &lt;/title&gt;
+    &lt;script src="jquery.js" type="text/javascript"&gt;&lt;/script&gt;
+    &lt;script src="render.js" type="text/javascript"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+
+  &lt;body>
+    &lt;!-- Warning message if no javascript --&gt;
+    &lt;noscript>Please turn on Javascript.&lt;/noscript&gt;
+
+    &lt;!-- Overload dummy router and catalog with dummy ones --&gt;
+    &lt;div data-gadget="dummy-router.html" data-gadget-scope="router"/&gt;
+    &lt;div data-gadget="dummy-catalog.html" data-gadget-scope="catalog"/&gt;
+  &lt;/body&gt;
+
+&lt;/html&gt;
+</pre>
+
+<p>By using appropriate scope, the standard catalog and router are overloaded with dummy implementations which... do nothing.</p>
+
+
+<h2>The Standard Router</h2>
+
+<p>The router is where everything happens to convert method calls into link invocations emissions and link invocations into method calls, both locally and
+remotely. It is key to communication between sandboxes in the same page, between URLs and gadgets and between gadgets on different hosts.</p>
+
+<p>The makeHandle method converts a URL of a link to a handle. A handle is a proxy object capable of converting any method call to an AJAX POST. For performance
+reasons, gadgets in the same sandbox can access eachother directly, without conversion to link of method calls. Yet, the proxying is kept to enforce clean
+development.</p>
+
+<pre>
+// Get the router which is just a gadget
+var router = €("router"),
+  // Get a handle to a remote gadget
+  handle = router.makeHandle('http://some.server/some/scope/some/gadget');
+// Call a method on the remote gadget through the transparent invocation of a link
+//   this is just a form of syntactic sugar
+handle.someMethod(some_parameter);
+// This will call AJAX POST http://some.server/some/scope/some/gadget/someMethod?some_parameter=some_parameter
+</pre>
+
+<p>The makeLink method converts a gadget to a link by concatenating its scope and parent scope.</p>
+
+<pre>
+// Compute the link of a gadget based on its scope and the scope of its parents
+link = router.makeLink(gadget);
+</pre>
+
+<p>The makeLink method can receive option method parameters to create links to published methods more easily.</p>
+
+<pre>
+// Compute the link of a gadget based on its scope and the scope of its parents and pass parameters in link
+link = router.makeLink(gadget, "POST", "someMethod", {"parameter_name": value});
+</pre>
+
+<p>The router can be used to connect to remote gadgets. In the not so distant future, two routers on different browsers can be interconected through WebRTC.
+Until this happens, two routers can be interconnected by COMET or Websocket and some intermediate server.</p>
+
+<p>In this example, Gadget A in a remote host and Gadget B is on local host.</p>
+
+<p>First we publish some method of Gadget A by running the following code on remote host:</p>
+
+<pre>
+// This code is executed on remote host (A)
+var router_a = €("router"),
+  gadget_a = €("a");
+// Publish someMethod of gadget_a
+router_a.declarePublic(gadget_a, "someMethod?parameter={value}", gadget_a.someMethod);
+// Publish declareRouted method of router_a so that it can be remotely invoked
+router_a.declarePublic(router_a, "declareRouted", router_a.declareRouted);
+</pre>
+
+<p>Next we invoke on local host the following code:</p>
+
+<pre>
+// This code is executed on local host (B)
+var router_b = €("router"),
+  gadget_b = €("b"),
+  link_b = router.makeLink(gadget_b, 'callB'),
+  router_a = router.makeHandle('http://remote.com/router'),
+  link_a = "http://remote.com/a";
+router_b.declarePublic(gadget_b, "callB", gadget_b.callB);
+router_a.declareRouted(link_a, someAMethod, link_b);
+</pre>
+
+<p>
+What will happen after this is that each time someAMethod is called on Gadget A, Gadget A will invoke link_b which itself will call method callB on Gadget B. In
+order to achieve this we need to publish declareRouted method of router on A side sode that it can be invoked from B.
+</p>
+
+
+<h2>The Standard Catalog</h2>
+
+<p>RenderJS catalog uses the allDocs API of JIO, including queries.</p>
+
+<pre>
+var catalog = €("catalog"),
+  i = 0,
+  link,
+  catalog_item;
+// Use JIO syntax
+catalog.allDocs(filter={}).done(function (catalog_item_list) {
+  for (i = 0; i < catalog_item_list.length; i += 1) {
+    catalog_item = catalog_item_list.length[i];
+    link = catalog_item['link'];
+    makeHandle(link).done(function (handle) {
+      // does a remote call to a living gadget
+      handle.getInterfaceList().done(function (interface_list) {
+        ...
+      });
+    });
+  }
+}
+</pre>
+
+
+<h1>Open Questions</h1>
+
+<ul>
+<li>
+Who is allowed to publish a method ? (parent is allowed to publish method of child ?) -> parent for child OR security policy defined
+</li><li>
+Is it better to have promise based (setGadget) or imperative based (addGadget) -> declarative
+</li><li>
+are makeLink and makeHandle part of router API, global methods or gadget methods ? -> router API
+</li><li>
+Should it be router.makeLink(gadget)  or gadget.makeLink()  or makeLink(gadget, someMethod) etc. -> router API
+</li><li>
+Should fireLink be method of router or each gadget -> router
+</li>
+
+</ul>
+
+<h1 id="g2">Problems Solved by renderJS </h1>
+
+<p> It is possible for example to embed in an HTML5 an SVG editor gadget which itself embeds a menu gadget, both of which are defined by different sources. </p>
+
+<h1 id="g3">Authors</h1>
+
+<a name="Authors"></a>
+
+<ul>
+  <li>Ivan Tyagov</li>
+  <li>Jean-Paul Smets</li>
+  <li>Sven Franck</li>
+  <li>Romain Courteaud</li>
+</ul>
+
+<h1 id="g4">Copyright and license</h1>
+
+<p>renderJS is an open-source library and is licensed under the LGPL license. More
+information on LGPL can be found
+<a href="http://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License">here</a></p>
+
+<p style="text-align: right; font-size: 10px;"> <em>Last update: Tuesday, June 12th, 2013</em> </p>
+
+
+    </div>
+  </body>
+</html>
