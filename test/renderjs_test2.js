@@ -938,7 +938,7 @@
   });
 
   /////////////////////////////////////////////////////////////////
-  // RenderJSGadget.declareMethod
+  // RenderJSGadgetKlass.declareMethod
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareMethod");
   test('is chainable', function () {
@@ -1051,6 +1051,49 @@
       .always(function () {
         start();
       });
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadgetKlass.ready
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadgetKlass.ready");
+  test('is chainable', function () {
+    // Check that ready is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.ready_list = [];
+    Klass.ready = RenderJSGadget.ready;
+
+    gadget = new Klass();
+    result = Klass.ready(function () {
+      var a;
+    });
+    // ready is chainable
+    equal(result, Klass);
+  });
+
+  test('store callback in the ready_list property', function () {
+    // Check that ready is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget, result,
+      callback = function () {var a; };
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.ready_list = [];
+    Klass.ready = RenderJSGadget.ready;
+
+    gadget = new Klass();
+    Klass.ready(callback);
+    // ready is chainable
+    deepEqual(Klass.ready_list, [callback]);
   });
 
 }(document, jQuery, renderJS, QUnit, sinon));

@@ -29,6 +29,7 @@
   RenderJSGadget.ready_list = [];
   RenderJSGadget.ready = function (callback) {
     this.ready_list.push(callback);
+    return this;
   };
 
   RenderJSGadget.declareMethod = function (name, callback) {
