@@ -940,7 +940,7 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareMethod
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.declareMethod");
+  module("RenderJSGadgetKlass.declareMethod");
   test('is chainable', function () {
     // Check that declareMethod is chainable
 
@@ -950,14 +950,15 @@
     }, gadget, result;
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
 
     gadget = new Klass();
     equal(gadget.testFoo, undefined);
-    result = gadget.declareMethod('testFoo', function () {
+    result = Klass.declareMethod('testFoo', function () {
       var a;
     });
     // declareMethod is chainable
-    equal(result, gadget);
+    equal(result, Klass);
   });
 
   test('creates methods on the prototype', function () {
@@ -969,10 +970,11 @@
     }, gadget, called, result;
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
 
     gadget = new Klass();
     equal(gadget.testFoo, undefined);
-    gadget.declareMethod('testFoo', function (value) {
+    Klass.declareMethod('testFoo', function (value) {
       called = value;
     });
     // Method is added on the instance class prototype
@@ -996,9 +998,10 @@
     }, gadget;
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
 
     gadget = new Klass();
-    gadget.declareMethod('testFoo', function (value) {
+    Klass.declareMethod('testFoo', function (value) {
       return value;
     });
 
@@ -1025,9 +1028,10 @@
     }, gadget;
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
 
     gadget = new Klass();
-    gadget.declareMethod('testFoo', function (value) {
+    Klass.declareMethod('testFoo', function (value) {
       var dfr = $.Deferred();
       setTimeout(function () {
         dfr.reject(value);
