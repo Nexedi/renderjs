@@ -10,7 +10,6 @@
 (function (document, window, $, DOMParser) {
 
   var gadget_model_dict = {},
-    gadget_scope_dict = {},
     javascript_registration_dict = {},
     stylesheet_registration_dict = {},
     gadget_loading_klass,
@@ -97,59 +96,71 @@
   RenderJSGadget.prototype.declareGadget = function (url, jquery_context) {
     var loaded = false,
       previous_loading_gadget_promise = loading_gadget_promise,
-      next_loading_gadget_deferred = $.Deferred(),
-      dfr = $.Deferred(),
-      dfr_promise = dfr.promise();
+      next_loading_gadget_deferred = $.Deferred();
 
+    // Change the global variable to update the loading queue
+    loading_gadget_promise = next_loading_gadget_deferred.promise();
 
-    dfr_promise.done(function (created_gadget) {
-      created_gadget.context.html(created_gadget.constructor.prototype.html);
-      $.each(created_gadget.constructor.ready_list, function (i, callback) {
-        callback.apply(created_gadget);
+    // Wait for previous gadget loading to finish first
+    previous_loading_gadget_promise.always(function () {
+      // Get the gadget class and instanciate it
+      renderJS.declareGadgetKlass(url).done(function (Klass) {
+        var gadget = new Klass();
+        gadget.context = jquery_context;
+
+        // Load dependencies if needed
+        $.when(gadget.getRequiredJSList(), gadget.getRequiredCSSList())
+          .done(function (js_list, css_list) {
+            var result_list = [];
+            gadget_loading_klass = Klass;
+            // Load all JS and CSS
+            $.each(js_list, function (i, required_url) {
+              result_list.push(renderJS.declareJS(required_url));
+            });
+            $.each(css_list, function (i, required_url) {
+              result_list.push(renderJS.declareCSS(required_url));
+            });
+            $.when.apply(this, result_list)
+              .done(function () {
+                // Dependency correctly loaded. Fire instanciation success.
+                next_loading_gadget_deferred.resolve(gadget);
+              }).fail(function () {
+                // One error during css/js loading
+                next_loading_gadget_deferred.reject();
+              });
+
+          }).fail(function () {
+            // Failed to fetch dependencies information.
+            next_loading_gadget_deferred.reject();
+          });
+      }).fail(function () {
+        // Klass not correctly loaded. Reject instanciation
+        next_loading_gadget_deferred.reject();
       });
     });
 
-    loading_gadget_promise = next_loading_gadget_deferred.promise();
-    if (gadget_model_dict.hasOwnProperty(url)) {
-      loaded = true;
-    }
-    renderJS.declareGadgetKlass(url).done(function (Klass) {
-      var gadget = new Klass();
-      gadget.context = jquery_context;
-      if (loaded === false) {
+    loading_gadget_promise
+      // Drop the current loading klass info used by selector
+      .done(function () {
+        gadget_loading_klass = undefined;
+      })
+      .fail(function () {
+        gadget_loading_klass = undefined;
+      })
+      .done(function (created_gadget) {
+        // Set the content html and call the ready list if instance is
+        // correctly loaded
+        if (created_gadget.context !== undefined) {
+          $(created_gadget.context).html(
+            created_gadget.constructor.prototype.html
+          );
+        }
+        $.each(created_gadget.constructor.ready_list, function (i, callback) {
+          callback.apply(created_gadget);
+        });
+      });
 
-        $.when(gadget.getRequiredJSList(), gadget.getRequiredCSSList())
-          .done(function (js_list, css_list) {
-
-            previous_loading_gadget_promise.done(function () {
-              var result_list = [];
-              gadget_loading_klass = Klass;
-              $.each(js_list, function (i, required_url) {
-                result_list.push(renderJS.declareJS(required_url));
-              });
-              $.each(css_list, function (i, required_url) {
-                result_list.push(renderJS.declareCSS(required_url));
-              });
-              $.when.apply(this, result_list).done(function () {
-                dfr.resolve(gadget);
-              }).fail(function () {
-                dfr.reject(gadget);
-              });
-            });
-          }).fail(function () {
-            dfr.reject(gadget);
-          });
-      } else {
-        dfr.resolve(gadget);
-      }
-    }).fail(function () {
-      dfr.reject();
-    });
-    dfr_promise.then(function () {
-      gadget_loading_klass = undefined;
-      next_loading_gadget_deferred.resolve();
-    });
-    return dfr_promise;
+    return loading_gadget_promise;
   };
 
   methods = {
@@ -282,9 +293,10 @@
 //       headID.appendChild(newScript);
 //     }
     var dfr,
-      origin_dfr;
+      origin_dfr = $.Deferred(),
+      head_element,
+      script_element;
     if (javascript_registration_dict.hasOwnProperty(url)) {
-      origin_dfr = $.Deferred();
       setTimeout(function () {
         origin_dfr.resolve();
       });
@@ -297,13 +309,18 @@
       }).done(function (script, textStatus) {
         javascript_registration_dict[url] = null;
       });
+
     }
     return dfr;
   };
 
   renderJS.declareCSS = function (url) {
     // https://github.com/furf/jquery-getCSS/blob/master/jquery.getCSS.js
+    // No way to cleanly check if a css has been loaded
+    // So, always resolve the promise...
+    // http://requirejs.org/docs/faq-advanced.html#css
     var origin_dfr = $.Deferred(),
+      origin_promise = origin_dfr.promise(),
       head,
       link;
     if (stylesheet_registration_dict.hasOwnProperty(url)) {
@@ -318,7 +335,7 @@
       link.type = 'text/css';
       link.href = url;
 
-      origin_dfr.done(function () {
+      origin_promise.done(function () {
         stylesheet_registration_dict[url] = null;
       });
 
@@ -329,7 +346,7 @@
       });
 
     }
-    return origin_dfr.promise();
+    return origin_promise;
   };
 
   renderJS.declareGadgetKlass = function (url) {
@@ -386,6 +403,8 @@
   // For test purpose only
   renderJS.clearGadgetKlassList = function () {
     gadget_model_dict = {};
+    javascript_registration_dict = {};
+    stylesheet_registration_dict = {};
   };
 
   renderJS.parseGadgetHTML = function (html) {

@@ -1,8 +1,8 @@
-/*global window, document, QUnit, jQuery, renderJS, RenderJSGadget, sinon */
+/*global window, document, QUnit, jQuery, renderJS, RenderJSGadget */
 /*jslint indent: 2, maxerr: 3, maxlen: 79 */
 "use strict";
 
-(function (document, $, renderJS, QUnit, sinon) {
+(function (document, $, renderJS, QUnit) {
   var test = QUnit.test,
     stop = QUnit.stop,
     start = QUnit.start,
@@ -15,12 +15,20 @@
   /////////////////////////////////////////////////////////////////
   // parseGadgetHTML
   /////////////////////////////////////////////////////////////////
-  module("renderJS.parseGadgetHTML");
+  module("renderJS.parseGadgetHTML", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('Not valid HTML string', function () {
-    // Check that parseGadgetHTML throws an error if the string is
+    // Check that parseGadgetHTML returns the default value if the string is
     // not a valid xml
-    throws(function () {
-      renderJS.parseGadgetHTML("<ht");
+    deepEqual(renderJS.parseGadgetHTML(""), {
+      title: "",
+      interface_list: [],
+      required_css_list: [],
+      required_js_list: [],
+      html: "",
     });
   });
 
@@ -92,8 +100,8 @@
     equal(settings.html, "<p>Foo</p>", "HTML extracted");
   });
 
-  test('Extract only one body', function () {
-    // Check that parseGadgetHTML correctly extract the first title
+  test('Extract all body', function () {
+    // Check that parseGadgetHTML correctly extracts all bodies
     var settings,
       html = "<html>" +
         "<body>" +
@@ -103,18 +111,18 @@
         "</body></html>";
 
     settings = renderJS.parseGadgetHTML(html);
-    equal(settings.html, '<p>Foo</p>', 'First body extracted');
+    equal(settings.html, '<p>Foo</p><p>Bar</p>', 'All bodies extracted');
   });
 
   test('Extract body only from html', function () {
-    // Check that parseGadgetHTML only extract title from html
+    // Check that parseGadgetHTML also extract body from head
     var settings,
       html = "<html>" +
         "<head><body><p>Bar</p></body></head>" +
         "</html>";
 
     settings = renderJS.parseGadgetHTML(html);
-    equal(settings.html, "", "Body not found");
+    equal(settings.html, "<p>Bar</p>", "Body not found");
   });
 
   test('Extract CSS', function () {
@@ -270,15 +278,15 @@
   /////////////////////////////////////////////////////////////////
   // declareGadgetKlass
   /////////////////////////////////////////////////////////////////
-  module("renderJS.declareGadgetKlass");
+  module("renderJS.declareGadgetKlass", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('Ajax error reject the promise', function () {
     // Check that declareGadgetKlass fails if ajax fails
-    renderJS.clearGadgetKlassList();
-
-    var server = sinon.fakeServer.create(),
+    var server = this.sandbox.useFakeServer(),
       url = 'https://example.org/files/qunittest/test';
-    server.autoRespond = true;
-    server.autoRespondAfter = 1;
 
     server.respondWith("GET", url, [404, {
       "Content-Type": "text/html",
@@ -295,16 +303,13 @@
       .always(function () {
         start();
       });
+    server.respond();
   });
 
   test('Non HTML reject the promise', function () {
     // Check that declareGadgetKlass fails if non html is retrieved
-    renderJS.clearGadgetKlassList();
-
-    var server = sinon.fakeServer.create(),
+    var server = this.sandbox.useFakeServer(),
       url = 'https://example.org/files/qunittest/test';
-    server.autoRespond = true;
-    server.autoRespondAfter = 1;
 
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/plain",
@@ -321,23 +326,20 @@
       .always(function () {
         start();
       });
+    server.respond();
   });
 
   test('HTML parsing failure reject the promise', function () {
     // Check that declareGadgetKlass fails if the html can not be parsed
-    renderJS.clearGadgetKlassList();
-
-    var server = sinon.fakeServer.create(),
+    var server = this.sandbox.useFakeServer(),
       url = 'https://example.org/files/qunittest/test',
       mock;
-    server.autoRespond = true;
-    server.autoRespondAfter = 1;
 
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, ""]);
 
-    mock = sinon.mock(renderJS, "parseGadgetHTML", function () {
+    mock = this.mock(renderJS, "parseGadgetHTML", function () {
       throw new Error();
     });
     mock.expects("parseGadgetHTML").once().throws();
@@ -353,26 +355,22 @@
       .always(function () {
         mock.verify();
         start();
-        mock.restore();
       });
+    server.respond();
   });
 
   test('Klass creation', function () {
     // Check that declareGadgetKlass returns a subclass of RenderJSGadget
     // and contains all extracted properties on the prototype
-    renderJS.clearGadgetKlassList();
-
-    var server = sinon.fakeServer.create(),
+    var server = this.sandbox.useFakeServer(),
       url = 'https://example.org/files/qunittest/test',
       mock;
-    server.autoRespond = true;
-    server.autoRespondAfter = 1;
 
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, "foo"]);
 
-    mock = sinon.mock(renderJS, "parseGadgetHTML");
+    mock = this.mock(renderJS, "parseGadgetHTML");
     mock.expects("parseGadgetHTML").once().withArgs("foo").returns(
       {foo: 'bar'}
     );
@@ -396,26 +394,22 @@
       .always(function () {
         mock.verify();
         start();
-        mock.restore();
       });
+    server.respond();
   });
 
   test('Klass is not reloaded if called twice', function () {
     // Check that declareGadgetKlass does not reload the gadget
     // if it has already been loaded
-    renderJS.clearGadgetKlassList();
-
-    var server = sinon.fakeServer.create(),
+    var server = this.sandbox.useFakeServer(),
       url = 'https://example.org/files/qunittest/test',
       mock;
-    server.autoRespond = true;
-    server.autoRespondAfter = 1;
 
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, "foo"]);
 
-    mock = sinon.mock(renderJS, "parseGadgetHTML");
+    mock = this.mock(renderJS, "parseGadgetHTML");
     mock.expects("parseGadgetHTML").once().withArgs("foo").returns(
       {foo: 'bar'}
     );
@@ -423,24 +417,16 @@
     stop();
     renderJS.declareGadgetKlass(url)
       .done(function (Klass1) {
-        var spy;
-
-        mock.restore();
-        server.restore();
-        spy = sinon.spy($, "ajax");
-
         renderJS.declareGadgetKlass(url)
           .done(function (Klass2) {
-
             equal(Klass1, Klass2);
-            ok(!spy.called);
           })
           .fail(function (jqXHR, textStatus) {
             ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
           })
           .always(function () {
             start();
-            spy.restore();
+            mock.verify();
           });
 
       })
@@ -448,16 +434,19 @@
         ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
         start();
       });
+    server.respond();
   });
 
   /////////////////////////////////////////////////////////////////
   // declareJS
   /////////////////////////////////////////////////////////////////
-  module("renderJS.declareJS");
-  test('Ajax error reject the promise', function () {
+  module("renderJS.declareJS", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+  test('Download error reject the promise', function () {
     // Check that declareJS fails if ajax fails
-    renderJS.clearGadgetKlassList();
-
     var url = 'foo://bar';
 
     stop();
@@ -473,30 +462,49 @@
       });
   });
 
-  test('Non JS reject the promise', function () {
-    // Check that declareJS fails if mime type is wrong
-    renderJS.clearGadgetKlassList();
-
-    var url = "data:image/png;base64," +
-         window.btoa("= = =");
+  test('Ajax error reject the promise twice', function () {
+    // Check that failed declareJS is not cached
+    var url = 'foo://bar';
 
     stop();
     renderJS.declareJS(url)
+      .always(function () {
+        renderJS.declareJS(url)
+          .done(function () {
+            ok(false, "404 should fail");
+          })
+          .fail(function (jqXHR, textStatus) {
+            equal("404", jqXHR.status);
+          })
+          .always(function () {
+            start();
+          });
+      });
+  });
+
+  test('Non JS reject the promise', function () {
+    // Check that declareJS fails if mime type is wrong
+    var url = "data:image/png;base64," +
+         window.btoa("= = ="),
+      previousonerror = window.onerror;
+
+    stop();
+    window.onerror = undefined;
+    renderJS.declareJS(url)
       .done(function (value, textStatus, jqXHR) {
-        ok(true, "Non JS mime type should load");
+        ok(ok, "Non JS mime type should load");
       })
       .fail(function (jqXHR, textStatus) {
         ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
       })
       .always(function () {
+        window.onerror = previousonerror;
         start();
       });
   });
 
   test('JS cleanly loaded', function () {
     // Check that declareJS is fetched and loaded
-    renderJS.clearGadgetKlassList();
-
     var url = "data:application/javascript;base64," +
          window.btoa("$('#qunit-fixture').text('JS fetched and loaded');");
 
@@ -515,28 +523,27 @@
 
   test('JS with errors cleanly loaded', function () {
     // Check that declareJS is fetched and loaded even if JS contains an error
-    renderJS.clearGadgetKlassList();
-
     var url = "data:application/javascript;base64," +
-         window.btoa("throw new Error('foo');");
+         window.btoa("= var var var a a a"),
+      previousonerror = window.onerror;
 
     stop();
+    window.onerror = undefined;
     renderJS.declareJS(url)
-      .done(function () {
+      .done(function (aaa) {
         ok(true, "JS with error cleanly loaded");
       })
       .fail(function (jqXHR, textStatus) {
         ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
       })
       .always(function () {
+        window.onerror = previousonerror;
         start();
       });
   });
 
   test('JS is not fetched twice', function () {
     // Check that declareJS does not load the JS twice
-    renderJS.clearGadgetKlassList();
-
     var url = "data:application/javascript;base64," +
          window.btoa("$('#qunit-fixture').text('JS not fetched twice');");
 
@@ -565,30 +572,32 @@
   /////////////////////////////////////////////////////////////////
   // declareCSS
   /////////////////////////////////////////////////////////////////
-  module("renderJS.declareCSS");
-  test('Ajax error reject the promise', function () {
-    // Check that declareCSS fails if ajax fails
-    renderJS.clearGadgetKlassList();
+  module("renderJS.declareCSS", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
 
+  test('Ajax error resolve the promise', function () {
+    // Check that declareCSS is resolved if ajax fails
     var url = 'foo://bar';
 
+    expect(1);
     stop();
     renderJS.declareCSS(url)
       .done(function () {
-        ok(false, "404 should fail");
+        ok(true, "404 should fail");
       })
       .fail(function (jqXHR, textStatus) {
-        equal("404", jqXHR.status);
+        ok(false);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Non CSS reject the promise', function () {
-    // Check that declareCSS fails if mime type is wrong
-    renderJS.clearGadgetKlassList();
-
+  test('Non CSS resolve the promise', function () {
+    // Check that declareCSS is resolved if mime type is wrong
     var url = "data:image/png;base64," +
          window.btoa("= = =");
 
@@ -598,7 +607,7 @@
         ok(true, "Non CSS mime type should load");
       })
       .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+        ok(false);
       })
       .always(function () {
         start();
@@ -607,8 +616,6 @@
 
   test('CSS cleanly loaded', function () {
     // Check that declareCSS is fetched and loaded
-    renderJS.clearGadgetKlassList();
-
     var url = "data:text/css;base64," +
          window.btoa("#qunit-fixture {background-color: red;}");
 
@@ -635,8 +642,6 @@
   test('CSS with errors cleanly loaded', function () {
     // Check that declareCSS is fetched and
     // loaded even if CSS contains an error
-    renderJS.clearGadgetKlassList();
-
     var url = "data:application/javascript;base64," +
          window.btoa("throw new Error('foo');");
 
@@ -655,8 +660,6 @@
 
   test('CSS is not fetched twice', function () {
     // Check that declareCSS does not load the CSS twice
-    renderJS.clearGadgetKlassList();
-
     var url = "data:text/css;base64," +
          window.btoa("#qunit-fixture {background-color: blue;}");
 
@@ -699,24 +702,25 @@
   /////////////////////////////////////////////////////////////////
   // clearGadgetKlassList
   /////////////////////////////////////////////////////////////////
-  module("renderJS.clearGadgetKlassList");
+  module("renderJS.clearGadgetKlassList", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+
   test('clearGadgetKlassList leads to gadget reload', function () {
     // Check that declareGadgetKlass reload the gadget
     // after clearGadgetKlassList is called
-    renderJS.clearGadgetKlassList();
-
-    var server = sinon.fakeServer.create(),
+    var server = this.sandbox.useFakeServer(),
       url = 'https://example.org/files/qunittest/test',
       mock;
-    server.autoRespond = true;
-    server.autoRespondAfter = 1;
 
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, "foo"]);
 
-    mock = sinon.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").once().withArgs("foo").returns(
+    mock = this.mock(renderJS, "parseGadgetHTML");
+    mock.expects("parseGadgetHTML").twice().withArgs("foo").returns(
       {foo: 'bar'}
     );
 
@@ -724,12 +728,7 @@
     renderJS.declareGadgetKlass(url)
       .done(function (Klass1) {
 
-        mock.restore();
         renderJS.clearGadgetKlassList();
-        mock = sinon.mock(renderJS, "parseGadgetHTML");
-        mock.expects("parseGadgetHTML").once().withArgs("foo").returns(
-          {foo: 'bar'}
-        );
 
         renderJS.declareGadgetKlass(url)
           .done(function (Klass2) {
@@ -741,7 +740,6 @@
           })
           .always(function () {
             start();
-            server.restore();
           });
 
       })
@@ -749,12 +747,52 @@
         ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
         start();
       });
+    server.respond();
   });
+
+  test('clearGadgetKlassList leads to JS reload', function () {
+    // Check that declareJS reload the JS
+    // after clearGadgetKlassList is called
+    var url = "data:application/javascript;base64," +
+         window.btoa("$('#qunit-fixture').text('JS not fetched twice');");
+
+    stop();
+    renderJS.declareJS(url)
+      .done(function () {
+        renderJS.clearGadgetKlassList();
+        equal($("#qunit-fixture").text(), "JS not fetched twice");
+        $("#qunit-fixture").text("");
+        renderJS.declareJS(url)
+          .done(function () {
+            equal($("#qunit-fixture").text(), "JS not fetched twice");
+          })
+          .fail(function (jqXHR, textStatus) {
+            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+          })
+          .always(function () {
+            start();
+          });
+      })
+      .fail(function (jqXHR, textStatus) {
+        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+        start();
+      });
+  });
+
+//   test('clearGadgetKlassList leads to CSS reload', function () {
+//     // Check that declareCSS reload the CSS
+//     // after clearGadgetKlassList is called
+//     ok(false, "not implemented");
+//   });
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getInterfaceList
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.getInterfaceList");
+  module("RenderJSGadget.getInterfaceList", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('returns interface_list', function () {
     // Check that getInterfaceList return a Promise
     var gadget = new RenderJSGadget();
@@ -785,7 +823,11 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getRequiredCSSList
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.getRequiredCSSList");
+  module("RenderJSGadget.getRequiredCSSList", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('returns interface_list', function () {
     // Check that getRequiredCSSList return a Promise
     var gadget = new RenderJSGadget();
@@ -816,7 +858,11 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getRequiredJSList
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.getRequiredJSList");
+  module("RenderJSGadget.getRequiredJSList", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('returns interface_list', function () {
     // Check that getRequiredJSList return a Promise
     var gadget = new RenderJSGadget();
@@ -847,7 +893,11 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getPath
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.getPath");
+  module("RenderJSGadget.getPath", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('returns path', function () {
     // Check that getPath return a Promise
     var gadget = new RenderJSGadget();
@@ -878,7 +928,11 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getTitle
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.getTitle");
+  module("RenderJSGadget.getTitle", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('returns title', function () {
     // Check that getTitle return a Promise
     var gadget = new RenderJSGadget();
@@ -909,7 +963,11 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getHTML
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.getHTML");
+  module("RenderJSGadget.getHTML", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('returns html', function () {
     // Check that getHTML return a Promise
     var gadget = new RenderJSGadget();
@@ -940,7 +998,11 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.declareMethod
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadgetKlass.declareMethod");
+  module("RenderJSGadgetKlass.declareMethod", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('is chainable', function () {
     // Check that declareMethod is chainable
 
@@ -1056,7 +1118,11 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.ready
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadgetKlass.ready");
+  module("RenderJSGadgetKlass.ready", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
   test('is chainable', function () {
     // Check that ready is chainable
 
@@ -1096,4 +1162,272 @@
     deepEqual(Klass.ready_list, [callback]);
   });
 
-}(document, jQuery, renderJS, QUnit, sinon));
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareGadget
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadget.declareGadget", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+  test('returns a Promise', function () {
+    // Check that declareGadget return a Promise
+    var gadget = new RenderJSGadget(),
+      server = this.sandbox.useFakeServer(),
+      url = 'https://example.org/files/qunittest/test',
+      html = "<html>" +
+        "<body>" +
+        "<script src='../lib/qunit/qunit.js' " +
+        "type='text/javascript'></script>" +
+        "</body></html>";
+
+    server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html",
+    }, html]);
+
+    stop();
+    gadget.declareGadget(url, $('#qunit-fixture'))
+      .always(function () {
+        ok(true);
+        start();
+      });
+    server.respond();
+  });
+
+  test('provide a gadget instance as callback parameter', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      server = this.sandbox.useFakeServer(),
+      url = 'https://example.org/files/qunittest/test',
+      html = "<html>" +
+        "<body>" +
+        "<script src='../lib/qunit/qunit.js' " +
+        "type='text/javascript'></script>" +
+        "</body></html>";
+
+    server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html",
+    }, html]);
+
+    stop();
+    gadget.declareGadget(url, $('#qunit-fixture'))
+      .done(function (new_gadget) {
+        equal(new_gadget.path, url);
+      })
+      .always(function () {
+        start();
+      });
+    server.respond();
+  });
+
+//   test('no parameter', function () {
+//     // Check that missing url reject the declaration
+//     var gadget = new RenderJSGadget();
+//     stop();
+//     gadget.declareGadget()
+//       .fail(function () {
+//         ok(true);
+//       })
+//       .always(function () {
+//         start();
+//       });
+//   });
+
+  test('load dependency before returning gadget', function () {
+    // Check that dependencies are loaded before gadget creation
+    var gadget = new RenderJSGadget(),
+      server = this.sandbox.useFakeServer(),
+      html_url = 'https://example.org/files/qunittest/test2.html',
+      js1_url = "data:application/javascript;base64," +
+         window.btoa(
+          "$('#qunit-fixture').find('div').first().text('youhou');"
+        ),
+      js2_url = js1_url,
+      css1_url = "data:text/plain;base64," +
+         window.btoa(""),
+      css2_url = css1_url,
+      html = "<html>" +
+        "<head>" +
+        "<title>Foo title</title>" +
+        "<script src='" + js1_url + "' type='text/javascript'></script>" +
+        "<script src='" + js2_url + "' type='text/javascript'></script>" +
+        "<link rel='stylesheet' href='" + css1_url + "' type='text/css'/>" +
+        "<link rel='stylesheet' href='" + css2_url + "' type='text/css'/>" +
+        "</head><body><p>Bar content</p></body></html>",
+      mock,
+      spy_js,
+      spy_css;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, html]);
+
+    spy_js = this.spy(renderJS, "declareJS");
+    spy_css = this.spy(renderJS, "declareCSS");
+
+    mock = this.mock(renderJS, "parseGadgetHTML");
+    mock.expects("parseGadgetHTML").once().withArgs(html).returns({
+      required_js_list: [js1_url, js2_url],
+      required_css_list: [css1_url, css2_url],
+      html: "<p>Bar content</p>",
+    });
+
+    $('#qunit-fixture').html("<div></div><div></div>");
+    stop();
+    gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
+      .done(function (new_gadget) {
+        equal($('#qunit-fixture').html(),
+              "<div>youhou</div><div><p>Bar content</p></div>");
+        ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
+        equal(spy_js.firstCall.args[0], js1_url, "First JS call");
+        equal(spy_js.secondCall.args[0], js2_url, "Second JS call");
+        ok(spy_css.calledTwice, "CSS count " + spy_css.callCount);
+        equal(spy_css.firstCall.args[0], css1_url, "First CSS call");
+        equal(spy_css.secondCall.args[0], css2_url, "Second CSS call");
+      })
+      .fail(function () {
+        ok(false);
+      })
+      .always(function () {
+        start();
+      });
+    server.respond();
+  });
+
+  test('Fail if klass can not be loaded', function () {
+    // Check that gadget is not created if klass is can not be loaded
+    var gadget = new RenderJSGadget(),
+      server = this.sandbox.useFakeServer(),
+      html_url = 'https://example.org/files/qunittest/test3.html';
+
+    server.respondWith("GET", html_url, [404, {
+      "Content-Type": "text/html",
+    }, ""]);
+
+    stop();
+    gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
+      .done(function (new_gadget) {
+        ok(false);
+      })
+      .fail(function () {
+        ok(true);
+      })
+      .always(function () {
+        start();
+      });
+    server.respond();
+  });
+
+  test('Fail if js can not be loaded', function () {
+    // Check that dependencies are loaded before gadget creation
+    var gadget = new RenderJSGadget(),
+      server = this.sandbox.useFakeServer(),
+      html_url = 'https://example.org/files/qunittest/test2.html',
+      js1_url = 'foo://bar2',
+      mock;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, "raw html"]);
+
+    mock = this.mock(renderJS, "parseGadgetHTML");
+    mock.expects("parseGadgetHTML").once().withArgs("raw html").returns({
+      required_js_list: [js1_url]
+    });
+
+    stop();
+    gadget.declareGadget(html_url, $('#qunit-fixture'))
+      .done(function (new_gadget) {
+        ok(false);
+      })
+      .fail(function () {
+        ok(true);
+      })
+      .always(function () {
+        start();
+      });
+    server.respond();
+  });
+
+  test('Do not load gadget dependency twice', function () {
+    // Check that dependencies are not reloaded if 2 gadgets are created
+    var gadget = new RenderJSGadget(),
+      server = this.sandbox.useFakeServer(),
+      html_url = 'https://example.org/files/qunittest/test2.html',
+      js1_url = "data:application/javascript;base64," +
+         window.btoa(
+          "$('#qunit-fixture').find('div').first().append('youhou');"
+        ),
+      mock,
+      spy;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, "raw html"]);
+
+    spy = this.spy($, "ajax");
+
+    mock = this.mock(renderJS, "parseGadgetHTML");
+    mock.expects("parseGadgetHTML").once().withArgs("raw html").returns({
+      required_js_list: [js1_url]
+    });
+
+    stop();
+    $('#qunit-fixture').html("<div></div><div></div>");
+    gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
+      .always(function () {
+        equal($('#qunit-fixture').html(),
+              "<div>youhou</div><div></div>");
+        gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
+          .done(function (new_gadget) {
+            equal($('#qunit-fixture').html(),
+                  "<div>youhou</div><div></div>");
+            ok(spy.calledTwice, "Ajax count " + spy.callCount);
+            equal(spy.firstCall.args[0], html_url, "First ajax call");
+            deepEqual(spy.secondCall.args[0], {
+              "cache": true,
+              "dataType": "script",
+              "url": js1_url,
+            }, "Second ajax call");
+          })
+          .fail(function () {
+            ok(false);
+          })
+          .always(function () {
+            start();
+          });
+      });
+    server.respond();
+  });
+
+  test('Load 2 concurrent gadgets in parallel', function () {
+    // Check that dependencies are loaded once if 2 gadgets are created
+    var gadget = new RenderJSGadget(),
+      server = this.sandbox.useFakeServer(),
+      html_url = 'https://example.org/files/qunittest/test2.html',
+      mock,
+      spy;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, "raw html"]);
+
+    spy = this.spy($, "ajax");
+
+    mock = this.mock(renderJS, "parseGadgetHTML");
+    mock.expects("parseGadgetHTML").once().withArgs("raw html").returns({});
+
+    stop();
+    $.when(
+      gadget.declareGadget(html_url, $('#qunit-fixture')),
+      gadget.declareGadget(html_url, $('#qunit-fixture'))
+    ).always(function () {
+      // Check that only one request has been done.
+      ok(spy.calledOnce, "Ajax count " + spy.callCount);
+      equal(spy.firstCall.args[0], html_url, "First ajax call");
+      start();
+    });
+    server.respond();
+  });
+
+}(document, jQuery, renderJS, QUnit));
