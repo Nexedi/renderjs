@@ -12,7 +12,9 @@ all: external lint test build doc
 #########################################
 # Download all external libs
 external: lib/sinon/sinon.js \
+     lib/sinon/sinon-qunit.js \
      lib/jquery/jquery.js \
+     lib/require/require.js \
      lib/qunit/qunit.js \
      lib/qunit/qunit.css \
      lib/jio/jio.js \
@@ -24,9 +26,18 @@ lib/sinon/sinon.js:
 	@mkdir -p $(@D)
 	curl -s -o $@ http://sinonjs.org/releases/sinon-1.7.3.js
 
+lib/sinon/sinon-qunit.js:
+	@mkdir -p $(@D)
+	# curl -s -o $@ http://sinonjs.org/releases/sinon-qunit-1.0.0.js
+	curl -s -o $@ https://raw.github.com/jfromaniello/jmail/master/scripts/Tests/sinon-qunit-1.0.0.js
+
 lib/jquery/jquery.js:
 	@mkdir -p $(@D)
-	curl -s -o $@ http://code.jquery.com/jquery-1.9.1.js
+	curl -s -o $@ http://code.jquery.com/jquery-2.0.3.js
+
+lib/require/require.js:
+	@mkdir -p $(@D)
+	curl -s -o $@ http://requirejs.org/docs/release/2.1.8/comments/require.js
 
 lib/qunit/qunit.%:
 	@mkdir -p $(@D)
@@ -69,4 +80,4 @@ lint: ${BUILDDIR}/$(RENDERJS).lint
 doc:
 	$(YUIDOC_CMD) .
 clean:
-	rm -rf $(RENDERJS_MIN) ${BUILDDIR} lib/sinon lib/jquery lib/qunit lib/jio
+	rm -rf $(RENDERJS_MIN) ${BUILDDIR} lib/sinon lib/jquery lib/qunit lib/jio lib/require
