@@ -2,11 +2,55 @@
 /*global $, jQuery, localStorage, jIO, window, document, DOMParser */
 /*jslint evil: true, indent: 2, maxerr: 3, maxlen: 79 */
 "use strict";
+
+/*
+ * DOMParser HTML extension
+ * 2012-09-04
+ * 
+ * By Eli Grey, http://eligrey.com
+ * Public domain.
+ * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+ */
+/*! @source https://gist.github.com/1129031 */
+(function (DOMParser) {
+  var DOMParser_proto = DOMParser.prototype,
+    real_parseFromString = DOMParser_proto.parseFromString;
+
+  // Firefox/Opera/IE throw errors on unsupported types
+  try {
+    // WebKit returns null on unsupported types
+    if ((new DOMParser()).parseFromString("", "text/html")) {
+      // text/html parsing is natively supported
+      return;
+    }
+  } catch (ex) {}
+
+  DOMParser_proto.parseFromString = function (markup, type) {
+    var result, doc, doc_elt, first_elt;
+    if (/^\s*text\/html\s*(?:;|$)/i.test(type)) {
+      doc = document.implementation.createHTMLDocument("");
+      doc_elt = doc.documentElement;
+
+      doc_elt.innerHTML = markup;
+      first_elt = doc_elt.firstElementChild;
+
+      if (doc_elt.childElementCount === 1
+          && first_elt.localName.toLowerCase() === "html") {
+        doc.replaceChild(first_elt, doc_elt);
+      }
+
+      result = doc;
+    } else {
+      result = real_parseFromString.apply(this, arguments);
+    }
+    return result;
+  };
+}(DOMParser));
+
 /*
  * renderJs - Generic Gadget library renderer.
  * http://www.renderjs.org/documentation
  */
-
 (function (document, window, $, DOMParser) {
 
   var gadget_model_dict = {},
@@ -252,7 +296,7 @@
 //   };
 //   // Give the init function the renderJS prototype for later instantiation
 //   renderJS.fn.init.prototype = renderJS.fn;
-// 
+//
 //   jQuery.fn.extend({
 //     attr: function (name, value) {
 //       return jQuery.access(this, jQuery.attr, name, value,
