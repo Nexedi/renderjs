@@ -18,6 +18,11 @@
         "title" :     "JQuery Text Editor Gadget",
         "interface" : "http://www.renderjs.org/interface/editor",
       },
+    editor_3_dict = {
+        "path" :      "./aceeditor.html",
+        "title" :     "Ace Editor Gadget",
+        "interface" : "http://www.renderjs.org/interface/editor",
+      },
     catalog_list = [
       {
         "path" :      "./officejs.html",
@@ -29,6 +34,7 @@
   catalog_list.push(io_dict);
   catalog_list.push(editor_1_dict);
   catalog_list.push(editor_2_dict);
+  catalog_list.push(editor_3_dict);
 
   gk.declareMethod('allDocs', function (filter) {
     var deferred = $.Deferred();
@@ -39,7 +45,7 @@
       deferred.resolve([io_dict]);
     } else if (filter.query ===
         'interface: "http://www.renderjs.org/interface/editor"') {
-      deferred.resolve([editor_1_dict, editor_2_dict]);
+      deferred.resolve([editor_1_dict, editor_2_dict, editor_3_dict]);
     } else {
       deferred.reject("Unsupported filter");
     }
