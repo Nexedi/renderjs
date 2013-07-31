@@ -37,7 +37,7 @@
 
          // Load 1 editor and 1 IO and plug them
          $.when(
-           g.declareGadget(editor_list[0].path, editor_a_context),
+           g.declareIframedGadget(editor_list[0].path, editor_a_context),
            g.declareGadget(io_list[0].path, io_a_context),
            "officejs").done(attachIOToEditor);
 
@@ -49,7 +49,7 @@
              'data-iconpos="left">' + editor_definition.title + '</a>');
            panel_context.find('a').last().click(function () {
              $.when(
-               g.declareGadget(editor_definition.path, editor_a_context),
+               g.declareIframedGadget(editor_definition.path, editor_a_context),
                g.declareGadget(io_list[0].path, io_a_context),
                "officejs").done(attachIOToEditor);
            });

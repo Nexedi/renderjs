@@ -14,6 +14,7 @@ all: external lint test build doc
 external: lib/sinon/sinon.js \
      lib/sinon/sinon-qunit.js \
      lib/jquery/jquery.js \
+     lib/jschannel/jschannel.js \
      lib/require/require.js \
      lib/qunit/qunit.js \
      lib/qunit/qunit.css \
@@ -34,6 +35,10 @@ lib/sinon/sinon-qunit.js:
 lib/jquery/jquery.js:
 	@mkdir -p $(@D)
 	curl -s -o $@ http://code.jquery.com/jquery-2.0.3.js
+
+lib/jschannel/jschannel.js:
+	@mkdir -p $(@D)
+	curl -s -o $@ http://mozilla.github.io/jschannel/src/jschannel.js
 
 lib/require/require.js:
 	@mkdir -p $(@D)
@@ -80,4 +85,4 @@ lint: ${BUILDDIR}/$(RENDERJS).lint
 doc:
 	$(YUIDOC_CMD) .
 clean:
-	rm -rf $(RENDERJS_MIN) ${BUILDDIR} lib/sinon lib/jquery lib/qunit lib/jio lib/require
+	rm -rf $(RENDERJS_MIN) ${BUILDDIR} lib/sinon lib/jquery lib/jschannel lib/qunit lib/jio lib/require
