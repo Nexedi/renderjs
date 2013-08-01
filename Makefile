@@ -67,10 +67,10 @@ lib/jio/complex_queries.js:
 $(RENDERJS_MIN): $(RENDERJS)
 	$(UGLIFY_CMD) "$<" > "$@"
 
-${BUILDDIR}/$(RENDERJS).lint: $(RENDERJS) test/renderjs_test2.js
+${BUILDDIR}/$(RENDERJS).lint: $(RENDERJS) test/renderjs_test.js
 	@mkdir -p $(@D)
 	$(LINT_CMD) "$(RENDERJS)"
-	$(LINT_CMD) "test/renderjs_test2.js"
+	$(LINT_CMD) "test/renderjs_test.js"
 	touch $@
 
 ${BUILDDIR}/index.html.ok: test/index.html
