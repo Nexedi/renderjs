@@ -294,16 +294,23 @@
                 next_loading_gadget_deferred.resolve(gadget);
               }).fail(function () {
                 // One error during css/js loading
-                next_loading_gadget_deferred.reject();
+                next_loading_gadget_deferred.reject.apply(
+                  next_loading_gadget_deferred,
+                  arguments
+                );
               });
 
           }).fail(function () {
             // Failed to fetch dependencies information.
-            next_loading_gadget_deferred.reject();
+            next_loading_gadget_deferred.reject.apply(
+              next_loading_gadget_deferred,
+              arguments
+            );
           });
       }).fail(function () {
         // Klass not correctly loaded. Reject instanciation
-        next_loading_gadget_deferred.reject();
+        next_loading_gadget_deferred.reject.apply(next_loading_gadget_deferred,
+                                                  arguments);
       });
     });
 
@@ -561,8 +568,8 @@
             dfr.reject(jqXHR, "Unexpected content type");
           }
         })
-        .fail(function (jqXHR, textStatus, errorThrown) {
-          dfr.reject(jqXHR, textStatus, errorThrown);
+        .fail(function () {
+          dfr.reject.apply(dfr, arguments);
         });
     }
     return dfr.promise();
@@ -744,7 +751,8 @@
           gadget_loading_klass = undefined;
           loading_gadget_deferred.resolve();
         }).fail(function () {
-          loading_gadget_deferred.reject();
+          loading_gadget_deferred.reject.apply(loading_gadget_deferred,
+                                               arguments);
         });
     });
   }

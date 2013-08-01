@@ -321,7 +321,9 @@
         ok(false, "text/plain should fail");
       })
       .fail(function (jqXHR, textStatus) {
-        equal("200", jqXHR.status);
+        equal(jqXHR.status, "200");
+        equal(textStatus, "Unexpected content type");
+        equal(jqXHR.getResponseHeader("Content-Type"), "text/plain");
       })
       .always(function () {
         start();
@@ -347,10 +349,11 @@
     stop();
     renderJS.declareGadgetKlass(url)
       .done(function () {
-        ok(false, "text/plain should fail");
+        ok(false, "Non parsable HTML should fail");
       })
       .fail(function (jqXHR, textStatus) {
         equal("200", jqXHR.status);
+        equal(textStatus, "HTML Parsing failed");
       })
       .always(function () {
         mock.verify();
@@ -455,7 +458,7 @@
         ok(false, "404 should fail");
       })
       .fail(function (jqXHR, textStatus) {
-        equal("404", jqXHR.status);
+        equal(jqXHR.status, "404");
       })
       .always(function () {
         start();
@@ -474,7 +477,7 @@
             ok(false, "404 should fail");
           })
           .fail(function (jqXHR, textStatus) {
-            equal("404", jqXHR.status);
+            equal(jqXHR.status, "404");
           })
           .always(function () {
             start();
@@ -779,11 +782,34 @@
       });
   });
 
-//   test('clearGadgetKlassList leads to CSS reload', function () {
-//     // Check that declareCSS reload the CSS
-//     // after clearGadgetKlassList is called
-//     ok(false, "not implemented");
-//   });
+  test('clearGadgetKlassList leads to CSS reload', function () {
+    // Check that declareCSS reload the CSS
+    // after clearGadgetKlassList is called
+    var url = "data:text/css;base64," +
+         window.btoa("#qunit-fixture {background-color: blue;}"),
+      count = $('head').find('link[rel=stylesheet]').length;
+
+    stop();
+    renderJS.declareCSS(url)
+      .done(function () {
+        renderJS.clearGadgetKlassList();
+        equal($('head').find('link[rel=stylesheet]').length, count + 1);
+        renderJS.declareCSS(url)
+          .done(function () {
+            equal($('head').find('link[rel=stylesheet]').length, count + 2);
+          })
+          .fail(function (jqXHR, textStatus) {
+            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+          })
+          .always(function () {
+            start();
+          });
+      })
+      .fail(function (jqXHR, textStatus) {
+        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+        start();
+      });
+  });
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getInterfaceList
@@ -1309,8 +1335,8 @@
       .done(function (new_gadget) {
         ok(false);
       })
-      .fail(function () {
-        ok(true);
+      .fail(function (jqXHR, textStatus) {
+        equal("404", jqXHR.status);
       })
       .always(function () {
         start();
@@ -1340,8 +1366,9 @@
       .done(function (new_gadget) {
         ok(false);
       })
-      .fail(function () {
-        ok(true);
+      .fail(function (jqXHR, textStatus) {
+        equal(jqXHR.status, 404);
+        equal(textStatus, "error");
       })
       .always(function () {
         start();
