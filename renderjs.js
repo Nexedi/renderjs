@@ -1,6 +1,6 @@
 /*! RenderJs v0.2  */
 /*global $, jQuery, localStorage, jIO, window, document, DOMParser, Channel */
-/*jslint evil: true, indent: 2, maxerr: 3, maxlen: 79 */
+/*jslint indent: 2, maxerr: 3, maxlen: 79 */
 "use strict";
 
 /*
