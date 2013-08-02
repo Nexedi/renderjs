@@ -193,7 +193,10 @@
         if (gadget.context !== undefined) {
           $(gadget.context).html(
             // Use encodeURI to prevent XSS
-            '<iframe src="' + encodeURI(url) + '"></iframe>'
+            '<iframe src="' + encodeURI(url) + '" ' +
+                    'width="' + $(gadget.context).width() + '" ' +
+                    'height="' + $(gadget.context).height() + '" ' +
+            '></iframe>'
           );
           gadget.chan = Channel.build({
             window: gadget.context.find('iframe').first()[0].contentWindow,
@@ -534,8 +537,9 @@
       $.ajax(url)
         .done(function (value, textStatus, jqXHR) {
           var klass, tmp_constructor, key;
+          // Content-Type: text/html;charset=""
           if ((jqXHR.getResponseHeader("Content-Type") || "")
-                === 'text/html') {
+                .match(/text\/html/)) {
 
             try {
               if (!gadget_model_dict.hasOwnProperty(url)) {
@@ -724,36 +728,40 @@
 
 
 
-
-    $(document).ready(function () {
-      // XXX HTML properties can only be set when the DOM is fully loaded
-      var settings = renderJS.parseGadgetHTML($('html')[0].outerHTML),
-        promise,
-        key;
-      for (key in settings) {
-        if (settings.hasOwnProperty(key)) {
-          tmp_constructor.prototype[key] = settings[key];
+    // run on next tick so that if this was pulled in with requirejs,
+    // rJS.ready() can still be used.
+    // XXX: doesn't work with require(['renderjs', 'somethingElse'], ...
+    setTimeout(function() {
+      $(document).ready(function () {
+        // XXX HTML properties can only be set when the DOM is fully loaded
+        var settings = renderJS.parseGadgetHTML($('html')[0].outerHTML),
+          promise,
+          key;
+        for (key in settings) {
+          if (settings.hasOwnProperty(key)) {
+            tmp_constructor.prototype[key] = settings[key];
+          }
         }
-      }
-      root_gadget.context = $('body');
-      promise = $.when(root_gadget.getRequiredJSList(),
-                       root_gadget.getRequiredCSSList())
-        .done(function (js_list, css_list) {
-          $.each(js_list, function (i, required_url) {
-            javascript_registration_dict[required_url] = null;
+        root_gadget.context = $('body');
+        promise = $.when(root_gadget.getRequiredJSList(),
+                         root_gadget.getRequiredCSSList())
+          .done(function (js_list, css_list) {
+            $.each(js_list, function (i, required_url) {
+              javascript_registration_dict[required_url] = null;
+            });
+            $.each(css_list, function (i, required_url) {
+              stylesheet_registration_dict[url] = null;
+            });
+            $.each(tmp_constructor.ready_list, function (i, callback) {
+              callback.apply(root_gadget);
+            });
+            gadget_loading_klass = undefined;
+            loading_gadget_deferred.resolve();
+          }).fail(function () {
+            loading_gadget_deferred.reject.apply(loading_gadget_deferred,
+                                                 arguments);
           });
-          $.each(css_list, function (i, required_url) {
-            stylesheet_registration_dict[url] = null;
-          });
-          $.each(tmp_constructor.ready_list, function (i, callback) {
-            callback.apply(root_gadget);
-          });
-          gadget_loading_klass = undefined;
-          loading_gadget_deferred.resolve();
-        }).fail(function () {
-          loading_gadget_deferred.reject.apply(loading_gadget_deferred,
-                                               arguments);
-        });
+      });
     });
   }
   bootstrap();
