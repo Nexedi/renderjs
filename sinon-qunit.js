@@ -3,7 +3,6 @@
  *
  * @author Gustavo Machado (@machadogj), Jose Romaniello (@jfroma)
  * Modified version of sinon-qunit from Christian Johansen
- * Modified version of sinon-qunit from Romain Courteaud
  *
  * (The BSD License)
  * 
@@ -46,24 +45,11 @@ sinon.config = {
     injectIntoThis: true,
     injectInto: null,
     properties: ["spy", "stub", "mock", "clock", "sandbox"],
-//     useFakeTimers: true,
-//     useFakeServer: false
     useFakeTimers: false,
     useFakeServer: true
 };
 
 (function (global) {
-    var qTest = QUnit.test;
-    
-    QUnit.test = global.test = function (testName, expected, callback, async) {
-        if (arguments.length === 2) {
-            callback = expected;
-            expected = null;
-        }
-
-        return qTest(testName, expected, sinon.test(callback), async);
-    };
-
     var qModule = QUnit.module;
     
     var setup = function () {

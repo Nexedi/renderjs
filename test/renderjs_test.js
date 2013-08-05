@@ -1,8 +1,8 @@
-/*global window, document, QUnit, jQuery, renderJS, RenderJSGadget */
+/*global window, document, QUnit, jQuery, renderJS, RenderJSGadget, sinon */
 /*jslint indent: 2, maxerr: 3, maxlen: 79 */
 "use strict";
 
-(function (document, $, renderJS, QUnit) {
+(function (document, $, renderJS, QUnit, sinon) {
   var test = QUnit.test,
     stop = QUnit.stop,
     start = QUnit.start,
@@ -285,7 +285,7 @@
   });
   test('Ajax error reject the promise', function () {
     // Check that declareGadgetKlass fails if ajax fails
-    var server = this.sandbox.useFakeServer(),
+    var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test';
 
     server.respondWith("GET", url, [404, {
@@ -308,7 +308,7 @@
 
   test('Non HTML reject the promise', function () {
     // Check that declareGadgetKlass fails if non html is retrieved
-    var server = this.sandbox.useFakeServer(),
+    var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test';
 
     server.respondWith("GET", url, [200, {
@@ -333,7 +333,7 @@
 
   test('HTML parsing failure reject the promise', function () {
     // Check that declareGadgetKlass fails if the html can not be parsed
-    var server = this.sandbox.useFakeServer(),
+    var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       mock;
 
@@ -365,7 +365,7 @@
   test('Klass creation', function () {
     // Check that declareGadgetKlass returns a subclass of RenderJSGadget
     // and contains all extracted properties on the prototype
-    var server = this.sandbox.useFakeServer(),
+    var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       mock;
 
@@ -404,7 +404,7 @@
   test('Klass is not reloaded if called twice', function () {
     // Check that declareGadgetKlass does not reload the gadget
     // if it has already been loaded
-    var server = this.sandbox.useFakeServer(),
+    var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       mock;
 
@@ -714,7 +714,7 @@
   test('clearGadgetKlassList leads to gadget reload', function () {
     // Check that declareGadgetKlass reload the gadget
     // after clearGadgetKlassList is called
-    var server = this.sandbox.useFakeServer(),
+    var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       mock;
 
@@ -1199,7 +1199,7 @@
   test('returns a Promise', function () {
     // Check that declareGadget return a Promise
     var gadget = new RenderJSGadget(),
-      server = this.sandbox.useFakeServer(),
+      server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       html = "<html>" +
         "<body>" +
@@ -1223,7 +1223,7 @@
   test('provide a gadget instance as callback parameter', function () {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
-      server = this.sandbox.useFakeServer(),
+      server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       html = "<html>" +
         "<body>" +
@@ -1262,13 +1262,16 @@
   test('load dependency before returning gadget', function () {
     // Check that dependencies are loaded before gadget creation
     var gadget = new RenderJSGadget(),
-      server = this.sandbox.useFakeServer(),
+      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test2.html',
       js1_url = "data:application/javascript;base64," +
          window.btoa(
           "$('#qunit-fixture').find('div').first().text('youhou');"
         ),
-      js2_url = js1_url,
+      js2_url = "data:application/javascript;base64," +
+         window.btoa(
+          "$('#qunit-fixture').find('div').first().text('youhou2');"
+        ),
       css1_url = "data:text/plain;base64," +
          window.btoa(""),
       css2_url = css1_url,
@@ -1303,7 +1306,7 @@
     gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
       .done(function (new_gadget) {
         equal($('#qunit-fixture').html(),
-              "<div>youhou</div><div><p>Bar content</p></div>");
+              "<div>youhou2</div><div><p>Bar content</p></div>");
         ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
         equal(spy_js.firstCall.args[0], js1_url, "First JS call");
         equal(spy_js.secondCall.args[0], js2_url, "Second JS call");
@@ -1323,7 +1326,7 @@
   test('Fail if klass can not be loaded', function () {
     // Check that gadget is not created if klass is can not be loaded
     var gadget = new RenderJSGadget(),
-      server = this.sandbox.useFakeServer(),
+      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test3.html';
 
     server.respondWith("GET", html_url, [404, {
@@ -1347,7 +1350,7 @@
   test('Fail if js can not be loaded', function () {
     // Check that dependencies are loaded before gadget creation
     var gadget = new RenderJSGadget(),
-      server = this.sandbox.useFakeServer(),
+      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test2.html',
       js1_url = 'foo://bar2',
       mock;
@@ -1379,7 +1382,7 @@
   test('Do not load gadget dependency twice', function () {
     // Check that dependencies are not reloaded if 2 gadgets are created
     var gadget = new RenderJSGadget(),
-      server = this.sandbox.useFakeServer(),
+      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test2.html',
       js1_url = "data:application/javascript;base64," +
          window.btoa(
@@ -1430,7 +1433,7 @@
   test('Load 2 concurrent gadgets in parallel', function () {
     // Check that dependencies are loaded once if 2 gadgets are created
     var gadget = new RenderJSGadget(),
-      server = this.sandbox.useFakeServer(),
+      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test2.html',
       mock,
       spy;
@@ -1457,4 +1460,4 @@
     server.respond();
   });
 
-}(document, jQuery, renderJS, QUnit));
+}(document, jQuery, renderJS, QUnit, sinon));
