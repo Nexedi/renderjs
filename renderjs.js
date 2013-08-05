@@ -213,8 +213,6 @@
 //           };
 
           gadget.chan.bind("declareMethod", function (trans, method_name) {
-            console.log("Receive declaration " + method_name + " on " +
-                        gadget.path);
             gadget[method_name] = function () {
               var dfr = $.Deferred();
               gadget.chan.call({
@@ -233,7 +231,6 @@
 
           // Wait for the iframe to be loaded before continuing
           gadget.chan.bind("ready", function (trans) {
-            console.log(gadget.path + " is ready");
             next_loading_gadget_deferred.resolve(gadget);
           });
           gadget.chan.bind("failed", function (trans) {
@@ -279,12 +276,32 @@
         // Load dependencies if needed
         $.when(gadget.getRequiredJSList(), gadget.getRequiredCSSList())
           .done(function (js_list, css_list) {
-            var result_list = [];
+            var result_list = [],
+              first_deferred = $.Deferred(),
+              first_promise = first_deferred.promise();
             gadget_loading_klass = Klass;
-            // Load all JS and CSS
-            $.each(js_list, function (i, required_url) {
-              result_list.push(renderJS.declareJS(required_url));
-            });
+            // Load JS and follow the dependency declaration defined in the
+            // head
+            function next(next_js_list) {
+              var next_js = next_js_list.shift();
+              if (next_js === undefined) {
+                first_deferred.resolve();
+              } else {
+                renderJS.declareJS(next_js)
+                  .done(function () {
+                    next(next_js_list);
+                  })
+                  .fail(function () {
+                    first_deferred.reject.apply(
+                      first_deferred,
+                      arguments
+                    );
+                  });
+              }
+            }
+            next(js_list);
+            result_list.push(first_promise);
+            // Load CSS
             $.each(css_list, function (i, required_url) {
               result_list.push(renderJS.declareCSS(required_url));
             });

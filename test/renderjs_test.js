@@ -1323,6 +1323,14 @@
     server.respond();
   });
 
+//   test('load dependency in the right order', function () {
+//     // Check that JS dependencies are loaded in the right order
+//     // Can be reproduce with real loading (http): 
+//     // * enormous 1 js
+//     // * second small js which require the 1 one to be loaded
+//     // How to mock the loading time?
+//   });
+
   test('Fail if klass can not be loaded', function () {
     // Check that gadget is not created if klass is can not be loaded
     var gadget = new RenderJSGadget(),
