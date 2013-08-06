@@ -1,6 +1,5 @@
 /*! RenderJs v0.2  */
-/*global $, jQuery, localStorage, jIO, window, document, DOMParser, Channel */
-/*jslint indent: 2, maxerr: 3, maxlen: 79 */
+/*global jQuery, window, document, DOMParser, Channel */
 "use strict";
 
 /*
