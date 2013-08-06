@@ -3,6 +3,8 @@ RENDERJS = renderjs.js
 RENDERJS_MIN = renderjs.min.js
 BUILDDIR = tmp
 
+LINT_OPTS = --maxlen 79 --indent 2 --maxerr 3
+
 include config.mk
 
 all: external lint test build doc
@@ -67,10 +69,11 @@ lib/jio/complex_queries.js:
 $(RENDERJS_MIN): $(RENDERJS)
 	$(UGLIFY_CMD) "$<" > "$@"
 
-${BUILDDIR}/$(RENDERJS).lint: $(RENDERJS) test/renderjs_test.js
+${BUILDDIR}/$(RENDERJS).lint: $(RENDERJS) test/renderjs_test.js examples/officejs/*.js
 	@mkdir -p $(@D)
-	$(LINT_CMD) "$(RENDERJS)"
-	$(LINT_CMD) "test/renderjs_test.js"
+	$(LINT_CMD) $(LINT_OPTS) "$(RENDERJS)"
+	$(LINT_CMD) $(LINT_OPTS) "test/renderjs_test.js"
+	$(LINT_CMD) $(LINT_OPTS) examples/officejs/*.js
 	touch $@
 
 ${BUILDDIR}/index.html.ok: test/index.html

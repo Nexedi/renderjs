@@ -13,7 +13,7 @@
     rJS(this).jio_key = key;
   })
 
-   .declareMethod('getIO', function () {
+    .declareMethod('getIO', function () {
       var deferred = $.Deferred(),
         default_value = "",
         gadget = rJS(this);
@@ -34,9 +34,9 @@
       });
 
       return deferred.promise();
-  })
+    })
 
-   .declareMethod('setIO', function (value) {
+    .declareMethod('setIO', function (value) {
 
       var deferred = $.Deferred(),
         default_value = "",
@@ -60,17 +60,17 @@
               }
             });
           }
-      });
+        });
       return deferred.promise();
-  })
+    })
 
-   .declareMethod('configureDataSourceCallback', function (that, callback) {
+    .declareMethod('configureDataSourceCallback', function (that, callback) {
       var g = rJS(this);
       g.context.find('a').unbind('click').click(function () {
         callback.apply(that).done(function (value) {
           g.setIO(value);
         });
       });
-  });
+    });
 
-}(window, $, jIO, rJS))
+}(window, jQuery, jIO, rJS));

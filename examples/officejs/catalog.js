@@ -4,25 +4,25 @@
 
   var gk = rJS(window),
     io_dict = {
-        "path" :      "./io.html",
-        "title" :     "IO",
-        "interface" : "http://www.renderjs.org/interface/io",
-      },
+      "path" :      "./io.html",
+      "title" :     "IO",
+      "interface" : "http://www.renderjs.org/interface/io",
+    },
     editor_1_dict = {
-        "path" :      "./editor.html",
-        "title" :     "Simple Text Editor Gadget",
-        "interface" : "http://www.renderjs.org/interface/editor",
-      },
+      "path" :      "./editor.html",
+      "title" :     "Simple Text Editor Gadget",
+      "interface" : "http://www.renderjs.org/interface/editor",
+    },
     editor_2_dict = {
-        "path" :      "./jqteditor.html",
-        "title" :     "JQuery Text Editor Gadget",
-        "interface" : "http://www.renderjs.org/interface/editor",
-      },
+      "path" :      "./jqteditor.html",
+      "title" :     "JQuery Text Editor Gadget",
+      "interface" : "http://www.renderjs.org/interface/editor",
+    },
     editor_3_dict = {
-        "path" :      "./aceeditor.html",
-        "title" :     "Ace Editor Gadget",
-        "interface" : "http://www.renderjs.org/interface/editor",
-      },
+      "path" :      "./aceeditor.html",
+      "title" :     "Ace Editor Gadget",
+      "interface" : "http://www.renderjs.org/interface/editor",
+    },
     catalog_list = [
       {
         "path" :      "./officejs.html",
@@ -52,4 +52,4 @@
     return deferred.promise();
   });
 
-}(window, $, rJS))
+}(window, jQuery, rJS));
