@@ -440,6 +440,37 @@
     server.respond();
   });
 
+  test('Content type parameter are supported', function () {
+    // Check that declareGadgetKlass does not fail if the page content type
+    // contains a parameter
+    var server = sinon.fakeServer.create(),
+      url = 'https://example.org/files/qunittest/test';
+
+    server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html; charset=utf-8",
+    }, "<html></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(url)
+      .done(function (Klass) {
+        var instance;
+
+        equal(Klass.prototype.path, url);
+
+        instance = new Klass();
+        ok(instance instanceof RenderJSGadget);
+        ok(instance instanceof Klass);
+        ok(Klass !== RenderJSGadget);
+      })
+      .fail(function (jqXHR, textStatus) {
+        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      })
+      .always(function () {
+        start();
+      });
+    server.respond();
+  });
+
   /////////////////////////////////////////////////////////////////
   // declareJS
   /////////////////////////////////////////////////////////////////

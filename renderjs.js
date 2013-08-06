@@ -615,8 +615,9 @@
       $.ajax(url)
         .done(function (value, textStatus, jqXHR) {
           var klass, tmp_constructor, key;
-          if ((jqXHR.getResponseHeader("Content-Type") || "")
-                === 'text/html') {
+          if (/^text\/html[;]?/.test(
+              jqXHR.getResponseHeader("Content-Type") || ""
+            )) {
 
             try {
               if (!gadget_model_dict.hasOwnProperty(url)) {
