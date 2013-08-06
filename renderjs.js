@@ -6,7 +6,7 @@
 /*
  * DOMParser HTML extension
  * 2012-09-04
- * 
+ *
  * By Eli Grey, http://eligrey.com
  * Public domain.
  * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
@@ -139,23 +139,79 @@
 
   // Class inheritance
   function RenderJSEmbeddedGadget() {
+    var root_gadget = this,
+      declare_method_count = 0,
+      gadget_ready = false,
+      // Create the communication channel
+      embedded_channel = Channel.build({
+        window: window.parent,
+        origin: "*",
+        scope: "renderJS"
+      });
+
     RenderJSGadget.call(this);
+
+    // Bind calls to renderJS method on the instance
+    embedded_channel.bind("methodCall", function (trans, v) {
+      root_gadget[v[0]].apply(root_gadget, v[1]).done(function (g) {
+        trans.complete(g);
+      }).fail(function () {
+        trans.error(Array.prototype.slice.call(arguments, 0));
+      });
+      trans.delayReturn(true);
+    });
+
+    // Notify parent about gadget instanciation
+    function notifyReady() {
+      if ((declare_method_count === 0) && (gadget_ready === true)) {
+        embedded_channel.notify({method: "ready"});
+      }
+    }
+
+    // Inform parent gadget about declareMethod calls here.
+    function notifyDeclareMethod(name) {
+      declare_method_count += 1;
+      embedded_channel.call({
+        method: "declareMethod",
+        params: name,
+        success: function () {
+          declare_method_count -= 1;
+          notifyReady();
+        },
+        error: function () {
+          declare_method_count -= 1;
+//           console.error(Array.prototype.slice.call(arguments, 0));
+        },
+      });
+    }
+
+    notifyDeclareMethod("getInterfaceList");
+    notifyDeclareMethod("getRequiredCSSList");
+    notifyDeclareMethod("getRequiredJSList");
+    notifyDeclareMethod("getPath");
+    notifyDeclareMethod("getTitle");
+    notifyDeclareMethod("getHTML");
+
+    // Surcharge declareMethod to inform parent window
+    this.constructor.declareMethod = function (name, callback) {
+      notifyDeclareMethod(name);
+      return RenderJSGadget.declareMethod.apply(this, [name, callback]);
+    };
+
+    // Inform parent window that gadget is correctly loaded
+    loading_gadget_promise.done(function () {
+      gadget_ready = true;
+      notifyReady();
+    }).fail(function () {
+      embedded_channel.notify({method: "failed"});
+    });
+    return root_gadget;
   }
   RenderJSEmbeddedGadget.ready_list = [];
-  RenderJSEmbeddedGadget.declareMethod =
-    RenderJSGadget.declareMethod;
   RenderJSEmbeddedGadget.ready =
     RenderJSGadget.ready;
   RenderJSEmbeddedGadget.prototype = new RenderJSGadget();
   RenderJSEmbeddedGadget.prototype.constructor = RenderJSEmbeddedGadget;
-  // XXX Declare method in same non root url gadget
-  RenderJSEmbeddedGadget.declareMethod = function (name, callback) {
-    RenderJSEmbeddedGadget.root_gadget.chan.notify({
-      method: "declareMethod",
-      params: name,
-    });
-    return RenderJSGadget.declareMethod.apply(this, [name, callback]);
-  };
 
   // Class inheritance
   function RenderJSIframeGadget() {
@@ -222,19 +278,25 @@
                   Array.prototype.slice.call(arguments, 0)],
                 success: function () {
                   dfr.resolveWith(gadget, arguments);
+                },
+                error: function () {
+                  dfr.rejectWith(gadget, arguments);
                 }
                 // XXX Error callback
               });
               return dfr.promise();
             };
+            return "OK";
           });
 
           // Wait for the iframe to be loaded before continuing
           gadget.chan.bind("ready", function (trans) {
             next_loading_gadget_deferred.resolve(gadget);
+            return "OK";
           });
           gadget.chan.bind("failed", function (trans) {
             next_loading_gadget_deferred.reject();
+            return "OK";
           });
         } else {
           next_loading_gadget_deferred.reject();
@@ -310,6 +372,7 @@
                 // Dependency correctly loaded. Fire instanciation success.
                 next_loading_gadget_deferred.resolve(gadget);
               }).fail(function () {
+//                 console.error(Array.prototype.slice.call(arguments, 0));
                 // One error during css/js loading
                 next_loading_gadget_deferred.reject.apply(
                   next_loading_gadget_deferred,
@@ -467,7 +530,6 @@
       result = selector;
     }
     if (result === undefined) {
-      console.error(selector);
       throw new Error("Unknown selector '" + selector + "'");
     }
     return result;
@@ -500,6 +562,8 @@
         cache: true,
       }).done(function (script, textStatus) {
         javascript_registration_dict[url] = null;
+//       }).fail(function () {
+//         console.error(Array.prototype.slice.call(arguments, 0));
       });
 
     }
@@ -684,58 +748,6 @@
       // Create the root gadget instance and put it in the loading stack
       tmp_constructor = RenderJSEmbeddedGadget;
       root_gadget = new RenderJSEmbeddedGadget();
-      RenderJSEmbeddedGadget.root_gadget = root_gadget;
-
-      // Create the communication channel
-      root_gadget.chan = Channel.build({
-        window: window.parent,
-        origin: "*",
-        scope: "renderJS"
-      });
-
-      root_gadget.chan.bind("methodCall", function (trans, v) {
-        root_gadget[v[0]].apply(root_gadget, v[1]).done(function (g) {
-          trans.complete(g);
-        });
-        trans.delayReturn(true);
-      });
-      root_gadget.chan.notify({
-        method: "declareMethod",
-        params: "getInterfaceList",
-      });
-      root_gadget.chan.notify({
-        method: "declareMethod",
-        params: "getRequiredCSSList",
-      });
-      root_gadget.chan.notify({
-        method: "declareMethod",
-        params: "getRequiredJSList",
-      });
-      root_gadget.chan.notify({
-        method: "declareMethod",
-        params: "getPath",
-      });
-      root_gadget.chan.notify({
-        method: "declareMethod",
-        params: "getTitle",
-      });
-      root_gadget.chan.notify({
-        method: "declareMethod",
-        params: "getHTML",
-      });
-
-      // Surcharge declareMethod to inform parent window
-      // XXX TODO
-
-      // Inform parent window that gadget is correctly loaded
-      loading_gadget_promise.done(function () {
-        // XXX Wait for all previous declaration before ending ready message
-        setTimeout(function () {
-          root_gadget.chan.notify({method: "ready"});
-        }, 100);
-      }).fail(function () {
-        root_gadget.chan.notify({method: "failed"});
-      });
     }
     gadget_loading_klass = tmp_constructor;
 
