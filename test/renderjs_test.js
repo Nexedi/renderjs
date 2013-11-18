@@ -1,5 +1,7 @@
-/*global window, document, QUnit, jQuery, renderJS, RenderJSGadget, sinon */
 /*jslint indent: 2, maxerr: 3, maxlen: 79 */
+/*global window, document, QUnit, jQuery, renderJS, RenderJSGadget, sinon,
+  RSVP, DOMParser */
+/*jslint unparam: true, maxlen: 150 */
 "use strict";
 
 (function (document, $, renderJS, QUnit, sinon) {
@@ -8,63 +10,81 @@
     start = QUnit.start,
     ok = QUnit.ok,
     equal = QUnit.equal,
-    expect = QUnit.expect,
     throws = QUnit.throws,
-    deepEqual = QUnit.deepEqual;
+    deepEqual = QUnit.deepEqual,
+    root_gadget_klass = renderJS(window),
+    root_gadget_defer = RSVP.defer();
+
+  // Keep track of the root gadget
+  renderJS(window).ready(function (g) {
+    root_gadget_defer.resolve(g);
+  });
+
+
+  QUnit.config.testTimeout = 500;
+//   sinon.log = function (message) {
+//     console.log(message);
+//   };
+
+  function parseGadgetHTML(html) {
+    return renderJS.parseGadgetHTMLDocument(
+      (new DOMParser()).parseFromString(html, "text/html")
+    );
+  }
 
   /////////////////////////////////////////////////////////////////
-  // parseGadgetHTML
+  // parseGadgetHTMLDocument
   /////////////////////////////////////////////////////////////////
-  module("renderJS.parseGadgetHTML", {
+  module("renderJS.parseGadgetHTMLDocument", {
     setup: function () {
       renderJS.clearGadgetKlassList();
     }
   });
   test('Not valid HTML string', function () {
-    // Check that parseGadgetHTML returns the default value if the string is
+    // Check that parseGadgetHTMLDocument returns the default value if the string is
     // not a valid xml
-    deepEqual(renderJS.parseGadgetHTML(""), {
+    deepEqual(parseGadgetHTML(""), {
       title: "",
       interface_list: [],
       required_css_list: [],
       required_js_list: [],
-      html: "",
     });
   });
 
-  test('Not string', function () {
-    // Check that parseGadgetHTML throws an error if the parameter is not a
-    // string
+  test('Not HTML Document', function () {
+    // Check that parseGadgetHTMLDocument throws an error if the parameter is
+    // not a HTMLDocument
     throws(function () {
-      renderJS.parseGadgetHTML({});
+      renderJS.parseGadgetHTMLDocument({});
     });
   });
 
   test('Default result value', function () {
-    // Check default value returned by parseGadgetHTML
-    deepEqual(renderJS.parseGadgetHTML(""), {
+    // Check default value returned by parseGadgetHTMLDocument
+    deepEqual(renderJS.parseGadgetHTMLDocument(
+      document.implementation.createHTMLDocument("")
+    ), {
       title: "",
       interface_list: [],
       required_css_list: [],
       required_js_list: [],
-      html: "",
     });
   });
 
   test('Extract title', function () {
-    // Check that parseGadgetHTML correctly extract the title
+    // Check that parseGadgetHTMLDocument correctly extract the title
     var settings,
       html = "<html>" +
         "<head>" +
         "<title>Great title</title>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     equal(settings.title, 'Great title', 'Title extracted');
   });
 
   test('Extract only one title', function () {
-    // Check that parseGadgetHTML correctly extract the first title
+    // Check that parseGadgetHTMLDocument correctly extract the first title
     var settings,
       html = "<html>" +
         "<head>" +
@@ -72,61 +92,62 @@
         "<title>Great title 2</title>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     equal(settings.title, 'Great title', 'First title extracted');
   });
 
-  test('Extract title only from head', function () {
-    // Check that parseGadgetHTML only extract title from head
-    var settings,
-      html = "<html>" +
-        "<body>" +
-        "<title>Great title</title>" +
-        "</body></html>";
+//   test('Extract title only from head', function () {
+//     // Check that parseGadgetHTML only extract title from head
+//     var settings,
+//       html = "<html>" +
+//         "<body>" +
+//         "<title>Great title</title>" +
+//         "</body></html>";
+// 
+//     settings = renderJS.parseGadgetHTML(html);
+//     equal(settings.title, '', 'Title not found');
+//   });
 
-    settings = renderJS.parseGadgetHTML(html);
-    equal(settings.title, '', 'Title not found');
-  });
-
-  test('Extract body', function () {
-    // Check that parseGadgetHTML correctly extract the body
-    var settings,
-      html = "<html>" +
-        "<body>" +
-        "<p>Foo</p>" +
-        "</body></html>";
-
-    settings = renderJS.parseGadgetHTML(html);
-    equal(settings.html, "<p>Foo</p>", "HTML extracted");
-  });
-
-  test('Extract all body', function () {
-    // Check that parseGadgetHTML correctly extracts all bodies
-    var settings,
-      html = "<html>" +
-        "<body>" +
-        "<p>Foo</p>" +
-        "</body><body>" +
-        "<p>Bar</p>" +
-        "</body></html>";
-
-    settings = renderJS.parseGadgetHTML(html);
-    equal(settings.html, '<p>Foo</p><p>Bar</p>', 'All bodies extracted');
-  });
-
-  test('Extract body only from html', function () {
-    // Check that parseGadgetHTML also extract body from head
-    var settings,
-      html = "<html>" +
-        "<head><body><p>Bar</p></body></head>" +
-        "</html>";
-
-    settings = renderJS.parseGadgetHTML(html);
-    equal(settings.html, "<p>Bar</p>", "Body not found");
-  });
+  // XXX innerHTML is not extracted anymore
+//   test('Extract body', function () {
+//     // Check that parseGadgetHTML correctly extract the body
+//     var settings,
+//       html = "<html>" +
+//         "<body>" +
+//         "<p>Foo</p>" +
+//         "</body></html>";
+// 
+//     settings = renderJS.parseGadgetHTML(html);
+//     equal(settings.html, "<p>Foo</p>", "HTML extracted");
+//   });
+// 
+//   test('Extract all body', function () {
+//     // Check that parseGadgetHTML correctly extracts all bodies
+//     var settings,
+//       html = "<html>" +
+//         "<body>" +
+//         "<p>Foo</p>" +
+//         "</body><body>" +
+//         "<p>Bar</p>" +
+//         "</body></html>";
+// 
+//     settings = renderJS.parseGadgetHTML(html);
+//     equal(settings.html, '<p>Foo</p><p>Bar</p>', 'All bodies extracted');
+//   });
+// 
+//   test('Extract body only from html', function () {
+//     // Check that parseGadgetHTML also extract body from head
+//     var settings,
+//       html = "<html>" +
+//         "<head><body><p>Bar</p></body></head>" +
+//         "</html>";
+// 
+//     settings = renderJS.parseGadgetHTML(html);
+//     equal(settings.html, "<p>Bar</p>", "Body not found");
+//   });
 
   test('Extract CSS', function () {
-    // Check that parseGadgetHTML correctly extract the CSS
+    // Check that parseGadgetHTMLDocument correctly extract the CSS
     var settings,
       html = "<html>" +
         "<head>" +
@@ -134,14 +155,14 @@
         "type='text/css'/>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.required_css_list,
               ['../lib/qunit/qunit.css'],
               "CSS extracted");
   });
 
   test('Extract CSS order', function () {
-    // Check that parseGadgetHTML correctly keep CSS order
+    // Check that parseGadgetHTMLDocument correctly keep CSS order
     var settings,
       html = "<html>" +
         "<head>" +
@@ -151,14 +172,14 @@
         "type='text/css'/>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.required_css_list,
               ['../lib/qunit/qunit.css', '../lib/qunit/qunit2.css'],
               "CSS order kept");
   });
 
   test('Extract CSS only from head', function () {
-    // Check that parseGadgetHTML only extract css from head
+    // Check that parseGadgetHTMLDocument only extract css from head
     var settings,
       html = "<html>" +
         "<body>" +
@@ -166,12 +187,12 @@
         "type='text/css'/>" +
         "</body></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.required_css_list, [], "CSS not found");
   });
 
   test('Extract interface', function () {
-    // Check that parseGadgetHTML correctly extract the interface
+    // Check that parseGadgetHTMLDocument correctly extract the interface
     var settings,
       html = "<html>" +
         "<head>" +
@@ -179,14 +200,14 @@
         "      href='./interface/renderable'/>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.interface_list,
               ['./interface/renderable'],
               "interface extracted");
   });
 
   test('Extract interface order', function () {
-    // Check that parseGadgetHTML correctly keep interface order
+    // Check that parseGadgetHTMLDocument correctly keep interface order
     var settings,
       html = "<html>" +
         "<head>" +
@@ -196,7 +217,7 @@
         "      href='./interface/field'/>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.interface_list,
               ['./interface/renderable',
                './interface/field'],
@@ -204,7 +225,7 @@
   });
 
   test('Extract interface only from head', function () {
-    // Check that parseGadgetHTML only extract interface from head
+    // Check that parseGadgetHTMLDocument only extract interface from head
     var settings,
       html = "<html>" +
         "<body>" +
@@ -212,12 +233,12 @@
         "      href='./interface/renderable'/>" +
         "</body></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.interface_list, [], "interface not found");
   });
 
   test('Extract JS', function () {
-    // Check that parseGadgetHTML correctly extract the JS
+    // Check that parseGadgetHTMLDocument correctly extract the JS
     var settings,
       html = "<html>" +
         "<head>" +
@@ -225,14 +246,14 @@
         "type='text/javascript'></script>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.required_js_list,
               ['../lib/qunit/qunit.js'],
               "JS extracted");
   });
 
   test('Extract JS order', function () {
-    // Check that parseGadgetHTML correctly keep JS order
+    // Check that parseGadgetHTMLDocument correctly keep JS order
     var settings,
       html = "<html>" +
         "<head>" +
@@ -242,14 +263,14 @@
         "type='text/javascript'></script>" +
         "</head></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.required_js_list,
               ['../lib/qunit/qunit.js', '../lib/qunit/qunit2.js'],
               "JS order kept");
   });
 
   test('Extract JS only from head', function () {
-    // Check that parseGadgetHTML only extract js from head
+    // Check that parseGadgetHTMLDocument only extract js from head
     var settings,
       html = "<html>" +
         "<body>" +
@@ -257,13 +278,13 @@
         "type='text/javascript'></script>" +
         "</body></html>";
 
-    settings = renderJS.parseGadgetHTML(html);
+    settings = parseGadgetHTML(html);
     deepEqual(settings.required_js_list, [], "JS not found");
   });
 
   test('Non valid XML (HTML in fact...)', function () {
-    // Check default value returned by parseGadgetHTML
-    deepEqual(renderJS.parseGadgetHTML('<!doctype html><html><head>' +
+    // Check default value returned by parseGadgetHTMLDocument
+    deepEqual(parseGadgetHTML('<!doctype html><html><head>' +
       '<title>Test non valid XML</title>' +
       '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' +
       '</head><body><p>Non valid XML</p></body></html>'), {
@@ -271,7 +292,7 @@
       interface_list: [],
       required_css_list: [],
       required_js_list: [],
-      html: "<p>Non valid XML</p>",
+//       html: "<p>Non valid XML</p>",
     });
   });
 
@@ -288,22 +309,26 @@
     var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test';
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", url, [404, {
       "Content-Type": "text/html",
     }, "foo"]);
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .done(function () {
+      .then(function () {
         ok(false, "404 should fail");
       })
-      .fail(function (jqXHR, textStatus) {
-        equal("404", jqXHR.status);
+      .fail(function (xhr) {
+        equal(xhr.status, 404);
+        equal(xhr.url, url);
       })
       .always(function () {
         start();
+        server.restore();
       });
-    server.respond();
   });
 
   test('Non HTML reject the promise', function () {
@@ -311,24 +336,26 @@
     var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test';
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/plain",
     }, "foo"]);
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .done(function () {
+      .then(function () {
         ok(false, "text/plain should fail");
       })
-      .fail(function (jqXHR, textStatus) {
-        equal(jqXHR.status, "200");
-        equal(textStatus, "Unexpected content type");
+      .fail(function (jqXHR) {
+        equal(jqXHR.status, 200);
         equal(jqXHR.getResponseHeader("Content-Type"), "text/plain");
       })
       .always(function () {
         start();
+        server.restore();
       });
-    server.respond();
   });
 
   test('HTML parsing failure reject the promise', function () {
@@ -337,29 +364,32 @@
       url = 'https://example.org/files/qunittest/test',
       mock;
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, ""]);
 
-    mock = this.mock(renderJS, "parseGadgetHTML", function () {
-      throw new Error();
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument", function () {
+      throw new Error("foo");
     });
-    mock.expects("parseGadgetHTML").once().throws();
+    mock.expects("parseGadgetHTMLDocument").once().throws();
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .done(function () {
+      .then(function () {
         ok(false, "Non parsable HTML should fail");
       })
-      .fail(function (jqXHR, textStatus) {
-        equal("200", jqXHR.status);
-        equal(textStatus, "HTML Parsing failed");
+      .fail(function (e) {
+        ok(e instanceof Error);
       })
       .always(function () {
-        mock.verify();
         start();
+        mock.verify();
+        mock.restore();
+        server.restore();
       });
-    server.respond();
   });
 
   test('Klass creation', function () {
@@ -369,36 +399,41 @@
       url = 'https://example.org/files/qunittest/test',
       mock;
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, "foo"]);
 
-    mock = this.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").once().withArgs("foo").returns(
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").once().returns(
       {foo: 'bar'}
     );
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .done(function (Klass) {
+      .then(function (Klass) {
         var instance;
 
         equal(Klass.prototype.path, url);
         equal(Klass.prototype.foo, 'bar');
+        equal(Klass.template_element.nodeType, 9);
 
         instance = new Klass();
         ok(instance instanceof RenderJSGadget);
         ok(instance instanceof Klass);
         ok(Klass !== RenderJSGadget);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .fail(function (e) {
+        ok(false, JSON.stringify(e));
       })
       .always(function () {
-        mock.verify();
         start();
+        mock.verify();
+        mock.restore();
+        server.restore();
       });
-    server.respond();
   });
 
   test('Klass is not reloaded if called twice', function () {
@@ -406,38 +441,39 @@
     // if it has already been loaded
     var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
+      klass1,
       mock;
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
 
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, "foo"]);
 
-    mock = this.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").once().withArgs("foo").returns(
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").once().returns(
       {foo: 'bar'}
     );
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .done(function (Klass1) {
-        renderJS.declareGadgetKlass(url)
-          .done(function (Klass2) {
-            equal(Klass1, Klass2);
-          })
-          .fail(function (jqXHR, textStatus) {
-            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
-          })
-          .always(function () {
-            start();
-            mock.verify();
-          });
-
+      .then(function (Klass1) {
+        klass1 = Klass1;
+        return renderJS.declareGadgetKlass(url);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .then(function (Klass2) {
+        equal(klass1, Klass2);
+      })
+      .fail(function (jqXHR) {
+        ok(false, "Failed to load " + jqXHR.status);
+      })
+      .always(function () {
         start();
+        mock.verify();
+        mock.restore();
+        server.restore();
       });
-    server.respond();
   });
 
   test('Content type parameter are supported', function () {
@@ -446,13 +482,16 @@
     var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test';
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html; charset=utf-8",
     }, "<html></html>"]);
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .done(function (Klass) {
+      .then(function (Klass) {
         var instance;
 
         equal(Klass.prototype.path, url);
@@ -462,13 +501,13 @@
         ok(instance instanceof Klass);
         ok(Klass !== RenderJSGadget);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .fail(function (jqXHR) {
+        ok(false, "Failed to load " + jqXHR.status);
       })
       .always(function () {
         start();
+        server.restore();
       });
-    server.respond();
   });
 
   /////////////////////////////////////////////////////////////////
@@ -481,15 +520,16 @@
   });
   test('Download error reject the promise', function () {
     // Check that declareJS fails if ajax fails
-    var url = 'foo://bar';
+    var url = 'http://0.0.0.0/bar';
 
     stop();
     renderJS.declareJS(url)
-      .done(function () {
+      .then(function () {
         ok(false, "404 should fail");
       })
-      .fail(function (jqXHR, textStatus) {
-        equal(jqXHR.status, "404");
+      .fail(function (e) {
+        equal(e.type, "error");
+        equal(e.target.getAttribute("src"), url);
       })
       .always(function () {
         start();
@@ -498,21 +538,22 @@
 
   test('Ajax error reject the promise twice', function () {
     // Check that failed declareJS is not cached
-    var url = 'foo://bar';
+    var url = 'http://0.0.0.0/bar2';
 
     stop();
     renderJS.declareJS(url)
       .always(function () {
-        renderJS.declareJS(url)
-          .done(function () {
-            ok(false, "404 should fail");
-          })
-          .fail(function (jqXHR, textStatus) {
-            equal(jqXHR.status, "404");
-          })
-          .always(function () {
-            start();
-          });
+        return renderJS.declareJS(url);
+      })
+      .then(function () {
+        ok(false, "404 should fail");
+      })
+      .fail(function (e) {
+        equal(e.type, "error");
+        equal(e.target.getAttribute("src"), url);
+      })
+      .always(function () {
+        start();
       });
   });
 
@@ -525,11 +566,11 @@
     stop();
     window.onerror = undefined;
     renderJS.declareJS(url)
-      .done(function (value, textStatus, jqXHR) {
+      .then(function (value, textStatus, jqXHR) {
         ok(ok, "Non JS mime type should load");
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .fail(function (jqXHR) {
+        ok(false, jqXHR);
       })
       .always(function () {
         window.onerror = previousonerror;
@@ -544,11 +585,11 @@
 
     stop();
     renderJS.declareJS(url)
-      .done(function () {
+      .then(function () {
         equal($("#qunit-fixture").text(), "JS fetched and loaded");
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .fail(function (jqXHR) {
+        ok(false, "Failed to load " + jqXHR);
       })
       .always(function () {
         start();
@@ -564,11 +605,11 @@
     stop();
     window.onerror = undefined;
     renderJS.declareJS(url)
-      .done(function (aaa) {
+      .then(function (aaa) {
         ok(true, "JS with error cleanly loaded");
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .fail(function (jqXHR) {
+        ok(false, jqXHR);
       })
       .always(function () {
         window.onerror = previousonerror;
@@ -583,22 +624,18 @@
 
     stop();
     renderJS.declareJS(url)
-      .done(function () {
+      .then(function () {
         equal($("#qunit-fixture").text(), "JS not fetched twice");
         $("#qunit-fixture").text("");
-        renderJS.declareJS(url)
-          .done(function () {
-            equal($("#qunit-fixture").text(), "");
-          })
-          .fail(function (jqXHR, textStatus) {
-            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
-          })
-          .always(function () {
-            start();
-          });
+        return renderJS.declareJS(url);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .then(function () {
+        equal($("#qunit-fixture").text(), "");
+      })
+      .fail(function (jqXHR) {
+        ok(false, "Failed to load " + jqXHR);
+      })
+      .always(function () {
         start();
       });
   });
@@ -614,34 +651,36 @@
 
   test('Ajax error resolve the promise', function () {
     // Check that declareCSS is resolved if ajax fails
-    var url = 'foo://bar';
+    var url = 'foo//://bar';
 
-    expect(1);
     stop();
     renderJS.declareCSS(url)
-      .done(function () {
-        ok(true, "404 should fail");
+      .then(function () {
+        ok(false, "404 should fail");
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false);
+      .fail(function (e) {
+        equal(e.type, "error");
+        equal(e.target.getAttribute("href"), url);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Non CSS resolve the promise', function () {
+  test('Non CSS reject the promise', function () {
     // Check that declareCSS is resolved if mime type is wrong
     var url = "data:image/png;base64," +
          window.btoa("= = =");
 
     stop();
     renderJS.declareCSS(url)
-      .done(function (value, textStatus, jqXHR) {
+      .then(function (value, textStatus, jqXHR) {
+        // Chrome accept the css
         ok(true, "Non CSS mime type should load");
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false);
+      .fail(function (e) {
+        equal(e.type, "error");
+        equal(e.target.getAttribute("href"), url);
       })
       .always(function () {
         start();
@@ -655,7 +694,7 @@
 
     stop();
     renderJS.declareCSS(url)
-      .done(function () {
+      .then(function () {
         var found = false;
         $('head').find('link[rel=stylesheet]').each(function (i, style) {
           if (style.href === url) {
@@ -665,8 +704,8 @@
         ok(found, "CSS in the head");
         equal($("#qunit-fixture").css("background-color"), "rgb(255, 0, 0)");
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .fail(function (e) {
+        ok(false, e);
       })
       .always(function () {
         start();
@@ -681,11 +720,12 @@
 
     stop();
     renderJS.declareCSS(url)
-      .done(function () {
+      .then(function () {
+        // Chrome does not consider this as error
         ok(true, "CSS with error cleanly loaded");
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .fail(function (jqXHR) {
+        ok(true, jqXHR);
       })
       .always(function () {
         start();
@@ -699,7 +739,7 @@
 
     stop();
     renderJS.declareCSS(url)
-      .done(function () {
+      .then(function () {
         equal($("#qunit-fixture").css("background-color"), "rgb(0, 0, 255)");
         $('head').find('link[rel=stylesheet]').each(function (i, style) {
           if (style.href === url) {
@@ -708,27 +748,23 @@
         });
         ok($("#qunit-fixture").css("background-color") !== "rgb(0, 0, 255)");
 
-        renderJS.declareCSS(url)
-          .done(function () {
-            var found = false;
-            $('head').find('link[rel=stylesheet]').each(function (i, style) {
-              if (style.href === url) {
-                found = true;
-              }
-            });
-            ok($("#qunit-fixture").css("background-color") !==
-               "rgb(0, 0, 255)", $("#qunit-fixture").css("background-color"));
-            ok(!found);
-          })
-          .fail(function (jqXHR, textStatus) {
-            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
-          })
-          .always(function () {
-            start();
-          });
+        return renderJS.declareCSS(url);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .then(function () {
+        var found = false;
+        $('head').find('link[rel=stylesheet]').each(function (i, style) {
+          if (style.href === url) {
+            found = true;
+          }
+        });
+        ok($("#qunit-fixture").css("background-color") !==
+           "rgb(0, 0, 255)", $("#qunit-fixture").css("background-color"));
+        ok(!found);
+      })
+      .fail(function (jqXHR) {
+        ok(false, "Failed to load " + jqXHR);
+      })
+      .always(function () {
         start();
       });
   });
@@ -747,41 +783,42 @@
     // after clearGadgetKlassList is called
     var server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
+      klass1,
       mock;
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
 
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, "foo"]);
 
-    mock = this.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").twice().withArgs("foo").returns(
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").twice().returns(
       {foo: 'bar'}
     );
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .done(function (Klass1) {
+      .then(function (Klass1) {
+        klass1 = Klass1;
 
         renderJS.clearGadgetKlassList();
 
-        renderJS.declareGadgetKlass(url)
-          .done(function (Klass2) {
-            mock.verify();
-            ok(Klass1 !== Klass2);
-          })
-          .fail(function (jqXHR, textStatus) {
-            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
-          })
-          .always(function () {
-            start();
-          });
-
+        return renderJS.declareGadgetKlass(url);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .then(function (Klass2) {
+        ok(klass1 !== Klass2);
+      })
+      .fail(function (jqXHR) {
+        ok(false, jqXHR);
+      })
+      .always(function () {
         start();
+        server.restore();
+        mock.verify();
+        mock.restore();
       });
-    server.respond();
   });
 
   test('clearGadgetKlassList leads to JS reload', function () {
@@ -792,23 +829,19 @@
 
     stop();
     renderJS.declareJS(url)
-      .done(function () {
+      .then(function () {
         renderJS.clearGadgetKlassList();
         equal($("#qunit-fixture").text(), "JS not fetched twice");
         $("#qunit-fixture").text("");
-        renderJS.declareJS(url)
-          .done(function () {
-            equal($("#qunit-fixture").text(), "JS not fetched twice");
-          })
-          .fail(function (jqXHR, textStatus) {
-            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
-          })
-          .always(function () {
-            start();
-          });
+        return renderJS.declareJS(url);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .then(function () {
+        equal($("#qunit-fixture").text(), "JS not fetched twice");
+      })
+      .fail(function (jqXHR) {
+        ok(false, "Failed to load " + jqXHR);
+      })
+      .always(function () {
         start();
       });
   });
@@ -822,24 +855,58 @@
 
     stop();
     renderJS.declareCSS(url)
-      .done(function () {
+      .then(function () {
         renderJS.clearGadgetKlassList();
         equal($('head').find('link[rel=stylesheet]').length, count + 1);
-        renderJS.declareCSS(url)
-          .done(function () {
-            equal($('head').find('link[rel=stylesheet]').length, count + 2);
-          })
-          .fail(function (jqXHR, textStatus) {
-            ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
-          })
-          .always(function () {
-            start();
-          });
+        return renderJS.declareCSS(url);
       })
-      .fail(function (jqXHR, textStatus) {
-        ok(false, "Failed to load " + textStatus + " " + jqXHR.status);
+      .then(function () {
+        equal($('head').find('link[rel=stylesheet]').length, count + 2);
+      })
+      .fail(function (jqXHR) {
+        ok(false, "Failed to load " + jqXHR);
+      })
+      .always(function () {
         start();
       });
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadget");
+
+  test('should be a constructor', function () {
+    var gadget = new RenderJSGadget();
+    equal(
+      Object.getPrototypeOf(gadget),
+      RenderJSGadget.prototype,
+      '[[Prototype]] equals RenderJSGadget.prototype'
+    );
+    equal(
+      gadget.constructor,
+      RenderJSGadget,
+      'constructor property of instances is set correctly'
+    );
+    equal(
+      RenderJSGadget.prototype.constructor,
+      RenderJSGadget,
+      'constructor property of prototype is set correctly'
+    );
+  });
+
+  test('should not accept parameter', function () {
+    equal(RenderJSGadget.length, 0);
+  });
+
+  test('should work without new', function () {
+    var gadgetKlass = RenderJSGadget,
+      gadget = gadgetKlass();
+    equal(
+      gadget.constructor,
+      RenderJSGadget,
+      'constructor property of instances is set correctly'
+    );
   });
 
   /////////////////////////////////////////////////////////////////
@@ -856,7 +923,7 @@
     gadget.interface_list = "foo";
     stop();
     gadget.getInterfaceList()
-      .done(function (result) {
+      .then(function (result) {
         equal(result, "foo");
       })
       .always(function () {
@@ -869,7 +936,7 @@
     var gadget = new RenderJSGadget();
     stop();
     gadget.getInterfaceList()
-      .done(function (result) {
+      .then(function (result) {
         deepEqual(result, []);
       })
       .always(function () {
@@ -891,7 +958,7 @@
     gadget.required_css_list = "foo";
     stop();
     gadget.getRequiredCSSList()
-      .done(function (result) {
+      .then(function (result) {
         equal(result, "foo");
       })
       .always(function () {
@@ -904,7 +971,7 @@
     var gadget = new RenderJSGadget();
     stop();
     gadget.getRequiredCSSList()
-      .done(function (result) {
+      .then(function (result) {
         deepEqual(result, []);
       })
       .always(function () {
@@ -926,7 +993,7 @@
     gadget.required_js_list = "foo";
     stop();
     gadget.getRequiredJSList()
-      .done(function (result) {
+      .then(function (result) {
         equal(result, "foo");
       })
       .always(function () {
@@ -939,7 +1006,7 @@
     var gadget = new RenderJSGadget();
     stop();
     gadget.getRequiredJSList()
-      .done(function (result) {
+      .then(function (result) {
         deepEqual(result, []);
       })
       .always(function () {
@@ -961,7 +1028,7 @@
     gadget.path = "foo";
     stop();
     gadget.getPath()
-      .done(function (result) {
+      .then(function (result) {
         equal(result, "foo");
       })
       .always(function () {
@@ -974,7 +1041,7 @@
     var gadget = new RenderJSGadget();
     stop();
     gadget.getPath()
-      .done(function (result) {
+      .then(function (result) {
         equal(result, "");
       })
       .always(function () {
@@ -996,7 +1063,7 @@
     gadget.title = "foo";
     stop();
     gadget.getTitle()
-      .done(function (result) {
+      .then(function (result) {
         equal(result, "foo");
       })
       .always(function () {
@@ -1009,7 +1076,7 @@
     var gadget = new RenderJSGadget();
     stop();
     gadget.getTitle()
-      .done(function (result) {
+      .then(function (result) {
         equal(result, "");
       })
       .always(function () {
@@ -1018,20 +1085,20 @@
   });
 
   /////////////////////////////////////////////////////////////////
-  // RenderJSGadget.getHTML
+  // RenderJSGadget.getElement
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.getHTML", {
+  module("RenderJSGadget.getElement", {
     setup: function () {
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns html', function () {
-    // Check that getHTML return a Promise
+  test('returns element property', function () {
+    // Check that getElement return a Promise
     var gadget = new RenderJSGadget();
-    gadget.html = "foo";
+    gadget.element = "foo";
     stop();
-    gadget.getHTML()
-      .done(function (result) {
+    gadget.getElement()
+      .then(function (result) {
         equal(result, "foo");
       })
       .always(function () {
@@ -1039,13 +1106,17 @@
       });
   });
 
-  test('default value', function () {
-    // Check that getHTML return a Promise
+  test('throw an error if no element is defined', function () {
+    // Check that getElement return a Promise
     var gadget = new RenderJSGadget();
     stop();
-    gadget.getHTML()
-      .done(function (result) {
-        equal(result, "");
+    gadget.getElement()
+      .then(function () {
+        ok(false, "getElement should fail");
+      })
+      .fail(function (e) {
+        console.log(e);
+        ok(e instanceof Error);
       })
       .always(function () {
         start();
@@ -1074,7 +1145,7 @@
     gadget = new Klass();
     equal(gadget.testFoo, undefined);
     result = Klass.declareMethod('testFoo', function () {
-      var a;
+      console.log("");
     });
     // declareMethod is chainable
     equal(result, Klass);
@@ -1086,7 +1157,7 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
-    }, gadget, called, result;
+    }, gadget, called;
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
     Klass.declareMethod = RenderJSGadget.declareMethod;
@@ -1102,9 +1173,18 @@
     ok(Klass.prototype.testFoo !== undefined);
     equal(Klass.prototype.testFoo, gadget.testFoo);
 
+    stop();
     // method can be called
-    gadget.testFoo("Bar");
-    equal(called, "Bar");
+    gadget.testFoo("Bar")
+      .then(function (param) {
+        equal(called, "Bar");
+      })
+      .fail(function () {
+        ok(false, "Should propagate the parameters");
+      })
+      .always(function () {
+        start();
+      });
   });
 
   test('returns a promise when synchronous function', function () {
@@ -1127,7 +1207,7 @@
     // method can be called
     stop();
     gadget.testFoo("Bar")
-      .done(function (param) {
+      .then(function (param) {
         equal(param, "Bar");
       })
       .fail(function () {
@@ -1152,16 +1232,14 @@
     gadget = new Klass();
     Klass.declareMethod('testFoo', function (value) {
       var dfr = $.Deferred();
-      setTimeout(function () {
-        dfr.reject(value);
-      });
+      dfr.reject(value);
       return dfr.promise();
     });
 
     // method can be called
     stop();
     gadget.testFoo("Bar")
-      .done(function () {
+      .then(function () {
         ok(false, "Callback promise is rejected");
       })
       .fail(function (param) {
@@ -1186,15 +1264,14 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
-    }, gadget, result;
+    }, result;
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
     Klass.ready_list = [];
     Klass.ready = RenderJSGadget.ready;
 
-    gadget = new Klass();
     result = Klass.ready(function () {
-      var a;
+      console.log("");
     });
     // ready is chainable
     equal(result, Klass);
@@ -1206,14 +1283,13 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
-    }, gadget, result,
-      callback = function () {var a; };
+    },
+      callback = function () {console.log(""); };
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
     Klass.ready_list = [];
     Klass.ready = RenderJSGadget.ready;
 
-    gadget = new Klass();
     Klass.ready(callback);
     // ready is chainable
     deepEqual(Klass.ready_list, [callback]);
@@ -1238,17 +1314,26 @@
         "type='text/javascript'></script>" +
         "</body></html>";
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, html]);
 
     stop();
-    gadget.declareGadget(url, $('#qunit-fixture'))
-      .always(function () {
+    gadget.declareGadget(url)//, $('#qunit-fixture'))
+      .then(function () {
         ok(true);
+      })
+      .fail(function (e) {
+        console.warn(e);
+        ok(false, e);
+      })
+      .always(function () {
         start();
+        server.restore();
       });
-    server.respond();
   });
 
   test('provide a gadget instance as callback parameter', function () {
@@ -1262,19 +1347,22 @@
         "type='text/javascript'></script>" +
         "</body></html>";
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", url, [200, {
       "Content-Type": "text/html",
     }, html]);
 
     stop();
-    gadget.declareGadget(url, $('#qunit-fixture'))
-      .done(function (new_gadget) {
+    gadget.declareGadget(url)//, $('#qunit-fixture'))
+      .then(function (new_gadget) {
         equal(new_gadget.path, url);
       })
       .always(function () {
         start();
+        server.restore();
       });
-    server.respond();
   });
 
 //   test('no parameter', function () {
@@ -1303,7 +1391,7 @@
          window.btoa(
           "$('#qunit-fixture').find('div').first().text('youhou2');"
         ),
-      css1_url = "data:text/plain;base64," +
+      css1_url = "data:text/css;base64," +
          window.btoa(""),
       css2_url = css1_url,
       html = "<html>" +
@@ -1314,30 +1402,34 @@
         "<link rel='stylesheet' href='" + css1_url + "' type='text/css'/>" +
         "<link rel='stylesheet' href='" + css2_url + "' type='text/css'/>" +
         "</head><body><p>Bar content</p></body></html>",
-      mock,
       spy_js,
       spy_css;
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
 
     server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html",
     }, html]);
 
-    spy_js = this.spy(renderJS, "declareJS");
-    spy_css = this.spy(renderJS, "declareCSS");
+    spy_js = sinon.spy(renderJS, "declareJS");
+    spy_css = sinon.spy(renderJS, "declareCSS");
 
-    mock = this.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").once().withArgs(html).returns({
-      required_js_list: [js1_url, js2_url],
-      required_css_list: [css1_url, css2_url],
-      html: "<p>Bar content</p>",
-    });
+//     mock = sinon.mock(renderJS, "parseGadgetHTML");
+//     mock.expects("parseGadgetHTML").once().withArgs(html).returns({
+//       required_js_list: [js1_url, js2_url],
+//       required_css_list: [css1_url, css2_url],
+//       html: "<p>Bar content</p>",
+//     });
 
-    $('#qunit-fixture').html("<div></div><div></div>");
+    $('#qunit-fixture').html("<div></div><div>bar</div>");
     stop();
-    gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
-      .done(function (new_gadget) {
+    gadget.declareGadget(html_url)//, $('#qunit-fixture').find("div").last()[0])
+      .then(function (new_gadget) {
         equal($('#qunit-fixture').html(),
-              "<div>youhou2</div><div><p>Bar content</p></div>");
+              "<div>youhou2</div><div>bar</div>");
+        equal(new_gadget.element.outerHTML,
+              "<div><p>Bar content</p></div>");
         ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
         equal(spy_js.firstCall.args[0], js1_url, "First JS call");
         equal(spy_js.secondCall.args[0], js2_url, "Second JS call");
@@ -1345,13 +1437,16 @@
         equal(spy_css.firstCall.args[0], css1_url, "First CSS call");
         equal(spy_css.secondCall.args[0], css2_url, "Second CSS call");
       })
-      .fail(function () {
+      .fail(function (e) {
+        console.warn(e);
         ok(false);
       })
       .always(function () {
         start();
+        server.restore();
+        spy_js.restore();
+        spy_css.restore();
       });
-    server.respond();
   });
 
 //   test('load dependency in the right order', function () {
@@ -1368,135 +1463,274 @@
       server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test3.html';
 
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
     server.respondWith("GET", html_url, [404, {
       "Content-Type": "text/html",
     }, ""]);
 
     stop();
-    gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
-      .done(function (new_gadget) {
+    gadget.declareGadget(html_url)//, $('#qunit-fixture').find("div").last())
+      .then(function (new_gadget) {
         ok(false);
       })
-      .fail(function (jqXHR, textStatus) {
-        equal("404", jqXHR.status);
+      .fail(function (jqXHR) {
+        equal(jqXHR.status, 404);
       })
       .always(function () {
         start();
+        server.restore();
       });
-    server.respond();
   });
 
   test('Fail if js can not be loaded', function () {
     // Check that dependencies are loaded before gadget creation
     var gadget = new RenderJSGadget(),
       server = sinon.fakeServer.create(),
-      html_url = 'https://example.org/files/qunittest/test2.html',
-      js1_url = 'foo://bar2',
+      html_url = 'http://example.org/files/qunittest/test5.html',
+      js1_url = 'http://0.0.0.0/test.js',
       mock;
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
 
     server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html",
     }, "raw html"]);
 
-    mock = this.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").once().withArgs("raw html").returns({
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").once().returns({
       required_js_list: [js1_url]
     });
 
     stop();
-    gadget.declareGadget(html_url, $('#qunit-fixture'))
-      .done(function (new_gadget) {
+    gadget.declareGadget(html_url)//, $('#qunit-fixture'))
+      .then(function (new_gadget) {
         ok(false);
       })
-      .fail(function (jqXHR, textStatus) {
-        equal(jqXHR.status, 404);
-        equal(textStatus, "error");
+      .fail(function (e) {
+        ok(true);
       })
       .always(function () {
         start();
+        server.restore();
+        mock.verify();
+        mock.restore();
       });
-    server.respond();
   });
 
   test('Do not load gadget dependency twice', function () {
     // Check that dependencies are not reloaded if 2 gadgets are created
     var gadget = new RenderJSGadget(),
       server = sinon.fakeServer.create(),
-      html_url = 'https://example.org/files/qunittest/test2.html',
+      html_url = 'https://example.org/files/qunittest/test254.html',
       js1_url = "data:application/javascript;base64," +
          window.btoa(
           "$('#qunit-fixture').find('div').first().append('youhou');"
         ),
-      mock,
-      spy;
+      mock;
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
 
     server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html",
     }, "raw html"]);
 
-    spy = this.spy($, "ajax");
-
-    mock = this.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").once().withArgs("raw html").returns({
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").once().returns({
       required_js_list: [js1_url]
     });
 
     stop();
     $('#qunit-fixture').html("<div></div><div></div>");
-    gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
+    gadget.declareGadget(html_url)//, $('#qunit-fixture').find("div").last()[0])
       .always(function () {
         equal($('#qunit-fixture').html(),
               "<div>youhou</div><div></div>");
-        gadget.declareGadget(html_url, $('#qunit-fixture').find("div").last())
-          .done(function (new_gadget) {
-            equal($('#qunit-fixture').html(),
-                  "<div>youhou</div><div></div>");
-            ok(spy.calledTwice, "Ajax count " + spy.callCount);
-            equal(spy.firstCall.args[0], html_url, "First ajax call");
-            deepEqual(spy.secondCall.args[0], {
-              "cache": true,
-              "dataType": "script",
-              "url": js1_url,
-            }, "Second ajax call");
-          })
-          .fail(function () {
-            ok(false);
-          })
-          .always(function () {
-            start();
-          });
+        return gadget.declareGadget(html_url);//,
+          //$('#qunit-fixture').find("div").last()[0]
+//         );
+      })
+      .then(function (new_gadget) {
+        equal($('#qunit-fixture').html(),
+              "<div>youhou</div><div></div>");
+      })
+      .fail(function () {
+        ok(false);
+      })
+      .always(function () {
+        start();
+        server.restore();
+        mock.verify();
+        mock.restore();
       });
-    server.respond();
   });
 
   test('Load 2 concurrent gadgets in parallel', function () {
     // Check that dependencies are loaded once if 2 gadgets are created
     var gadget = new RenderJSGadget(),
       server = sinon.fakeServer.create(),
-      html_url = 'https://example.org/files/qunittest/test2.html',
-      mock,
-      spy;
+      html_url = 'https://example.org/files/qunittest/test987.html',
+      mock;
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
 
     server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html",
     }, "raw html"]);
 
-    spy = this.spy($, "ajax");
-
-    mock = this.mock(renderJS, "parseGadgetHTML");
-    mock.expects("parseGadgetHTML").once().withArgs("raw html").returns({});
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").once().returns({});
 
     stop();
-    $.when(
-      gadget.declareGadget(html_url, $('#qunit-fixture')),
-      gadget.declareGadget(html_url, $('#qunit-fixture'))
-    ).always(function () {
-      // Check that only one request has been done.
-      ok(spy.calledOnce, "Ajax count " + spy.callCount);
-      equal(spy.firstCall.args[0], html_url, "First ajax call");
-      start();
-    });
-    server.respond();
+    RSVP.all([
+      gadget.declareGadget(html_url),// $('#qunit-fixture')),
+      gadget.declareGadget(html_url)//, $('#qunit-fixture'))
+    ])
+      .then(function () {
+        ok(true);
+      })
+      .always(function () {
+        // Check that only one request has been done.
+        start();
+        mock.verify();
+        mock.restore();
+        server.restore();
+      });
+  });
+
+  test('Wait for ready callback before returning', function () {
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var called = false,
+      gadget = new RenderJSGadget(),
+      server = sinon.fakeServer.create(),
+      html_url = 'https://example.org/files/qunittest/test98.html';
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, "<html><body></body></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        // Create a ready function
+        Klass.ready(function () {
+          return RSVP.delay(50).then(function () {
+            // Modify the value after 50ms
+            called = true;
+          });
+        });
+        return gadget.declareGadget(html_url);//, $('#qunit-fixture')[0]);
+      })
+      .then(function () {
+        ok(called);
+      })
+      .fail(function (e) {
+        console.warn(e);
+        ok(false);
+      })
+      .always(function () {
+        start();
+        server.restore();
+      });
+  });
+
+  test('Can take a DOM element options', function () {
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      server = sinon.fakeServer.create(),
+      html_url = 'https://example.org/files/qunittest/test98.html';
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, "<html><body><p>foo</p></body></html>"]);
+
+    $('#qunit-fixture').empty();
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        return gadget.declareGadget(html_url, {element: $('#qunit-fixture')[0]});
+      })
+      .then(function () {
+        equal($('#qunit-fixture').html(), '<p>foo</p>');
+      })
+      .fail(function (e) {
+        console.warn(e);
+        ok(false);
+      })
+      .always(function () {
+        start();
+        server.restore();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget bootstrap
+  /////////////////////////////////////////////////////////////////
+
+  module("RenderJSGadget bootstrap");
+//   module("RenderJSGadget bootstrap", {
+//     setup: function () {
+//       renderJS.clearGadgetKlassList();
+//     }
+//   });
+
+  test('Check that the root gadget is cleanly implemented', function () {
+    stop();
+    console.log(root_gadget_klass);
+    root_gadget_defer.promise
+      .then(function (root_gadget) {
+        // Check instance
+        equal(root_gadget.path, window.location.href);
+        equal(root_gadget.title, document.title);
+        deepEqual(root_gadget.interface_list, []);
+        deepEqual(root_gadget.required_css_list, ["../lib/qunit/qunit.css"]);
+        deepEqual(root_gadget.required_js_list, [
+          "../lib/rsvp/rsvp.js",
+          "../lib/jquery/jquery.js",
+          "../lib/qunit/qunit.js",
+          "../lib/sinon/sinon.js",
+          "../../lib/jschannel/jschannel.js",
+          "../renderjs.js",
+          "renderjs_test.js",
+        ]);
+        equal(root_gadget.element.outerHTML, document.body.outerHTML);
+        // Check klass
+        equal(root_gadget.constructor.prototype.path, window.location.href);
+        equal(root_gadget.constructor.prototype.title, document.title);
+        deepEqual(root_gadget.constructor.prototype.interface_list, []);
+        deepEqual(root_gadget.constructor.prototype.required_css_list,
+                  ["../lib/qunit/qunit.css"]);
+        deepEqual(root_gadget.constructor.prototype.required_js_list, [
+          "../lib/rsvp/rsvp.js",
+          "../lib/jquery/jquery.js",
+          "../lib/qunit/qunit.js",
+          "../lib/sinon/sinon.js",
+          "../../lib/jschannel/jschannel.js",
+          "../renderjs.js",
+          "renderjs_test.js",
+        ]);
+        var html = root_gadget.constructor.template_element.outerHTML;
+        ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
   });
 
 }(document, jQuery, renderJS, QUnit, sinon));

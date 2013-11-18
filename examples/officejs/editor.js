@@ -1,6 +1,6 @@
-/*global window, jQuery, rJS */
+/*global window, rJS */
 "use strict";
-(function (window, $, rJS) {
+(function (window, rJS) {
 
   function escape_text(text) {
     // &, ", ', <, >, /
@@ -12,10 +12,11 @@
   var gk = rJS(window);
 
   gk.declareMethod('setContent', function (value) {
-    return rJS(this).context.find('textarea').val(escape_text(value));
+    rJS(this).element.getElementsByTagName('textarea')[0].value =
+      escape_text(value);
   })
     .declareMethod('getContent', function () {
-      return rJS(this).context.find('textarea').val();
+      return rJS(this).element.getElementsByTagName('textarea')[0].value;
     });
 
-}(window, jQuery, rJS));
+}(window, rJS));

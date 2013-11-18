@@ -1,6 +1,6 @@
 /*global window, jQuery, rJS */
 "use strict";
-(function (window, $, rJS, undefined) {
+(function (window, $, rJS) {
 
   var gk = rJS(window),
     io_dict = {

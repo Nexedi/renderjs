@@ -1,6 +1,6 @@
 # npm install uglify-js
-UGLIFY_CMD = $(shell which uglifyjs || echo node ~/node_modules/uglify-js/bin/uglifyjs)
+UGLIFY_CMD = ~/node_modules/.bin/uglifyjs
 # npm install jslint
-LINT_CMD = $(shell which jslint || echo node ~/node_modules/jslint/bin/jslint.js) --terse
+LINT_CMD = /home/romain/devel/nowm/gidzit/node_modules/.bin/jslint
 YUIDOC_CMD = $(shell which yuidoc)
 PHANTOMJS_CMD = xvfb-run phantomjs

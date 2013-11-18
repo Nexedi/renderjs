@@ -5,7 +5,7 @@
   var gk = rJS(window);
 
   gk.declareMethod('configureIO', function (key) {
-    rJS(this).jio = jIO.newJio({
+    rJS(this).jio = jIO.createJIO({
       "type": "local",
       "username": "couscous",
       "application_name": "renderjs"
@@ -14,60 +14,36 @@
   })
 
     .declareMethod('getIO', function () {
-      var deferred = $.Deferred(),
-        default_value = "",
-        gadget = rJS(this);
+      var gadget = rJS(this);
 
-      gadget.jio.getAttachment({
+      return gadget.jio.getAttachment({
         "_id": gadget.jio_key,
         "_attachment": "body.txt"
-      }, function (err, response) {
-        if (err) {
-          if (err.status === 404) {
-            deferred.resolve(default_value);
-          } else {
-            deferred.reject(err);
-          }
-        } else {
-          deferred.resolve(response || default_value);
-        }
+      }).then(function (response) {
+        return jIO.util.readBlobAsText(response.data);
+      }).then(function (response) {
+        return response.target.result;
       });
-
-      return deferred.promise();
     })
 
     .declareMethod('setIO', function (value) {
+      var gadget = rJS(this);
 
-      var deferred = $.Deferred(),
-        default_value = "",
-        gadget = rJS(this);
-
-      gadget.jio.put({"_id": gadget.jio_key},
-        function (err, response) {
-          if (err) {
-            deferred.reject(err);
-          } else {
-            gadget.jio.putAttachment({
-              "_id": gadget.jio_key,
-              "_attachment": "body.txt",
-              "_data": value,
-              "_mimetype": "text/plain"
-            }, function (err, response) {
-              if (err) {
-                deferred.reject(err);
-              } else {
-                deferred.resolve();
-              }
-            });
-          }
+      return gadget.jio.put({"_id": gadget.jio_key})
+        .then(function () {
+          return gadget.jio.putAttachment({
+            "_id": gadget.jio_key,
+            "_attachment": "body.txt",
+            "_data": value,
+            "_mimetype": "text/plain"
+          });
         });
-      return deferred.promise();
     })
 
     .declareMethod('configureDataSourceCallback', function (that, callback) {
       var g = rJS(this);
-      g.context.find('a').unbind('click').click(function () {
-        callback.apply(that).done(function (value) {
+      $(g.element).find('a').unbind('click').click(function () {
+        callback.apply(that).then(function (value) {
           g.setIO(value);
         });
       });
