@@ -47,24 +47,14 @@
   }
 
   function createLoadNewEditorCallback(g, editor_path, e_c, io_path, i_c) {
-//     throw new Error("nutnut");
-    console.log("createLoadNewEditorCallback");
     return function () {
-//       var new_element = document.createElement("div");
-//   //     console.log(e_c);
-//   //     e_c[0].innerHTML = '';
       e_c.empty();
-//       e_c[0].appendChild(new_element);
-      console.log("inside");
       return RSVP.all([
-        g.declareGadget(editor_path, {element: e_c[0]}),
-//         g.declareGadget(editor_path),
+        g.declareGadget(editor_path, {element: e_c[0], sandbox: 'iframe'}),
         g.declareGadget(io_path),
         "officejs"
       ])
         .then(function (all_param) {
-//           e_c.empty();
-//           e_c[0].appendChild(all_param[0].element);
           i_c.empty();
           i_c[0].appendChild(all_param[1].element);
           return attachIOToEditor(all_param);
@@ -101,18 +91,16 @@
           i;
 
         // Load 1 editor and 1 IO and plug them
-        console.log(io_list[0].path);
+        editor_a_context.empty();
         return RSVP.all([
-          g.declareGadget(editor_list[0].path),// editor_a_context),
+          g.declareGadget(
+            editor_list[0].path,
+            {element: editor_a_context[0], sandbox: 'iframe'}
+          ),
           g.declareGadget(io_list[0].path),// io_a_context),
           "officejs"
         ])
           .then(function (all_param) {
-            editor_a_context.empty();
-            console.log("first G");
-            console.log(all_param[0].element);
-            editor_a_context[0].appendChild(all_param[0].element);
-            console.log(editor_a_context[0]);
             io_a_context.empty();
             io_a_context[0].appendChild(all_param[1].element);
             return attachIOToEditor(all_param);

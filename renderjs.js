@@ -1,4 +1,4 @@
-/*! RenderJs v0.3 */
+/*! RenderJs v0.3.1 */
 /*global RSVP, window, document, DOMParser, Channel, XMLHttpRequest, alert */
 /*jslint unparam: true, maxlen: 150 */
 "use strict";
@@ -60,6 +60,9 @@
     loading_gadget_promise,
     renderJS;
 
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget
+  /////////////////////////////////////////////////////////////////
   function RenderJSGadget() {
     if (!(this instanceof RenderJSGadget)) {
       return new RenderJSGadget();
@@ -78,6 +81,9 @@
     return this;
   };
 
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareMethod
+  /////////////////////////////////////////////////////////////////
   RenderJSGadget.declareMethod = function (name, callback) {
     this.prototype[name] = function () {
       var context = this,
@@ -121,24 +127,31 @@
       return this.element;
     });
 
-  RenderJSGadget.prototype.declareGadget = function (url, options) {
-    var gadget_instance,
-      queue,
-      previous_loading_gadget_promise = loading_gadget_promise;
-
-    if (options === undefined) {
-      options = {};
+  /////////////////////////////////////////////////////////////////
+  // RenderJSEmbeddedGadget
+  /////////////////////////////////////////////////////////////////
+  // Class inheritance
+  function RenderJSEmbeddedGadget() {
+    if (!(this instanceof RenderJSEmbeddedGadget)) {
+      return new RenderJSEmbeddedGadget();
     }
+    RenderJSGadget.call(this);
+  }
+  RenderJSEmbeddedGadget.ready_list = [];
+  RenderJSEmbeddedGadget.ready =
+    RenderJSGadget.ready;
+  RenderJSEmbeddedGadget.prototype = new RenderJSGadget();
+  RenderJSEmbeddedGadget.prototype.constructor = RenderJSEmbeddedGadget;
+
+  /////////////////////////////////////////////////////////////////
+  // privateDeclarePublicGadget
+  /////////////////////////////////////////////////////////////////
+  function privateDeclarePublicGadget(url, options) {
+    var gadget_instance;
     if (options.element === undefined) {
       options.element = document.createElement("div");
     }
-
-    // Change the global variable to update the loading queue
-    queue = new RSVP.Queue()
-      // Wait for previous gadget loading to finish first
-      .push(function () {
-        return previous_loading_gadget_promise;
-      })
+    return new RSVP.Queue()
       .push(function () {
         return renderJS.declareGadgetKlass(url);
       })
@@ -172,8 +185,142 @@
         }
         return RSVP.all(parameter_list);
       })
-      // Set the HTML context
       .push(function () {
+        return gadget_instance;
+      });
+  }
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSIframeGadget
+  /////////////////////////////////////////////////////////////////
+  function RenderJSIframeGadget() {
+    if (!(this instanceof RenderJSIframeGadget)) {
+      return new RenderJSIframeGadget();
+    }
+    RenderJSGadget.call(this);
+  }
+  RenderJSIframeGadget.ready_list = [];
+  RenderJSIframeGadget.ready =
+    RenderJSGadget.ready;
+  RenderJSIframeGadget.prototype = new RenderJSGadget();
+  RenderJSIframeGadget.prototype.constructor = RenderJSIframeGadget;
+
+  /////////////////////////////////////////////////////////////////
+  // privateDeclareIframeGadget
+  /////////////////////////////////////////////////////////////////
+  function privateDeclareIframeGadget(url, options) {
+    var gadget_instance,
+      iframe,
+      node,
+      iframe_loading_deferred = RSVP.defer();
+
+    if (options.element === undefined) {
+      throw new Error("DOM element is required to create Iframe Gadget " + url);
+    }
+
+    // Check if the element is attached to the DOM
+    node = options.element.parentNode;
+    while (node !== null) {
+      if (node === document) {
+        break;
+      }
+      node = node.parentNode;
+    }
+    if (node === null) {
+      throw new Error("The parent element is not attached to the DOM for " + url);
+    }
+
+    gadget_instance = new RenderJSIframeGadget();
+    iframe = document.createElement("iframe");
+//    gadget_instance.element.setAttribute("seamless", "seamless");
+    iframe.setAttribute("src", url);
+    gadget_instance.path = url;
+    gadget_instance.element = options.element;
+
+    // Attach it to the DOM
+    options.element.appendChild(iframe);
+
+    // XXX Manage unbind when deleting the gadget
+
+    // Create the communication channel with the iframe
+    gadget_instance.chan = Channel.build({
+      window: iframe.contentWindow,
+      origin: "*",
+      scope: "renderJS"
+    });
+
+    // Create new method from the declareMethod call inside the iframe
+    gadget_instance.chan.bind("declareMethod", function (trans, method_name) {
+      gadget_instance[method_name] = function () {
+        var argument_list = arguments;
+        return new RSVP.Promise(function (resolve, reject) {
+          gadget_instance.chan.call({
+            method: "methodCall",
+            params: [
+              method_name,
+              Array.prototype.slice.call(argument_list, 0)],
+            success: function (s) {
+              resolve(s);
+            },
+            error: function (e) {
+              reject(e);
+            }
+          });
+        });
+      };
+      return "OK";
+    });
+
+    // Wait for the iframe to be loaded before continuing
+    gadget_instance.chan.bind("ready", function (trans) {
+      iframe_loading_deferred.resolve(gadget_instance);
+      return "OK";
+    });
+    gadget_instance.chan.bind("failed", function (trans, params) {
+      iframe_loading_deferred.reject(params);
+      return "OK";
+    });
+    return RSVP.any([
+      iframe_loading_deferred.promise,
+      // Timeout to prevent non renderJS embeddable gadget
+      // XXX Maybe using iframe.onload/onerror would be safer?
+      RSVP.timeout(5000)
+    ]);
+  }
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareGadget
+  /////////////////////////////////////////////////////////////////
+  RenderJSGadget.prototype.declareGadget = function (url, options) {
+    var queue,
+      previous_loading_gadget_promise = loading_gadget_promise;
+
+    if (options === undefined) {
+      options = {};
+    }
+    if (options.sandbox === undefined) {
+      options.sandbox = "public";
+    }
+
+    // Change the global variable to update the loading queue
+    queue = new RSVP.Queue()
+      // Wait for previous gadget loading to finish first
+      .push(function () {
+        return previous_loading_gadget_promise;
+      })
+      .push(function () {
+        var method;
+        if (options.sandbox === "public") {
+          method = privateDeclarePublicGadget;
+        } else if (options.sandbox === "iframe") {
+          method = privateDeclareIframeGadget;
+        } else {
+          throw new Error("Unsupported sandbox options '" + options.sandbox + "'");
+        }
+        return method(url, options);
+      })
+      // Set the HTML context
+      .push(function (gadget_instance) {
         var i;
         // Drop the current loading klass info used by selector
         gadget_loading_klass = undefined;
@@ -202,6 +349,9 @@
     return loading_gadget_promise;
   };
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS selector
+  /////////////////////////////////////////////////////////////////
   renderJS = function (selector) {
     var result;
     if (selector === window) {
@@ -217,6 +367,9 @@
     return result;
   };
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.declareJS
+  /////////////////////////////////////////////////////////////////
   renderJS.declareJS = function (url) {
     // Prevent infinite recursion if loading render.js
     // more than once
@@ -242,6 +395,9 @@
     return result;
   };
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.declareCSS
+  /////////////////////////////////////////////////////////////////
   renderJS.declareCSS = function (url) {
     // https://github.com/furf/jquery-getCSS/blob/master/jquery.getCSS.js
     // No way to cleanly check if a css has been loaded
@@ -270,6 +426,9 @@
     return result;
   };
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.declareGadgetKlass
+  /////////////////////////////////////////////////////////////////
   renderJS.declareGadgetKlass = function (url) {
     var result,
       xhr;
@@ -359,6 +518,9 @@
     return result;
   };
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.clearGadgetKlassList
+  /////////////////////////////////////////////////////////////////
   // For test purpose only
   renderJS.clearGadgetKlassList = function () {
     gadget_model_dict = {};
@@ -366,6 +528,9 @@
     stylesheet_registration_dict = {};
   };
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.parseGadgetHTMLDocument
+  /////////////////////////////////////////////////////////////////
   renderJS.parseGadgetHTMLDocument = function (document_element) {
     var settings = {
         title: "",
@@ -397,8 +562,14 @@
     }
     return settings;
   };
+
+  /////////////////////////////////////////////////////////////////
+  // global
+  /////////////////////////////////////////////////////////////////
   window.rJS = window.renderJS = renderJS;
   window.RenderJSGadget = RenderJSGadget;
+  window.RenderJSEmbeddedGadget = RenderJSEmbeddedGadget;
+  window.RenderJSIframeGadget = RenderJSIframeGadget;
 
   ///////////////////////////////////////////////////
   // Bootstrap process. Register the self gadget.
@@ -407,7 +578,12 @@
   function bootstrap() {
     var url = window.location.href,
       tmp_constructor,
-      root_gadget;
+      root_gadget,
+      declare_method_count = 0,
+      embedded_channel,
+      notifyReady,
+      notifyDeclareMethod,
+      gadget_ready = false;
 
 
     // Create the gadget class for the current url
@@ -430,6 +606,64 @@
 
         // Create the root gadget instance and put it in the loading stack
         root_gadget = new gadget_model_dict[url]();
+
+      } else {
+        // Create the communication channel
+        embedded_channel = Channel.build({
+          window: window.parent,
+          origin: "*",
+          scope: "renderJS"
+        });
+        // Create the root gadget instance and put it in the loading stack
+        tmp_constructor = RenderJSEmbeddedGadget;
+        root_gadget = new RenderJSEmbeddedGadget();
+
+        // Bind calls to renderJS method on the instance
+        embedded_channel.bind("methodCall", function (trans, v) {
+          root_gadget[v[0]].apply(root_gadget, v[1]).then(function (g) {
+            trans.complete(g);
+          }).fail(function (e) {
+            console.warn(e);
+            trans.error(e.toString());
+          });
+          trans.delayReturn(true);
+        });
+
+        // Notify parent about gadget instanciation
+        notifyReady = function () {
+          if ((declare_method_count === 0) && (gadget_ready === true)) {
+            embedded_channel.notify({method: "ready"});
+          }
+        };
+
+        // Inform parent gadget about declareMethod calls here.
+        notifyDeclareMethod = function (name) {
+          declare_method_count += 1;
+          embedded_channel.call({
+            method: "declareMethod",
+            params: name,
+            success: function () {
+              declare_method_count -= 1;
+              notifyReady();
+            },
+            error: function () {
+              declare_method_count -= 1;
+            },
+          });
+        };
+
+        notifyDeclareMethod("getInterfaceList");
+        notifyDeclareMethod("getRequiredCSSList");
+        notifyDeclareMethod("getRequiredJSList");
+        notifyDeclareMethod("getPath");
+        notifyDeclareMethod("getTitle");
+
+        // Surcharge declareMethod to inform parent window
+        tmp_constructor.declareMethod = function (name, callback) {
+          var result = RenderJSGadget.declareMethod.apply(this, [name, callback]);
+          notifyDeclareMethod(name);
+          return result;
+        };
       }
 
       gadget_loading_klass = tmp_constructor;
@@ -488,6 +722,18 @@
       }
       document.addEventListener('DOMContentLoaded', init, false);
     });
+
+    if (window.self !== window.top) {
+      // Inform parent window that gadget is correctly loaded
+      loading_gadget_promise.then(function () {
+        gadget_ready = true;
+        notifyReady();
+      }).fail(function (e) {
+        console.warn(e);
+        embedded_channel.notify({method: "failed", params: e.toString()});
+        throw e;
+      });
+    }
 
   }
   bootstrap();

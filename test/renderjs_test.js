@@ -1,7 +1,7 @@
 /*jslint indent: 2, maxerr: 3, maxlen: 79 */
 /*global window, document, QUnit, jQuery, renderJS, RenderJSGadget, sinon,
-  RSVP, DOMParser */
-/*jslint unparam: true, maxlen: 150 */
+  RSVP, DOMParser, RenderJSIframeGadget, RenderJSEmbeddedGadget */
+/*jslint unparam: true */
 "use strict";
 
 (function (document, $, renderJS, QUnit, sinon) {
@@ -41,8 +41,8 @@
     }
   });
   test('Not valid HTML string', function () {
-    // Check that parseGadgetHTMLDocument returns the default value if the string is
-    // not a valid xml
+    // Check that parseGadgetHTMLDocument returns the default value
+    // if the string is not a valid xml
     deepEqual(parseGadgetHTML(""), {
       title: "",
       interface_list: [],
@@ -1296,7 +1296,89 @@
   });
 
   /////////////////////////////////////////////////////////////////
-  // RenderJSGadget.declareGadget
+  // RenderJSIframeGadget
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSIframeGadget");
+
+  test('should be a constructor', function () {
+    var gadget = new RenderJSIframeGadget();
+    equal(
+      Object.getPrototypeOf(gadget),
+      RenderJSIframeGadget.prototype,
+      '[[Prototype]] equals RenderJSIframeGadget.prototype'
+    );
+    equal(
+      gadget.constructor,
+      RenderJSIframeGadget,
+      'constructor property of instances is set correctly'
+    );
+    equal(
+      RenderJSIframeGadget.prototype.constructor,
+      RenderJSIframeGadget,
+      'constructor property of prototype is set correctly'
+    );
+  });
+
+  test('should not accept parameter', function () {
+    equal(RenderJSIframeGadget.length, 0);
+  });
+
+  test('should work without new', function () {
+    var gadgetKlass = RenderJSIframeGadget,
+      gadget = gadgetKlass();
+    equal(
+      gadget.constructor,
+      RenderJSIframeGadget,
+      'constructor property of instances is set correctly'
+    );
+    ok(gadget instanceof RenderJSGadget);
+    ok(gadget instanceof RenderJSIframeGadget);
+    ok(RenderJSIframeGadget !== RenderJSGadget);
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSEmbeddedGadget
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSEmbeddedGadget");
+
+  test('should be a constructor', function () {
+    var gadget = new RenderJSEmbeddedGadget();
+    equal(
+      Object.getPrototypeOf(gadget),
+      RenderJSEmbeddedGadget.prototype,
+      '[[Prototype]] equals RenderJSEmbeddedGadget.prototype'
+    );
+    equal(
+      gadget.constructor,
+      RenderJSEmbeddedGadget,
+      'constructor property of instances is set correctly'
+    );
+    equal(
+      RenderJSEmbeddedGadget.prototype.constructor,
+      RenderJSEmbeddedGadget,
+      'constructor property of prototype is set correctly'
+    );
+  });
+
+  test('should not accept parameter', function () {
+    equal(RenderJSEmbeddedGadget.length, 0);
+  });
+
+  test('should work without new', function () {
+    var gadgetKlass = RenderJSEmbeddedGadget,
+      gadget = gadgetKlass();
+    equal(
+      gadget.constructor,
+      RenderJSEmbeddedGadget,
+      'constructor property of instances is set correctly'
+    );
+    ok(gadget instanceof RenderJSGadget);
+    ok(gadget instanceof RenderJSEmbeddedGadget);
+    ok(RenderJSEmbeddedGadget !== RenderJSGadget);
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareGadget (public)
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.declareGadget", {
     setup: function () {
@@ -1358,6 +1440,7 @@
     gadget.declareGadget(url)//, $('#qunit-fixture'))
       .then(function (new_gadget) {
         equal(new_gadget.path, url);
+        ok(new_gadget instanceof RenderJSGadget);
       })
       .always(function () {
         start();
@@ -1424,7 +1507,7 @@
 
     $('#qunit-fixture').html("<div></div><div>bar</div>");
     stop();
-    gadget.declareGadget(html_url)//, $('#qunit-fixture').find("div").last()[0])
+    gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         equal($('#qunit-fixture').html(),
               "<div>youhou2</div><div>bar</div>");
@@ -1545,7 +1628,7 @@
 
     stop();
     $('#qunit-fixture').html("<div></div><div></div>");
-    gadget.declareGadget(html_url)//, $('#qunit-fixture').find("div").last()[0])
+    gadget.declareGadget(html_url)
       .always(function () {
         equal($('#qunit-fixture').html(),
               "<div>youhou</div><div></div>");
@@ -1661,7 +1744,10 @@
     stop();
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
-        return gadget.declareGadget(html_url, {element: $('#qunit-fixture')[0]});
+        return gadget.declareGadget(
+          html_url,
+          {element: $('#qunit-fixture')[0]}
+        );
       })
       .then(function () {
         equal($('#qunit-fixture').html(), '<p>foo</p>');
@@ -1673,6 +1759,159 @@
       .always(function () {
         start();
         server.restore();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareGadget (iframe)
+  /////////////////////////////////////////////////////////////////
+  test('Require the element options', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      server = sinon.fakeServer.create(),
+      html_url = 'https://example.org/files/qunittest/test98.html';
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, "<html><body><p>foo</p></body></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        return gadget.declareGadget(html_url, {sandbox: 'iframe'});
+      })
+      .then(function () {
+        ok(false);
+      })
+      .fail(function (e) {
+        ok(e instanceof Error);
+        equal(
+          e.message,
+          "DOM element is required to create Iframe Gadget " + html_url
+        );
+      })
+      .always(function () {
+        start();
+        server.restore();
+      });
+  });
+
+  test('Require a DOM element as option', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      server = sinon.fakeServer.create(),
+      html_url = 'https://example.org/files/qunittest/test98.html';
+
+    server.autoRespond = true;
+    server.autoRespondAfter = 5;
+
+    server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html",
+    }, "<html><body><p>foo</p></body></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        return gadget.declareGadget(html_url, {
+          sandbox: 'iframe',
+          element: document.createElement("div")
+        });
+      })
+      .then(function () {
+        ok(false);
+      })
+      .fail(function (e) {
+        ok(e instanceof Error);
+        equal(
+          e.message,
+          "The parent element is not attached to the DOM for " + html_url
+        );
+      })
+      .always(function () {
+        start();
+        server.restore();
+      });
+  });
+
+  test('provide an iframed gadget as callback parameter', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded.html";
+
+    $('#qunit-fixture').text('');
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: $('#qunit-fixture')[0]
+    })
+      .then(function (new_gadget) {
+        equal(new_gadget.path, url);
+        ok(new_gadget instanceof RenderJSIframeGadget);
+        equal(
+          $(new_gadget.element).html(),
+          '<iframe src="' + url + '"></iframe>'
+        );
+        ok(new_gadget.chan !== undefined);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('checking working iframe gadget', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded.html";
+
+    $('#qunit-fixture').text('');
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: $('#qunit-fixture')[0]
+    })
+      .then(function (new_gadget) {
+        return new RSVP.Queue()
+
+          // Check that ready function are called
+          .push(function () {
+            return new_gadget.wasReadyCalled();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // Custom method accept parameter
+          // and return value
+          .push(function () {
+            return new_gadget.setContent("foobar");
+          })
+          .push(function (result) {
+            return new_gadget.getContent();
+          })
+          .push(function (result) {
+            equal(result, "foobar");
+          })
+
+          // Method are propagated
+          .push(function () {
+            return new_gadget.triggerError();
+          })
+          .push(function () {
+            ok(false, "triggerError should fail");
+          }, function (e) {
+            equal(e, "Error: Manually triggered embedded error");
+          });
+      })
+      .fail(function () {
+        ok(false);
+      })
+      .always(function () {
+        start();
       });
   });
 
