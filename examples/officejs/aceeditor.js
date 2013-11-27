@@ -1,6 +1,6 @@
-/*global window, rJS, ace */
-"use strict";
+/*global ace */
 (function (window, rJS) {
+  "use strict";
 
   var gk = rJS(window);
 

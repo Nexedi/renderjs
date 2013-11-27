@@ -1,13 +1,12 @@
-/*global window, rJS */
-"use strict";
 (function (window, rJS) {
+  "use strict";
 
   var gk = rJS(window),
     ready_called = false;
 
   gk.ready(function (g) {
-      ready_called = true;
-    })
+    ready_called = true;
+  })
     .declareMethod('wasReadyCalled', function () {
       return ready_called;
     })

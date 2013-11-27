@@ -1,6 +1,6 @@
-/*global document, window, jQuery, rJS, RSVP */
-"use strict";
+/*global console */
 (function (window, $, rJS, RSVP) {
+  "use strict";
 
   function attachIOToEditor(all_param) {
     var editor = all_param[0],

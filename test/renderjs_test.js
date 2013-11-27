@@ -1,10 +1,5 @@
-/*jslint indent: 2, maxerr: 3, maxlen: 79 */
-/*global window, document, QUnit, jQuery, renderJS, RenderJSGadget, sinon,
-  RSVP, DOMParser, RenderJSIframeGadget, RenderJSEmbeddedGadget */
-/*jslint unparam: true */
-"use strict";
-
-(function (document, $, renderJS, QUnit, sinon) {
+(function (document, renderJS, QUnit, sinon) {
+  "use strict";
   var test = QUnit.test,
     stop = QUnit.stop,
     start = QUnit.start,
@@ -12,6 +7,7 @@
     equal = QUnit.equal,
     throws = QUnit.throws,
     deepEqual = QUnit.deepEqual,
+    module = QUnit.module,
     root_gadget_klass = renderJS(window),
     root_gadget_defer = RSVP.defer();
 
@@ -21,7 +17,8 @@
   });
 
 
-  QUnit.config.testTimeout = 500;
+  QUnit.config.testTimeout = 1000;
+//   QUnit.config.reorder = false;
 //   sinon.log = function (message) {
 //     console.log(message);
 //   };
@@ -47,7 +44,7 @@
       title: "",
       interface_list: [],
       required_css_list: [],
-      required_js_list: [],
+      required_js_list: []
     });
   });
 
@@ -67,7 +64,7 @@
       title: "",
       interface_list: [],
       required_css_list: [],
-      required_js_list: [],
+      required_js_list: []
     });
   });
 
@@ -104,7 +101,7 @@
 //         "<title>Great title</title>" +
 //         "</body></html>";
 // 
-//     settings = renderJS.parseGadgetHTML(html);
+//     settings = parseGadgetHTML(html);
 //     equal(settings.title, '', 'Title not found');
 //   });
 
@@ -291,7 +288,7 @@
       title: "Test non valid XML",
       interface_list: [],
       required_css_list: [],
-      required_js_list: [],
+      required_js_list: []
 //       html: "<p>Non valid XML</p>",
     });
   });
@@ -302,18 +299,22 @@
   module("renderJS.declareGadgetKlass", {
     setup: function () {
       renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
     }
   });
   test('Ajax error reject the promise', function () {
     // Check that declareGadgetKlass fails if ajax fails
-    var server = sinon.fakeServer.create(),
-      url = 'https://example.org/files/qunittest/test';
+    var url = 'https://example.org/files/qunittest/test';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [404, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", url, [404, {
+      "Content-Type": "text/html"
     }, "foo"]);
 
     stop();
@@ -327,20 +328,15 @@
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
   test('Non HTML reject the promise', function () {
     // Check that declareGadgetKlass fails if non html is retrieved
-    var server = sinon.fakeServer.create(),
-      url = 'https://example.org/files/qunittest/test';
+    var url = 'https://example.org/files/qunittest/test';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/plain",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/plain"
     }, "foo"]);
 
     stop();
@@ -354,21 +350,16 @@
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
   test('HTML parsing failure reject the promise', function () {
     // Check that declareGadgetKlass fails if the html can not be parsed
-    var server = sinon.fakeServer.create(),
-      url = 'https://example.org/files/qunittest/test',
+    var url = 'https://example.org/files/qunittest/test',
       mock;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
     }, ""]);
 
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument", function () {
@@ -388,22 +379,17 @@
         start();
         mock.verify();
         mock.restore();
-        server.restore();
       });
   });
 
   test('Klass creation', function () {
     // Check that declareGadgetKlass returns a subclass of RenderJSGadget
     // and contains all extracted properties on the prototype
-    var server = sinon.fakeServer.create(),
-      url = 'https://example.org/files/qunittest/test',
+    var url = 'https://example.org/files/qunittest/test',
       mock;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
     }, "foo"]);
 
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
@@ -432,23 +418,18 @@
         start();
         mock.verify();
         mock.restore();
-        server.restore();
       });
   });
 
   test('Klass is not reloaded if called twice', function () {
     // Check that declareGadgetKlass does not reload the gadget
     // if it has already been loaded
-    var server = sinon.fakeServer.create(),
-      url = 'https://example.org/files/qunittest/test',
+    var url = 'https://example.org/files/qunittest/test',
       klass1,
       mock;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
     }, "foo"]);
 
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
@@ -472,21 +453,16 @@
         start();
         mock.verify();
         mock.restore();
-        server.restore();
       });
   });
 
   test('Content type parameter are supported', function () {
     // Check that declareGadgetKlass does not fail if the page content type
     // contains a parameter
-    var server = sinon.fakeServer.create(),
-      url = 'https://example.org/files/qunittest/test';
+    var url = 'https://example.org/files/qunittest/test';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/html; charset=utf-8",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html; charset=utf-8"
     }, "<html></html>"]);
 
     stop();
@@ -506,7 +482,6 @@
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
@@ -542,7 +517,7 @@
 
     stop();
     renderJS.declareJS(url)
-      .always(function () {
+      .then(function () {
         return renderJS.declareJS(url);
       })
       .then(function () {
@@ -581,12 +556,16 @@
   test('JS cleanly loaded', function () {
     // Check that declareJS is fetched and loaded
     var url = "data:application/javascript;base64," +
-         window.btoa("$('#qunit-fixture').text('JS fetched and loaded');");
+         window.btoa("document.getElementById('qunit-fixture').textContent " +
+                     "= 'JS fetched and loaded';");
 
     stop();
     renderJS.declareJS(url)
       .then(function () {
-        equal($("#qunit-fixture").text(), "JS fetched and loaded");
+        equal(
+          document.getElementById("qunit-fixture").textContent,
+          "JS fetched and loaded"
+        );
       })
       .fail(function (jqXHR) {
         ok(false, "Failed to load " + jqXHR);
@@ -620,17 +599,21 @@
   test('JS is not fetched twice', function () {
     // Check that declareJS does not load the JS twice
     var url = "data:application/javascript;base64," +
-         window.btoa("$('#qunit-fixture').text('JS not fetched twice');");
+         window.btoa("document.getElementById('qunit-fixture').textContent " +
+                     "= 'JS not fetched twice';");
 
     stop();
     renderJS.declareJS(url)
       .then(function () {
-        equal($("#qunit-fixture").text(), "JS not fetched twice");
-        $("#qunit-fixture").text("");
+        equal(
+          document.getElementById("qunit-fixture").textContent,
+          "JS not fetched twice"
+        );
+        document.getElementById("qunit-fixture").textContent = "";
         return renderJS.declareJS(url);
       })
       .then(function () {
-        equal($("#qunit-fixture").text(), "");
+        equal(document.getElementById("qunit-fixture").textContent, "");
       })
       .fail(function (jqXHR) {
         ok(false, "Failed to load " + jqXHR);
@@ -695,14 +678,15 @@
     stop();
     renderJS.declareCSS(url)
       .then(function () {
-        var found = false;
-        $('head').find('link[rel=stylesheet]').each(function (i, style) {
-          if (style.href === url) {
-            found = true;
-          }
-        });
-        ok(found, "CSS in the head");
-        equal($("#qunit-fixture").css("background-color"), "rgb(255, 0, 0)");
+        var result = document.querySelectorAll("link[href='" + url + "']");
+        ok(result.length > 0, "CSS in the head");
+        equal(
+          window.getComputedStyle(
+            document.getElementById("qunit-fixture"),
+            null
+          ).backgroundColor,
+          "rgb(255, 0, 0)"
+        );
       })
       .fail(function (e) {
         ok(false, e);
@@ -740,26 +724,34 @@
     stop();
     renderJS.declareCSS(url)
       .then(function () {
-        equal($("#qunit-fixture").css("background-color"), "rgb(0, 0, 255)");
-        $('head').find('link[rel=stylesheet]').each(function (i, style) {
-          if (style.href === url) {
-            $(style).remove();
-          }
-        });
-        ok($("#qunit-fixture").css("background-color") !== "rgb(0, 0, 255)");
+        equal(
+          window.getComputedStyle(
+            document.getElementById("qunit-fixture"),
+            null
+          ).backgroundColor,
+          "rgb(0, 0, 255)"
+        );
+        var element = document.querySelectorAll("link[href='" + url + "']")[0];
+        element.parentNode.removeChild(element);
+        ok(
+          window.getComputedStyle(
+            document.getElementById("qunit-fixture"),
+            null
+          ).backgroundColor !== "rgb(0, 0, 255)"
+        );
 
         return renderJS.declareCSS(url);
       })
       .then(function () {
-        var found = false;
-        $('head').find('link[rel=stylesheet]').each(function (i, style) {
-          if (style.href === url) {
-            found = true;
-          }
-        });
-        ok($("#qunit-fixture").css("background-color") !==
-           "rgb(0, 0, 255)", $("#qunit-fixture").css("background-color"));
-        ok(!found);
+        var element_list =
+          document.querySelectorAll("link[href='" + url + "']");
+        equal(element_list.length, 0);
+        ok(
+          window.getComputedStyle(
+            document.getElementById("qunit-fixture"),
+            null
+          ).backgroundColor !== "rgb(0, 0, 255)"
+        );
       })
       .fail(function (jqXHR) {
         ok(false, "Failed to load " + jqXHR);
@@ -775,22 +767,26 @@
   module("renderJS.clearGadgetKlassList", {
     setup: function () {
       renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
     }
   });
 
   test('clearGadgetKlassList leads to gadget reload', function () {
     // Check that declareGadgetKlass reload the gadget
     // after clearGadgetKlassList is called
-    var server = sinon.fakeServer.create(),
-      url = 'https://example.org/files/qunittest/test',
+    var url = 'https://example.org/files/qunittest/test',
       klass1,
       mock;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
     }, "foo"]);
 
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
@@ -815,7 +811,6 @@
       })
       .always(function () {
         start();
-        server.restore();
         mock.verify();
         mock.restore();
       });
@@ -825,18 +820,25 @@
     // Check that declareJS reload the JS
     // after clearGadgetKlassList is called
     var url = "data:application/javascript;base64," +
-         window.btoa("$('#qunit-fixture').text('JS not fetched twice');");
+         window.btoa("document.getElementById('qunit-fixture').textContent " +
+                     "= 'JS not fetched twice';");
 
     stop();
     renderJS.declareJS(url)
       .then(function () {
         renderJS.clearGadgetKlassList();
-        equal($("#qunit-fixture").text(), "JS not fetched twice");
-        $("#qunit-fixture").text("");
+        equal(
+          document.getElementById("qunit-fixture").textContent,
+          "JS not fetched twice"
+        );
+        document.getElementById("qunit-fixture").textContent = "";
         return renderJS.declareJS(url);
       })
       .then(function () {
-        equal($("#qunit-fixture").text(), "JS not fetched twice");
+        equal(
+          document.getElementById("qunit-fixture").textContent,
+          "JS not fetched twice"
+        );
       })
       .fail(function (jqXHR) {
         ok(false, "Failed to load " + jqXHR);
@@ -851,17 +853,23 @@
     // after clearGadgetKlassList is called
     var url = "data:text/css;base64," +
          window.btoa("#qunit-fixture {background-color: blue;}"),
-      count = $('head').find('link[rel=stylesheet]').length;
+      count = document.querySelectorAll("link[rel=stylesheet]").length;
 
     stop();
     renderJS.declareCSS(url)
       .then(function () {
         renderJS.clearGadgetKlassList();
-        equal($('head').find('link[rel=stylesheet]').length, count + 1);
+        equal(
+          document.querySelectorAll("link[rel=stylesheet]").length,
+          count + 1
+        );
         return renderJS.declareCSS(url);
       })
       .then(function () {
-        equal($('head').find('link[rel=stylesheet]').length, count + 2);
+        equal(
+          document.querySelectorAll("link[rel=stylesheet]").length,
+          count + 2
+        );
       })
       .fail(function (jqXHR) {
         ok(false, "Failed to load " + jqXHR);
@@ -1115,7 +1123,6 @@
         ok(false, "getElement should fail");
       })
       .fail(function (e) {
-        console.log(e);
         ok(e instanceof Error);
       })
       .always(function () {
@@ -1145,7 +1152,7 @@
     gadget = new Klass();
     equal(gadget.testFoo, undefined);
     result = Klass.declareMethod('testFoo', function () {
-      console.log("");
+      return;
     });
     // declareMethod is chainable
     equal(result, Klass);
@@ -1231,9 +1238,7 @@
 
     gadget = new Klass();
     Klass.declareMethod('testFoo', function (value) {
-      var dfr = $.Deferred();
-      dfr.reject(value);
-      return dfr.promise();
+      return RSVP.reject(value);
     });
 
     // method can be called
@@ -1271,7 +1276,7 @@
     Klass.ready = RenderJSGadget.ready;
 
     result = Klass.ready(function () {
-      console.log("");
+      return;
     });
     // ready is chainable
     equal(result, Klass);
@@ -1284,7 +1289,7 @@
     var Klass = function () {
       RenderJSGadget.call(this);
     },
-      callback = function () {console.log(""); };
+      callback = function () {return; };
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
     Klass.ready_list = [];
@@ -1383,12 +1388,19 @@
   module("RenderJSGadget.declareGadget", {
     setup: function () {
       renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
     }
   });
   test('returns a Promise', function () {
     // Check that declareGadget return a Promise
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       html = "<html>" +
         "<body>" +
@@ -1396,32 +1408,26 @@
         "type='text/javascript'></script>" +
         "</body></html>";
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
     }, html]);
 
     stop();
-    gadget.declareGadget(url)//, $('#qunit-fixture'))
+    gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function () {
         ok(true);
       })
       .fail(function (e) {
-        console.warn(e);
         ok(false, e);
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
   test('provide a gadget instance as callback parameter', function () {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       url = 'https://example.org/files/qunittest/test',
       html = "<html>" +
         "<body>" +
@@ -1429,50 +1435,47 @@
         "type='text/javascript'></script>" +
         "</body></html>";
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
     }, html]);
 
     stop();
-    gadget.declareGadget(url)//, $('#qunit-fixture'))
+    gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function (new_gadget) {
         equal(new_gadget.path, url);
         ok(new_gadget instanceof RenderJSGadget);
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
-//   test('no parameter', function () {
-//     // Check that missing url reject the declaration
-//     var gadget = new RenderJSGadget();
-//     stop();
-//     gadget.declareGadget()
-//       .fail(function () {
-//         ok(true);
-//       })
-//       .always(function () {
-//         start();
-//       });
-//   });
+  test('no parameter', function () {
+    // Check that missing url reject the declaration
+    var gadget = new RenderJSGadget();
+    stop();
+    gadget.declareGadget()
+      .fail(function () {
+        ok(true);
+      })
+      .always(function () {
+        start();
+      });
+  });
 
   test('load dependency before returning gadget', function () {
     // Check that dependencies are loaded before gadget creation
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test2.html',
       js1_url = "data:application/javascript;base64," +
          window.btoa(
-          "$('#qunit-fixture').find('div').first().text('youhou');"
+          "document.getElementById('qunit-fixture').getElementsByTagName" +
+            "('div')[0].textContent = 'youhou';"
         ),
       js2_url = "data:application/javascript;base64," +
          window.btoa(
-          "$('#qunit-fixture').find('div').first().text('youhou2');"
+          "document.getElementById('qunit-fixture').getElementsByTagName" +
+            "('div')[0].textContent = 'youhou2';"
         ),
       css1_url = "data:text/css;base64," +
          window.btoa(""),
@@ -1488,11 +1491,8 @@
       spy_js,
       spy_css;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, html]);
 
     spy_js = sinon.spy(renderJS, "declareJS");
@@ -1505,11 +1505,12 @@
 //       html: "<p>Bar content</p>",
 //     });
 
-    $('#qunit-fixture').html("<div></div><div>bar</div>");
+    document.getElementById('qunit-fixture').innerHTML =
+      "<div></div><div>bar</div>";
     stop();
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        equal($('#qunit-fixture').html(),
+        equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou2</div><div>bar</div>");
         equal(new_gadget.element.outerHTML,
               "<div><p>Bar content</p></div>");
@@ -1521,12 +1522,10 @@
         equal(spy_css.secondCall.args[0], css2_url, "Second CSS call");
       })
       .fail(function (e) {
-        console.warn(e);
         ok(false);
       })
       .always(function () {
         start();
-        server.restore();
         spy_js.restore();
         spy_css.restore();
       });
@@ -1543,18 +1542,14 @@
   test('Fail if klass can not be loaded', function () {
     // Check that gadget is not created if klass is can not be loaded
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
-      html_url = 'https://example.org/files/qunittest/test3.html';
+      html_url = 'http://example.org/files/qunittest/test3.html';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [404, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [404, {
+      "Content-Type": "text/html"
     }, ""]);
 
     stop();
-    gadget.declareGadget(html_url)//, $('#qunit-fixture').find("div").last())
+    gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         ok(false);
       })
@@ -1563,23 +1558,18 @@
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
   test('Fail if js can not be loaded', function () {
     // Check that dependencies are loaded before gadget creation
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'http://example.org/files/qunittest/test5.html',
       js1_url = 'http://0.0.0.0/test.js',
       mock;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, "raw html"]);
 
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
@@ -1588,7 +1578,7 @@
     });
 
     stop();
-    gadget.declareGadget(html_url)//, $('#qunit-fixture'))
+    gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         ok(false);
       })
@@ -1597,7 +1587,6 @@
       })
       .always(function () {
         start();
-        server.restore();
         mock.verify();
         mock.restore();
       });
@@ -1606,19 +1595,16 @@
   test('Do not load gadget dependency twice', function () {
     // Check that dependencies are not reloaded if 2 gadgets are created
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test254.html',
       js1_url = "data:application/javascript;base64," +
          window.btoa(
-          "$('#qunit-fixture').find('div').first().append('youhou');"
+          "document.getElementById('qunit-fixture').getElementsByTagName" +
+            "('div')[0].textContent += 'youhou';"
         ),
       mock;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, "raw html"]);
 
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
@@ -1627,25 +1613,26 @@
     });
 
     stop();
-    $('#qunit-fixture').html("<div></div><div></div>");
+    document.getElementById('qunit-fixture').innerHTML =
+      "<div></div><div></div>";
     gadget.declareGadget(html_url)
-      .always(function () {
-        equal($('#qunit-fixture').html(),
+      .fail(function (e) {
+        ok(false, "1 + " + e.toString());
+      })
+      .then(function () {
+        equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou</div><div></div>");
-        return gadget.declareGadget(html_url);//,
-          //$('#qunit-fixture').find("div").last()[0]
-//         );
+        return gadget.declareGadget(html_url);
       })
       .then(function (new_gadget) {
-        equal($('#qunit-fixture').html(),
+        equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou</div><div></div>");
       })
-      .fail(function () {
-        ok(false);
+      .fail(function (e) {
+        ok(false, "2 + " + e.toString());
       })
       .always(function () {
         start();
-        server.restore();
         mock.verify();
         mock.restore();
       });
@@ -1654,15 +1641,11 @@
   test('Load 2 concurrent gadgets in parallel', function () {
     // Check that dependencies are loaded once if 2 gadgets are created
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test987.html',
       mock;
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, "raw html"]);
 
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
@@ -1670,8 +1653,8 @@
 
     stop();
     RSVP.all([
-      gadget.declareGadget(html_url),// $('#qunit-fixture')),
-      gadget.declareGadget(html_url)//, $('#qunit-fixture'))
+      gadget.declareGadget(html_url),
+      gadget.declareGadget(html_url)
     ])
       .then(function () {
         ok(true);
@@ -1681,7 +1664,6 @@
         start();
         mock.verify();
         mock.restore();
-        server.restore();
       });
   });
 
@@ -1690,14 +1672,10 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var called = false,
       gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test98.html';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
     stop();
@@ -1710,18 +1688,16 @@
             called = true;
           });
         });
-        return gadget.declareGadget(html_url);//, $('#qunit-fixture')[0]);
+        return gadget.declareGadget(html_url);
       })
       .then(function () {
         ok(called);
       })
       .fail(function (e) {
-        console.warn(e);
         ok(false);
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
@@ -1729,36 +1705,32 @@
 
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test98.html';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, "<html><body><p>foo</p></body></html>"]);
 
-    $('#qunit-fixture').empty();
-
+    document.getElementById('qunit-fixture').textContent = "";
     stop();
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
           html_url,
-          {element: $('#qunit-fixture')[0]}
+          {element: document.getElementById('qunit-fixture')}
         );
       })
       .then(function () {
-        equal($('#qunit-fixture').html(), '<p>foo</p>');
+        equal(
+          document.getElementById('qunit-fixture').innerHTML,
+          '<p>foo</p>'
+        );
       })
       .fail(function (e) {
-        console.warn(e);
         ok(false);
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
@@ -1768,14 +1740,10 @@
   test('Require the element options', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test98.html';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, "<html><body><p>foo</p></body></html>"]);
 
     stop();
@@ -1795,21 +1763,16 @@
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
   test('Require a DOM element as option', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
-      server = sinon.fakeServer.create(),
       html_url = 'https://example.org/files/qunittest/test98.html';
 
-    server.autoRespond = true;
-    server.autoRespondAfter = 5;
-
-    server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html",
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
     }, "<html><body><p>foo</p></body></html>"]);
 
     stop();
@@ -1832,7 +1795,6 @@
       })
       .always(function () {
         start();
-        server.restore();
       });
   });
 
@@ -1841,18 +1803,18 @@
     var gadget = new RenderJSGadget(),
       url = "./embedded.html";
 
-    $('#qunit-fixture').text('');
+    document.getElementById("qunit-fixture").textContent = "";
 
     stop();
     gadget.declareGadget(url, {
       sandbox: 'iframe',
-      element: $('#qunit-fixture')[0]
+      element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
         equal(new_gadget.path, url);
         ok(new_gadget instanceof RenderJSIframeGadget);
         equal(
-          $(new_gadget.element).html(),
+          new_gadget.element.innerHTML,
           '<iframe src="' + url + '"></iframe>'
         );
         ok(new_gadget.chan !== undefined);
@@ -1867,12 +1829,10 @@
     var gadget = new RenderJSGadget(),
       url = "./embedded.html";
 
-    $('#qunit-fixture').text('');
-
     stop();
     gadget.declareGadget(url, {
       sandbox: 'iframe',
-      element: $('#qunit-fixture')[0]
+      element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
         return new RSVP.Queue()
@@ -1928,22 +1888,21 @@
 
   test('Check that the root gadget is cleanly implemented', function () {
     stop();
-    console.log(root_gadget_klass);
     root_gadget_defer.promise
       .then(function (root_gadget) {
         // Check instance
         equal(root_gadget.path, window.location.href);
         equal(root_gadget.title, document.title);
         deepEqual(root_gadget.interface_list, []);
-        deepEqual(root_gadget.required_css_list, ["../lib/qunit/qunit.css"]);
+        deepEqual(root_gadget.required_css_list,
+                  ["../node_modules/grunt-contrib-qunit/test/libs/qunit.css"]);
         deepEqual(root_gadget.required_js_list, [
-          "../lib/rsvp/rsvp.js",
-          "../lib/jquery/jquery.js",
-          "../lib/qunit/qunit.js",
-          "../lib/sinon/sinon.js",
-          "../../lib/jschannel/jschannel.js",
-          "../renderjs.js",
-          "renderjs_test.js",
+          "../node_modules/rsvp/dist/rsvp-2.0.4.js",
+          "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
+          "../node_modules/sinon/pkg/sinon.js",
+          "../lib/jschannel/jschannel.js",
+          "../dist/renderjs-latest.js",
+          "renderjs_test.js"
         ]);
         equal(root_gadget.element.outerHTML, document.body.outerHTML);
         // Check klass
@@ -1951,18 +1910,19 @@
         equal(root_gadget.constructor.prototype.title, document.title);
         deepEqual(root_gadget.constructor.prototype.interface_list, []);
         deepEqual(root_gadget.constructor.prototype.required_css_list,
-                  ["../lib/qunit/qunit.css"]);
+                  ["../node_modules/grunt-contrib-qunit/test/libs/qunit.css"]);
         deepEqual(root_gadget.constructor.prototype.required_js_list, [
-          "../lib/rsvp/rsvp.js",
-          "../lib/jquery/jquery.js",
-          "../lib/qunit/qunit.js",
-          "../lib/sinon/sinon.js",
-          "../../lib/jschannel/jschannel.js",
-          "../renderjs.js",
-          "renderjs_test.js",
+          "../node_modules/rsvp/dist/rsvp-2.0.4.js",
+          "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
+          "../node_modules/sinon/pkg/sinon.js",
+          "../lib/jschannel/jschannel.js",
+          "../dist/renderjs-latest.js",
+          "renderjs_test.js"
         ]);
         var html = root_gadget.constructor.template_element.outerHTML;
         ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
+        ok(root_gadget instanceof RenderJSGadget);
+        ok(root_gadget_klass, root_gadget.constructor);
       })
       .fail(function (e) {
         ok(false, e);
@@ -1972,4 +1932,4 @@
       });
   });
 
-}(document, jQuery, renderJS, QUnit, sinon));
+}(document, renderJS, QUnit, sinon));

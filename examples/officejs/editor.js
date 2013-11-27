@@ -1,6 +1,5 @@
-/*global window, rJS */
-"use strict";
 (function (window, rJS) {
+  "use strict";
 
   function escape_text(text) {
     // &, ", ', <, >, /

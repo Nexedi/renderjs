@@ -1,6 +1,5 @@
-/*global window, jQuery, jIO, rJS */
-"use strict";
 (function (window, $, jIO, rJS) {
+  "use strict";
 
   var gk = rJS(window);
 

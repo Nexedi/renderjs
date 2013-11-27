@@ -1,34 +1,33 @@
-/*global window, jQuery, rJS */
-"use strict";
 (function (window, $, rJS) {
+  "use strict";
 
   var gk = rJS(window),
     io_dict = {
       "path" :      "./io.html",
       "title" :     "IO",
-      "interface" : "http://www.renderjs.org/interface/io",
+      "interface" : "http://www.renderjs.org/interface/io"
     },
     editor_1_dict = {
       "path" :      "./editor.html",
       "title" :     "Simple Text Editor Gadget",
-      "interface" : "http://www.renderjs.org/interface/editor",
+      "interface" : "http://www.renderjs.org/interface/editor"
     },
     editor_2_dict = {
       "path" :      "./jqteditor.html",
       "title" :     "JQuery Text Editor Gadget",
-      "interface" : "http://www.renderjs.org/interface/editor",
+      "interface" : "http://www.renderjs.org/interface/editor"
     },
     editor_3_dict = {
       "path" :      "./aceeditor.html",
       "title" :     "Ace Editor Gadget",
-      "interface" : "http://www.renderjs.org/interface/editor",
+      "interface" : "http://www.renderjs.org/interface/editor"
     },
     catalog_list = [
       {
         "path" :      "./officejs.html",
         "title" :     "Office JS",
-        "interface" : "http://www.renderjs.org/interface/officejs",
-      },
+        "interface" : "http://www.renderjs.org/interface/officejs"
+      }
     ];
 
   catalog_list.push(io_dict);

@@ -1,0 +1,37 @@
+{
+  "name": "renderjs",
+  "version": "0.3.2",
+  "description": "RenderJs provides HTML5 gadgets",
+  "main": "dist/renderjs-latest.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "rsvp": "git+http://git.erp5.org/repos/rsvp.js.git"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-cli": "~0.1.11",
+    "grunt-jslint": "~1.1.x",
+    "grunt-contrib-uglify": "~0.2.x",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-qunit": "~0.3.0",
+    "grunt-contrib-connect": "~0.5.0",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-curl": "~1.2.1",
+    "sinon": "~1.7.3",
+    "connect-livereload": "~0.3.0",
+    "grunt-open": "~0.2.2"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/grunt test",
+    "lint": "./node_modules/.bin/grunt lint",
+    "prepublish": "./node_modules/.bin/grunt build"
+  },
+  "keywords": [
+    "component",
+    "html5"
+  ],
+  "author": "Nexedi SA",
+  "license": "LGPL 3"
+}
