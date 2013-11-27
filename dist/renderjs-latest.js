@@ -1,4 +1,4 @@
-/*! RenderJs v0.3.2 */
+/*! RenderJs */
 
 /*
  * DOMParser HTML extension
@@ -310,6 +310,10 @@
       // Wait for previous gadget loading to finish first
       .push(function () {
         return previous_loading_gadget_promise;
+      })
+      .push(undefined, function () {
+        // Forget previous declareGadget error
+        return;
       })
       .push(function () {
         var method;

@@ -1667,6 +1667,42 @@
       });
   });
 
+  test('One failing gadget does not prevent the others to load', function () {
+    // Check that dependencies are loaded once if 2 gadgets are created
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test12345.html',
+      html_url2 = 'https://example.org/files/qunittest/test12346.html',
+      mock;
+
+    this.server.respondWith("GET", html_url, [404, {
+      "Content-Type": "text/html"
+    }, "error"]);
+    this.server.respondWith("GET", html_url2, [200, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").once().returns({});
+
+    stop();
+    gadget.declareGadget(html_url)
+      .then(function () {
+        ok(false);
+      })
+      .fail(function () {
+        return gadget.declareGadget(html_url2);
+      })
+      .then(function () {
+        ok(true);
+      })
+      .always(function () {
+        // Check that only one request has been done.
+        start();
+        mock.verify();
+        mock.restore();
+      });
+  });
+
   test('Wait for ready callback before returning', function () {
 
     // Subclass RenderJSGadget to not pollute its namespace
