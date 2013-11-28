@@ -208,7 +208,7 @@ module.exports = function (grunt) {
   });
 
   grunt.registerTask('default', ['all']);
-  grunt.registerTask('all', ['lint', 'build', 'test']);
+  grunt.registerTask('all', ['lint', 'build']);
   grunt.registerTask('lint', ['jslint']);
   grunt.registerTask('test', ['qunit']);
   grunt.registerTask('server', ['connect:client', 'open', 'watch']);
