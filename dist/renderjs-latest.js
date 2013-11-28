@@ -751,6 +751,8 @@
             return queue;
           }).fail(function (e) {
             reject(e);
+            /*global console */
+            console.error(e);
           });
       }
       document.addEventListener('DOMContentLoaded', init, false);
