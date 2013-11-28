@@ -13,6 +13,9 @@
     .declareMethod('triggerError', function (value) {
       throw new Error("Manually triggered embedded error");
     })
+    .declareMethod('triggerEvent', function (value) {
+      return rJS(this).trigger('fooTrigger', 'barValue');
+    })
     .declareMethod('setContent', function (value) {
       rJS(this).embedded_property = value;
     })

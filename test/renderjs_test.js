@@ -410,6 +410,9 @@
         ok(instance instanceof RenderJSGadget);
         ok(instance instanceof Klass);
         ok(Klass !== RenderJSGadget);
+        ok(instance.on !== undefined);
+        ok(instance.off !== undefined);
+        ok(instance.trigger !== undefined);
       })
       .fail(function (e) {
         ok(false, JSON.stringify(e));
@@ -1339,6 +1342,9 @@
     ok(gadget instanceof RenderJSGadget);
     ok(gadget instanceof RenderJSIframeGadget);
     ok(RenderJSIframeGadget !== RenderJSGadget);
+    ok(gadget.on !== undefined);
+    ok(gadget.off !== undefined);
+    ok(gadget.trigger !== undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -1380,6 +1386,9 @@
     ok(gadget instanceof RenderJSGadget);
     ok(gadget instanceof RenderJSEmbeddedGadget);
     ok(RenderJSEmbeddedGadget !== RenderJSGadget);
+    ok(gadget.on !== undefined);
+    ok(gadget.off !== undefined);
+    ok(gadget.trigger !== undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -1901,6 +1910,30 @@
             ok(false, "triggerError should fail");
           }, function (e) {
             equal(e, "Error: Manually triggered embedded error");
+          })
+
+          // Events are propagated
+          .push(function () {
+            var waiting_event = RSVP.defer();
+            new_gadget.on("fooTrigger", function (param) {
+              waiting_event.resolve(param);
+            });
+
+            new_gadget.triggerEvent();
+            return RSVP.any([
+              waiting_event.promise,
+              RSVP.timeout(500)
+            ])
+              .then(function (all_results) {
+                // RSVP return string inside event's detail property
+                equal(all_results.detail, "barValue");
+              })
+              .fail(function (e) {
+                ok(false, e);
+              })
+              .always(function () {
+                new_gadget.off("fooTrigger");
+              });
           });
       })
       .fail(function () {
@@ -1957,6 +1990,9 @@
         ]);
         var html = root_gadget.constructor.template_element.outerHTML;
         ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
+        ok(root_gadget.on !== undefined);
+        ok(root_gadget.off !== undefined);
+        ok(root_gadget.trigger !== undefined);
         ok(root_gadget instanceof RenderJSGadget);
         ok(root_gadget_klass, root_gadget.constructor);
       })

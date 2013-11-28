@@ -74,6 +74,8 @@
   RenderJSGadget.prototype.required_css_list = [];
   RenderJSGadget.prototype.required_js_list = [];
 
+  RSVP.EventTarget.mixin(RenderJSGadget.prototype);
+
   RenderJSGadget.ready_list = [];
   RenderJSGadget.ready = function (callback) {
     this.ready_list.push(callback);
@@ -282,6 +284,9 @@
     gadget_instance.chan.bind("failed", function (trans, params) {
       iframe_loading_deferred.reject(params);
       return "OK";
+    });
+    gadget_instance.chan.bind("trigger", function (trans, params) {
+      return gadget_instance.trigger(params.event_name, params.options);
     });
     return RSVP.any([
       iframe_loading_deferred.promise,
@@ -589,6 +594,7 @@
       embedded_channel,
       notifyReady,
       notifyDeclareMethod,
+      notifyTrigger,
       gadget_ready = false;
 
 
@@ -670,6 +676,26 @@
               [name, callback]
             );
           notifyDeclareMethod(name);
+          return result;
+        };
+
+        notifyTrigger = function (eventName, options) {
+          embedded_channel.notify({
+            method: "trigger",
+            params: {
+              event_name: eventName,
+              options: options
+            }
+          });
+        };
+
+        // Surcharge trigger to inform parent window
+        tmp_constructor.prototype.trigger = function (eventName, options) {
+          var result = RenderJSGadget.prototype.trigger.apply(
+              this,
+              [eventName, options]
+            );
+          notifyTrigger(eventName, options);
           return result;
         };
       }
