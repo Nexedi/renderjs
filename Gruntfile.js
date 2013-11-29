@@ -27,6 +27,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks("grunt-contrib-uglify");
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-qunit');
+  grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-curl');
@@ -105,26 +106,34 @@ module.exports = function (grunt) {
       }
     },
 
-    copy: {
-      renderjs: {
-        src: '<%= pkg.name %>.js',
-        dest: "dist/<%= pkg.name %>-<%= pkg.version %>.js"
+    concat: {
+      options: {
+        separator: ';'
       },
-      latest: {
-        files: [{
-          src: '<%= pkg.name %>.js',
-          dest: "dist/<%= pkg.name %>-latest.js"
-        }, {
-          src: '<%= uglify.stateless.dest %>',
-          dest: "dist/<%= pkg.name %>-latest.min.js"
-        }]
+      dist: {
+        src: ['<%= curl.jschannel.dest %>',
+              '<%= curl.domparser.dest %>',
+              'renderjs.js'],
+        dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }
     },
 
     uglify: {
-      stateless: {
-        src: "dist/<%= pkg.name %>-<%= pkg.version %>.js",
+      renderjs: {
+        src: "<%= concat.dist.dest %>",
         dest: "dist/<%= pkg.name %>-<%= pkg.version %>.min.js"
+      }
+    },
+
+    copy: {
+      latest: {
+        files: [{
+          src: '<%= uglify.renderjs.src %>',
+          dest: "dist/<%= pkg.name %>-latest.js"
+        }, {
+          src: '<%= uglify.renderjs.dest %>',
+          dest: "dist/<%= pkg.name %>-latest.min.js"
+        }]
       }
     },
 
@@ -134,19 +143,11 @@ module.exports = function (grunt) {
           '<%= jslint.client.src %>',
           '<%= jslint.config.src %>',
           '<%= jslint.test.src %>',
-          '<%= qunit.all %>',
-          ['test/*.html', 'test/*.js']
-        ],
-        tasks: ['default'],
-        options: {
-          livereload: LIVERELOAD_PORT
-        }
-      },
-      examples: {
-        files: [
+          ['lib/**'],
+          ['test/*.html', 'test/*.js'],
           ['examples/**']
         ],
-        tasks: ['lint'],
+        tasks: ['default'],
         options: {
           livereload: LIVERELOAD_PORT
         }
@@ -154,6 +155,11 @@ module.exports = function (grunt) {
     },
 
     curl: {
+      domparser: {
+        src: 'https://gist.github.com/eligrey/1129031/raw/' +
+          'e26369ee7939db745087beb98b4bb4bbcf460cf3/html-domparser.js',
+        dest: 'lib/domparser/domparser.js'
+      },
       jschannel: {
         src: 'http://mozilla.github.io/jschannel/src/jschannel.js',
         dest: 'lib/jschannel/jschannel.js'
@@ -212,6 +218,6 @@ module.exports = function (grunt) {
   grunt.registerTask('lint', ['jslint']);
   grunt.registerTask('test', ['qunit']);
   grunt.registerTask('server', ['connect:client', 'open', 'watch']);
-  grunt.registerTask('build', ['copy:renderjs', 'uglify', 'copy:latest']);
+  grunt.registerTask('build', ['concat', 'uglify', 'copy']);
 
 };

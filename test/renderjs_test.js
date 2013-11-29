@@ -1969,7 +1969,6 @@
           "../node_modules/rsvp/dist/rsvp-2.0.4.js",
           "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
           "../node_modules/sinon/pkg/sinon.js",
-          "../lib/jschannel/jschannel.js",
           "../dist/renderjs-latest.js",
           "renderjs_test.js"
         ]);
@@ -1984,7 +1983,6 @@
           "../node_modules/rsvp/dist/rsvp-2.0.4.js",
           "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
           "../node_modules/sinon/pkg/sinon.js",
-          "../lib/jschannel/jschannel.js",
           "../dist/renderjs-latest.js",
           "renderjs_test.js"
         ]);

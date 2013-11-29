@@ -1,11 +1,8 @@
 {
   "name": "renderjs",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "RenderJs provides HTML5 gadgets",
   "main": "dist/renderjs-latest.js",
-  "directories": {
-    "lib": "lib"
-  },
   "dependencies": {
     "rsvp": "git+http://git.erp5.org/repos/rsvp.js.git"
   },
@@ -21,7 +18,8 @@
     "grunt-curl": "~1.2.1",
     "sinon": "~1.7.3",
     "connect-livereload": "~0.3.0",
-    "grunt-open": "~0.2.2"
+    "grunt-open": "~0.2.2",
+    "grunt-contrib-concat": "~0.3.0"
   },
   "scripts": {
     "test": "./node_modules/.bin/grunt test",
