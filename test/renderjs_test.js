@@ -100,7 +100,7 @@
 //         "<body>" +
 //         "<title>Great title</title>" +
 //         "</body></html>";
-// 
+//
 //     settings = parseGadgetHTML(html);
 //     equal(settings.title, '', 'Title not found');
 //   });
@@ -113,11 +113,11 @@
 //         "<body>" +
 //         "<p>Foo</p>" +
 //         "</body></html>";
-// 
+//
 //     settings = renderJS.parseGadgetHTML(html);
 //     equal(settings.html, "<p>Foo</p>", "HTML extracted");
 //   });
-// 
+//
 //   test('Extract all body', function () {
 //     // Check that parseGadgetHTML correctly extracts all bodies
 //     var settings,
@@ -127,18 +127,18 @@
 //         "</body><body>" +
 //         "<p>Bar</p>" +
 //         "</body></html>";
-// 
+//
 //     settings = renderJS.parseGadgetHTML(html);
 //     equal(settings.html, '<p>Foo</p><p>Bar</p>', 'All bodies extracted');
 //   });
-// 
+//
 //   test('Extract body only from html', function () {
 //     // Check that parseGadgetHTML also extract body from head
 //     var settings,
 //       html = "<html>" +
 //         "<head><body><p>Bar</p></body></head>" +
 //         "</html>";
-// 
+//
 //     settings = renderJS.parseGadgetHTML(html);
 //     equal(settings.html, "<p>Bar</p>", "Body not found");
 //   });
