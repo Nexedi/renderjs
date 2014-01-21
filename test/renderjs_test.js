@@ -1540,13 +1540,63 @@
       });
   });
 
-//   test('load dependency in the right order', function () {
-//     // Check that JS dependencies are loaded in the right order
-//     // Can be reproduce with real loading (http): 
-//     // * enormous 1 js
-//     // * second small js which require the 1 one to be loaded
-//     // How to mock the loading time?
-//   });
+  test('load dependency in the right order', function () {
+    // Check that JS dependencies are loaded in the right order
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test22.html',
+      js1_url = "data:application/javascript;base64," +
+         window.btoa(
+          "test_js1 = {};"
+        ),
+      js2_url = "data:application/javascript;base64," +
+         window.btoa(
+          "test_js1.test_js2 = {}"
+        ),
+      js3_url = "data:application/javascript;base64," +
+         window.btoa(
+          "test_js1.test_js2.test_js3 = {}"
+        ),
+      js4_url = "data:application/javascript;base64," +
+         window.btoa(
+          "test_js1.test_js2.test_js3.test_js4 = {}"
+        ),
+      js5_url = "data:application/javascript;base64," +
+         window.btoa(
+          "test_js1.test_js2.test_js3.test_js4.test_js5 = {}"
+        ),
+      js6_url = "data:application/javascript;base64," +
+         window.btoa(
+          "test_js1.test_js2.test_js3.test_js4.test_js5.test_js6 = 'foo'"
+        ),
+      html = "<html>" +
+        "<head>" +
+        "<title>Foo title</title>" +
+        "<script src='" + js1_url + "' type='text/javascript'></script>" +
+        "<script src='" + js2_url + "' type='text/javascript'></script>" +
+        "<script src='" + js3_url + "' type='text/javascript'></script>" +
+        "<script src='" + js4_url + "' type='text/javascript'></script>" +
+        "<script src='" + js5_url + "' type='text/javascript'></script>" +
+        "<script src='" + js6_url + "' type='text/javascript'></script>" +
+        "</head><body><p>Bar content</p></body></html>";
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, html]);
+
+    stop();
+    gadget.declareGadget(html_url)
+      .then(function (new_gadget) {
+        equal(window.test_js1.test_js2.test_js3.test_js4.test_js5.test_js6,
+              'foo');
+      })
+      .fail(function (e) {
+        ok(false);
+      })
+      .always(function () {
+        start();
+      });
+
+  });
 
   test('Fail if klass can not be loaded', function () {
     // Check that gadget is not created if klass is can not be loaded

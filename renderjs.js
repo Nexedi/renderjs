@@ -107,6 +107,13 @@
     if (options.element === undefined) {
       options.element = document.createElement("div");
     }
+
+    function loadDependency(method, url) {
+      return function () {
+        return method(url);
+      };
+    }
+
     return new RSVP.Queue()
       .push(function () {
         return renderJS.declareGadgetKlass(url);
@@ -131,17 +138,17 @@
       })
       // Load all JS/CSS
       .push(function (all_list) {
-        var parameter_list = [],
+        var q = new RSVP.Queue(),
           i;
         // Load JS
         for (i = 0; i < all_list[0].length; i += 1) {
-          parameter_list.push(renderJS.declareJS(all_list[0][i]));
+          q.push(loadDependency(renderJS.declareJS, all_list[0][i]));
         }
         // Load CSS
         for (i = 0; i < all_list[1].length; i += 1) {
-          parameter_list.push(renderJS.declareCSS(all_list[1][i]));
+          q.push(loadDependency(renderJS.declareCSS, all_list[1][i]));
         }
-        return RSVP.all(parameter_list);
+        return q;
       })
       .push(function () {
         return gadget_instance;
