@@ -5,10 +5,10 @@
   var gk = rJS(window);
 
   gk.declareMethod('setContent', function (value) {
-    rJS(this).editor.getSession().setValue(value);
+    this.editor.getSession().setValue(value);
   })
     .declareMethod('getContent', function () {
-      return rJS(this).editor.getSession().getValue();
+      return this.editor.getSession().getValue();
     });
 
   gk.ready(function (g) {

@@ -14,13 +14,13 @@
       throw new Error("Manually triggered embedded error");
     })
     .declareMethod('triggerEvent', function (value) {
-      return rJS(this).trigger('fooTrigger', 'barValue');
+      return this.trigger('fooTrigger', 'barValue');
     })
     .declareMethod('setContent', function (value) {
-      rJS(this).embedded_property = value;
+      this.embedded_property = value;
     })
     .declareMethod('getContent', function () {
-      return rJS(this).embedded_property;
+      return this.embedded_property;
     });
 
 }(window, rJS));

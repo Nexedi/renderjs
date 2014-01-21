@@ -4,16 +4,16 @@
   var gk = rJS(window);
 
   gk.declareMethod('configureIO', function (key) {
-    rJS(this).jio = jIO.createJIO({
+    this.jio = jIO.createJIO({
       "type": "local",
       "username": "couscous",
       "application_name": "renderjs"
     });
-    rJS(this).jio_key = key;
+    this.jio_key = key;
   })
 
     .declareMethod('getIO', function () {
-      var gadget = rJS(this);
+      var gadget = this;
 
       return gadget.jio.getAttachment({
         "_id": gadget.jio_key,
@@ -26,7 +26,7 @@
     })
 
     .declareMethod('setIO', function (value) {
-      var gadget = rJS(this);
+      var gadget = this;
 
       return gadget.jio.put({"_id": gadget.jio_key})
         .then(function () {
@@ -40,7 +40,7 @@
     })
 
     .declareMethod('configureDataSourceCallback', function (that, callback) {
-      var g = rJS(this);
+      var g = this;
       $(g.element).find('a').unbind('click').click(function () {
         callback.apply(that).then(function (value) {
           g.setIO(value);

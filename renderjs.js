@@ -331,8 +331,6 @@
       // window is the 'this' value when loading a javascript file
       // In this case, use the current loading gadget constructor
       result = gadget_loading_klass;
-    } else if (selector instanceof RenderJSGadget) {
-      result = selector;
     }
     if (result === undefined) {
       throw new Error("Unknown selector '" + selector + "'");

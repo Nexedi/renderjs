@@ -11,11 +11,11 @@
   var gk = rJS(window);
 
   gk.declareMethod('setContent', function (value) {
-    rJS(this).element.getElementsByTagName('textarea')[0].value =
+    this.element.getElementsByTagName('textarea')[0].value =
       escape_text(value);
   })
     .declareMethod('getContent', function () {
-      return rJS(this).element.getElementsByTagName('textarea')[0].value;
+      return this.element.getElementsByTagName('textarea')[0].value;
     });
 
 }(window, rJS));
