@@ -1944,6 +1944,27 @@
       });
   });
 
+  test('checking failing iframe gadget', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded_fail.html";
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        ok(false);
+      })
+      .fail(function (error) {
+        equal(error, "Error: Manually rejected");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget bootstrap
   /////////////////////////////////////////////////////////////////
