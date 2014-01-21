@@ -695,9 +695,9 @@
             queue.push(ready_wrapper);
             for (i = 0; i < tmp_constructor.ready_list.length; i += 1) {
               // Put a timeout?
-              queue.push(tmp_constructor.ready_list[i]);
+              queue.push(tmp_constructor.ready_list[i])
               // Always return the gadget instance after ready function
-              queue.push(ready_wrapper);
+                   .push(ready_wrapper);
             }
             queue.push(resolve, function (e) {
               reject(e);
