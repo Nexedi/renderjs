@@ -1,0 +1,31 @@
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Getting Started with Aloha Editor</title>
+    <!-- Load Aloha Editor css and js -->
+    <link rel="stylesheet" href="aloha/css/aloha.css" type="text/css">
+    <!-- exports require() and define() into the global namespace -->
+    <script src="aloha/lib/require.js"></script>
+    <!-- defines the 'jquery' module -->
+    <script src="aloha/lib/jquery-1.7.2.js"></script>
+    <!-- uses the 'jquery' module defined above -->
+    <script src="aloha/lib/aloha.js"
+      data-aloha-plugins="common/ui,common/format,common/highlighteditables,common/link,common/image,common/list,common/table"></script>
+</head>
+<body>
+   <div id="main">
+        <div id="content"><p>Getting started with Aloha Editor!</p></div>
+    </div>
+    <script type="text/javascript">
+        //Aloha.ready( function() {
+            Aloha.jQuery('#content').aloha();
+        //});
+        $('#aloha-devtool-source-viewer-content').live('keyup', function () { 
+            var text = $('#aloha-devtool-source-viewer-content').clone(); 
+            var spanToKill = text.find('span.aloha-devtool-source-viewer-marker'); 
+            spanToKill.remove(); 
+            text = text.text(); 
+            var selectededit = $('.aloha-editable-active'); 
+            selectededit.html(text); 
+        });
+    </script>
+</body>

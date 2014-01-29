@@ -11,6 +11,7 @@
   var gk = rJS(window);
 
   gk.declareMethod('setContent', function (value) {
+    console.log(this);
     this.element.getElementsByTagName('textarea')[0].value =
       escape_text(value);
   })
