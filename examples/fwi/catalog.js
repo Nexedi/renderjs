@@ -27,6 +27,11 @@
       "title" :     "Aloha Editor Gadget",
       "interface" : "http://www.renderjs.org/interface/editor"
     },
+    blog_1_dict = {
+      "path" :      "./blog.html",
+      "title" :     "Blog Gadget",
+      "interface" : "http://www.renderjs.org/interface/blog"
+    },
     catalog_list = [
       {
         "path" :      "./officejs.html",
@@ -40,6 +45,7 @@
   catalog_list.push(editor_2_dict);
   catalog_list.push(editor_3_dict);
   catalog_list.push(editor_4_dict);
+  catalog_list.push(blog_1_dict);
 
   gk.declareMethod('allDocs', function (filter) {
     var deferred = $.Deferred();
@@ -48,6 +54,9 @@
     } else if (filter.query ===
         'interface: "http://www.renderjs.org/interface/io"') {
       deferred.resolve([io_dict]);
+    } else if (filter.query ===
+        'interface: "http://www.renderjs.org/interface/blog"') {
+      deferred.resolve([blog_1_dict]);
     } else if (filter.query ===
         'interface: "http://www.renderjs.org/interface/editor"') {
       deferred.resolve([editor_1_dict, editor_2_dict, editor_3_dict, editor_4_dict]);

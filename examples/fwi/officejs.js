@@ -36,6 +36,33 @@
       });
   }
 
+  function attachIOToBlog(all_param) {
+    var blog = all_param[0],
+      io = all_param[1],
+      id = all_param[2],
+      jio_config = {
+          "type": "dropbox",
+          "access_token": "v43SQLCEoi8AAAAAAAAAAVixCoMfDelgGj3NRPfEnqscAuNGp2LhoS8-GiAaDD4C"
+      };
+    $(io.element).trigger('create');
+    $(blog.element).trigger('create');
+      return io.configureIO(id, jio_config)
+      .then(function () {
+          return io.configureDataSourceCallback(blog,blog.displayHTML);
+      })
+      .then(function () {
+        return io.getIO().fail(function (error) {
+          if (error.status === 404) {
+            return "";
+          }
+          throw error;
+        });
+      })
+      .then(function (value) {
+        return blog.displayHTML(value);
+      });
+  }
+
   function handleError(rejectedReason) {
     var word_list;
     console.warn(rejectedReason);
@@ -66,23 +93,47 @@
     };
   }
 
+  function createLoadNewBlogCallback(g, blog_path, e_c, io_path, i_c) {
+    return function () {
+      e_c.empty();
+      return RSVP.all([
+        g.declareGadget(blog_path, {element: e_c[0], sandbox: 'iframe'}),
+        g.declareGadget(io_path),
+        "officejs"
+      ])
+        .then(function (all_param) {
+          i_c.empty();
+          i_c[0].appendChild(all_param[1].element);
+          return attachIOToBlog(all_param);
+        })
+        .fail(handleError);
+    };
+  }
+
   rJS(window).ready(function (g) {
     var editor_a_context = $(g.element).find(".editor_a").last(),
-      io_a_context = $(g.element).find(".editor_a_safe").last();
+      io_a_context = $(g.element).find(".editor_a_safe").last(),
+      io_blog_a_context = $(g.element).find(".blog_a_safe").last(),
+      blog_a_context = $(g.element).find(".blog_a").last();
 //       editor_b_context = g.context.find(".editor_b").last(),
 //       io_b_context = g.context.find(".editor_b_safe").last();
 
     // First, load the catalog gadget
+    console.log('start');
     g.declareGadget('./catalog.html')
       .then(function (catalog) {
         // Fetch the list of editor and io gadgets
         // This is done in 2 different queries to the catalog
+	console.log('catalog ready');
         return RSVP.all([
           catalog.allDocs(
             {query: 'interface: "http://www.renderjs.org/interface/editor"'}
           ),
           catalog.allDocs(
             {query: 'interface: "http://www.renderjs.org/interface/io"'}
+          ),
+          catalog.allDocs(
+            {query: 'interface: "http://www.renderjs.org/interface/blog"'}
           )
         ]);
       })
@@ -90,9 +141,10 @@
         var panel_context = $(g.element).find(".bare_panel"),
           editor_list = all_list[0],
           io_list = all_list[1],
+	  blog_list = all_list[2],
           editor_definition,
           i;
-
+	console.log('got Catalog Stuff');
         // Load 1 editor and 1 IO and plug them
         editor_a_context.empty();
         return RSVP.all([
@@ -104,9 +156,24 @@
           "officejs"
         ])
           .then(function (all_param) {
+	    console.log('Editor Gadget Prepared');
             io_a_context.empty();
             io_a_context[0].appendChild(all_param[1].element);
             return attachIOToEditor(all_param);
+          })
+	  .then(function (){
+	      return RSVP.all([ // Load Blog
+		g.declareGadget(
+		  blog_list[0].path,
+		  {element: blog_a_context[0], sandbox: 'iframe'}
+		),
+		g.declareGadget(io_list[0].path),// io_blog_a_context),
+		"officejs"
+              ])})
+          .then(function (all_param) {
+            io_blog_a_context.empty();
+            io_blog_a_context[0].appendChild(all_param[1].element);
+            return attachIOToBlog(all_param);
           })
           .then(function () {
             // Fill the panel
