@@ -79,6 +79,7 @@
   function createLoadNewEditorCallback(g, editor_path, e_c, io_path, i_c) {
     return function () {
       e_c.empty();
+      $('.editor_a_safe').attr("style","");
       return RSVP.all([
         g.declareGadget(editor_path, {element: e_c[0], sandbox: 'iframe'}),
         g.declareGadget(io_path),
@@ -96,6 +97,7 @@
   function createLoadNewBlogCallback(g, blog_path, e_c, io_path, i_c) {
     return function () {
       e_c.empty();
+      $('.editor_a_safe').attr("style","display:none");
       return RSVP.all([
         g.declareGadget(blog_path, {element: e_c[0], sandbox: 'iframe'}),
         g.declareGadget(io_path),
@@ -113,13 +115,10 @@
   rJS(window).ready(function (g) {
     var editor_a_context = $(g.element).find(".editor_a").last(),
       io_a_context = $(g.element).find(".editor_a_safe").last(),
-      io_blog_a_context = $(g.element).find(".blog_a_safe").last(),
-      blog_a_context = $(g.element).find(".blog_a").last();
-//       editor_b_context = g.context.find(".editor_b").last(),
-//       io_b_context = g.context.find(".editor_b_safe").last();
+      io_blog_a_context = $(g.element).find(".editor_a_safe").last(),
+      blog_a_context = $(g.element).find(".editor_a").last();
 
     // First, load the catalog gadget
-    console.log('start');
     g.declareGadget('./catalog.html')
       .then(function (catalog) {
         // Fetch the list of editor and io gadgets
@@ -139,64 +138,52 @@
       })
       .then(function (all_list) {
         var panel_context = $(g.element).find(".bare_panel"),
-          editor_list = all_list[0],
-          io_list = all_list[1],
-	  blog_list = all_list[2],
-          editor_definition,
-          i;
-	console.log('got Catalog Stuff');
+        editor_list = all_list[0],
+        io_list = all_list[1],
+	blog_list = all_list[2],
+        editor_definition,
+	blog_definition,
+        i;
         // Load 1 editor and 1 IO and plug them
         editor_a_context.empty();
+	$('.editor_a_safe').attr("style","display:none");
         return RSVP.all([
           g.declareGadget(
-            editor_list[0].path,
-            {element: editor_a_context[0], sandbox: 'iframe'}
+            blog_list[0].path,
+            {element: blog_a_context[0], sandbox: 'iframe'}
           ),
           g.declareGadget(io_list[0].path),// io_a_context),
           "officejs"
         ])
           .then(function (all_param) {
 	    console.log('Editor Gadget Prepared');
-            io_a_context.empty();
-            io_a_context[0].appendChild(all_param[1].element);
-            return attachIOToEditor(all_param);
-          })
-	  .then(function (){
-	      return RSVP.all([ // Load Blog
-		g.declareGadget(
-		  blog_list[0].path,
-		  {element: blog_a_context[0], sandbox: 'iframe'}
-		),
-		g.declareGadget(io_list[0].path),// io_blog_a_context),
-		"officejs"
-              ])})
-          .then(function (all_param) {
             io_blog_a_context.empty();
             io_blog_a_context[0].appendChild(all_param[1].element);
             return attachIOToBlog(all_param);
           })
           .then(function () {
             // Fill the panel
+            for (i = 0; i < blog_list.length; i += 1) {
+              blog_definition = blog_list[i];
+              panel_context.append(
+                '<a href="#" data-role="button" data-icon="edit" ' +
+                  'data-iconpos="left">' + blog_definition.title + '</a>'
+              );
+              panel_context.find('a').last().click(
+                createLoadNewBlogCallback(g, blog_definition.path,
+                  blog_a_context, io_list[0].path, io_blog_a_context)
+              );
+            }
             for (i = 0; i < editor_list.length; i += 1) {
               editor_definition = editor_list[i];
               panel_context.append(
                 '<a href="#" data-role="button" data-icon="edit" ' +
                   'data-iconpos="left">' + editor_definition.title + '</a>'
               );
-//               $(editor_definition.element).click(
               panel_context.find('a').last().click(
                 createLoadNewEditorCallback(g, editor_definition.path,
                   editor_a_context, io_list[0].path, io_a_context)
               );
-              // XXX Handle links
-//               panel_context.find('a').last().click(function () {
-//                 $.when(
-//                   g.declareGadget(editor_definition.path,
-//                                          editor_a_context),
-//                   g.declareGadget(io_list[0].path, io_a_context),
-//                   "officejs"
-//                 ).done(attachIOToEditor);
-//               });
             }
             panel_context.trigger('create');
           });

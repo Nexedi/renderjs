@@ -29,7 +29,7 @@
     },
     blog_1_dict = {
       "path" :      "./blog.html",
-      "title" :     "Blog Gadget",
+      "title" :     "Blog",
       "interface" : "http://www.renderjs.org/interface/blog"
     },
     catalog_list = [
