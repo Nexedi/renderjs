@@ -1,0 +1,26 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/srv/slapgrid/slappart90/srv/runner/software/0832fcc236be9086d36c09ef347064c1/parts/nodejs/bin/node',
+1 verbose cli   '/srv/slapgrid/slappart90/srv/runner/instance/slappart0/bin/npm',
+1 verbose cli   'install' ]
+2 info using npm@1.2.18
+3 info using node@v0.8.23
+4 verbose read json /srv/slapgrid/slappart90/srv/runner/instance/slappart0/srv/www/Aloha-Editor/src/package.json
+5 error install Couldn't read dependencies
+6 error Error: invalid version: ${version}
+6 error     at validVersion (/srv/slapgrid/slappart90/srv/runner/software/0832fcc236be9086d36c09ef347064c1/parts/nodejs/lib/node_modules/npm/node_modules/read-package-json/read-json.js:571:40)
+6 error     at final (/srv/slapgrid/slappart90/srv/runner/software/0832fcc236be9086d36c09ef347064c1/parts/nodejs/lib/node_modules/npm/node_modules/read-package-json/read-json.js:323:23)
+6 error     at /srv/slapgrid/slappart90/srv/runner/software/0832fcc236be9086d36c09ef347064c1/parts/nodejs/lib/node_modules/npm/node_modules/read-package-json/read-json.js:139:33
+6 error     at cb (/srv/slapgrid/slappart90/srv/runner/software/0832fcc236be9086d36c09ef347064c1/parts/nodejs/lib/node_modules/npm/node_modules/slide/lib/async-map.js:48:11)
+6 error     at /srv/slapgrid/slappart90/srv/runner/software/0832fcc236be9086d36c09ef347064c1/parts/nodejs/lib/node_modules/npm/node_modules/read-package-json/read-json.js:301:48
+6 error     at fs.js:117:20
+6 error     at Object.oncomplete (fs.js:297:15)
+7 error If you need help, you may report this log at:
+7 error     <http://github.com/isaacs/npm/issues>
+7 error or email it to:
+7 error     <npm-@googlegroups.com>
+8 error System Linux 3.1.0-1.2-default
+9 error command "/srv/slapgrid/slappart90/srv/runner/software/0832fcc236be9086d36c09ef347064c1/parts/nodejs/bin/node" "/srv/slapgrid/slappart90/srv/runner/instance/slappart0/bin/npm" "install"
+10 error cwd /srv/slapgrid/slappart90/srv/runner/instance/slappart0/srv/www/Aloha-Editor/src
+11 error node -v v0.8.23
+12 error npm -v 1.2.18
+13 verbose exit [ 1, true ]
