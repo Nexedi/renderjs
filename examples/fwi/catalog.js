@@ -7,11 +7,6 @@
       "title" :     "IO",
       "interface" : "http://www.renderjs.org/interface/io"
     },
-    editor_1_dict = {
-      "path" :      "./editor.html",
-      "title" :     "Simple Text Editor Gadget",
-      "interface" : "http://www.renderjs.org/interface/editor"
-    },
     editor_2_dict = {
       "path" :      "./jqteditor.html",
       "title" :     "JQuery Text Editor Gadget",
@@ -41,7 +36,6 @@
     ];
 
   catalog_list.push(io_dict);
-  catalog_list.push(editor_1_dict);
   catalog_list.push(editor_2_dict);
   catalog_list.push(editor_3_dict);
   catalog_list.push(editor_4_dict);
@@ -59,7 +53,7 @@
       deferred.resolve([blog_1_dict]);
     } else if (filter.query ===
         'interface: "http://www.renderjs.org/interface/editor"') {
-      deferred.resolve([editor_1_dict, editor_2_dict, editor_3_dict, editor_4_dict]);
+      deferred.resolve([editor_2_dict, editor_3_dict, editor_4_dict]);
     } else {
       deferred.reject("Unsupported filter");
     }
