@@ -4,35 +4,30 @@
 
   function attachIOToEditor(all_param) {
     var editor = all_param[0],
-      io = all_param[1],
-      id = all_param[2],
-      jio_config = {
-          "type": "dropbox",
-          "access_token": "v43SQLCEoi8AAAAAAAAAAVixCoMfDelgGj3NRPfEnqscAuNGp2LhoS8-GiAaDD4C"
-      };
+    io = all_param[1],
+    id = all_param[2],
+    property = all_param[3],
+    jio_config = {
+      "type": "dropbox",
+      "access_token": "v43SQLCEoi8AAAAAAAAAAVixCoMfDelgGj3NRPfEnqscAuNGp2LhoS8-GiAaDD4C"
+    };
     $(io.element).trigger('create');
+    $(property.element).trigger('create');
     $(editor.element).trigger('create');
-//       .then(function (element) {
-//         element.trigger('create');
-//       });
-//     io.getElement()
-//       .then(function (element) {
-//         element.trigger('create');
-//       });
-      return io.configureIO(id, jio_config)
+      return io.configureIO(jio_config)
       .then(function () {
-        return io.configureDataSourceCallback(editor, editor.getContent);
+        return io.configureDataSourceCallback(editor, editor.getContent, property, property.getContent ,'48c3ca06-78b9-2f4c-80db-d5cb2417de45');
       })
       .then(function () {
-        return io.getIO().fail(function (error) {
+        return io.getIO('48c3ca06-78b9-2f4c-80db-d5cb2417de45').fail(function (error) {
           if (error.status === 404) {
             return "";
           }
           throw error;
         });
       })
-      .then(function (value) {
-        return editor.setContent(value);
+      .then(function (document) {
+        return RSVP.all([editor.setContent(document.text_content), property.setContent(document)]);
       });
   }
 
@@ -46,20 +41,20 @@
       };
     $(io.element).trigger('create');
     $(blog.element).trigger('create');
-      return io.configureIO(id, jio_config)
+      return io.configureIO(jio_config)
       .then(function () {
-          return io.configureDataSourceCallback(blog,blog.displayHTML);
+        return io.configureDataSourceCallback(blog,blog.displayHTML, '48c3ca06-78b9-2f4c-80db-d5cb2417de45');
       })
       .then(function () {
-        return io.getIO().fail(function (error) {
+        return io.getIO('48c3ca06-78b9-2f4c-80db-d5cb2417de45').fail(function (error) {
           if (error.status === 404) {
             return "";
           }
           throw error;
         });
       })
-      .then(function (value) {
-        return blog.displayHTML(value);
+      .then(function (document) {
+        return blog.displayHTML(document.text_content);
       });
   }
 
@@ -76,18 +71,22 @@
     throw rejectedReason;
   }
 
-  function createLoadNewEditorCallback(g, editor_path, e_c, io_path, i_c) {
+  function createLoadNewEditorCallback(g, editor_path, e_c, io_path, i_c, property_path, p_c) {
     return function () {
       e_c.empty();
+      p_c.empty();
       $('.editor_a_safe').attr("style","");
+      $('.property_a_safe').attr("style","");
       return RSVP.all([
         g.declareGadget(editor_path, {element: e_c[0], sandbox: 'iframe'}),
         g.declareGadget(io_path),
-        "officejs"
+        "officejs",
+        g.declareGadget(property_path)
       ])
         .then(function (all_param) {
           i_c.empty();
           i_c[0].appendChild(all_param[1].element);
+          p_c[0].appendChild(all_param[3].element);
           return attachIOToEditor(all_param);
         })
         .fail(handleError);
@@ -98,6 +97,7 @@
     return function () {
       e_c.empty();
       $('.editor_a_safe').attr("style","display:none");
+      $('.property_a_safe').attr("style","display:none");
       return RSVP.all([
         g.declareGadget(blog_path, {element: e_c[0], sandbox: 'iframe'}),
         g.declareGadget(io_path),
@@ -116,7 +116,9 @@
     var editor_a_context = $(g.element).find(".editor_a").last(),
       io_a_context = $(g.element).find(".editor_a_safe").last(),
       io_blog_a_context = $(g.element).find(".editor_a_safe").last(),
-      blog_a_context = $(g.element).find(".editor_a").last();
+    blog_a_context = $(g.element).find(".editor_a").last(),
+    property_a_context = $(g.element).find(".property_a_safe").last()
+    ;
 
     // First, load the catalog gadget
     g.declareGadget('./catalog.html')
@@ -133,6 +135,9 @@
           ),
           catalog.allDocs(
             {query: 'interface: "http://www.renderjs.org/interface/blog"'}
+          ),
+          catalog.allDocs(
+            {query: 'interface: "http://www.renderjs.org/interface/property"'}
           )
         ]);
       })
@@ -141,12 +146,15 @@
         editor_list = all_list[0],
         io_list = all_list[1],
 	blog_list = all_list[2],
+	property_list = all_list[3],
         editor_definition,
 	blog_definition,
+	property_definition,
         i;
         // Load 1 editor and 1 IO and plug them
         editor_a_context.empty();
 	$('.editor_a_safe').attr("style","display:none");
+	$('.property_a_safe').attr("style","display:none");
         return RSVP.all([
           g.declareGadget(
             blog_list[0].path,
@@ -156,13 +164,13 @@
           "officejs"
         ])
           .then(function (all_param) {
-	    console.log('Editor Gadget Prepared');
             io_blog_a_context.empty();
             io_blog_a_context[0].appendChild(all_param[1].element);
             return attachIOToBlog(all_param);
           })
           .then(function () {
             // Fill the panel
+	    property_definition = property_list[0];
             for (i = 0; i < blog_list.length; i += 1) {
               blog_definition = blog_list[i];
               panel_context.append(
@@ -181,8 +189,10 @@
                   'data-iconpos="left">' + editor_definition.title + '</a>'
               );
               panel_context.find('a').last().click(
-                createLoadNewEditorCallback(g, editor_definition.path,
-                  editor_a_context, io_list[0].path, io_a_context)
+                createLoadNewEditorCallback(
+		  g, editor_definition.path,
+                  editor_a_context, io_list[0].path, io_a_context,
+		  property_definition.path, property_a_context)
               );
             }
             panel_context.trigger('create');

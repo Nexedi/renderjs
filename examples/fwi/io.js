@@ -1,47 +1,48 @@
-(function (window, $, jIO, rJS) {
+(function (window, $, jIO, rJS, RSVP) {
   "use strict";
 
   var gk = rJS(window);
 
-    gk.declareMethod('configureIO', function (key, config) {
-      this.jio = jIO.createJIO(config);
-    this.jio_key = key;
+  gk.declareMethod('configureIO', function (config) {
+    this.jio = jIO.createJIO(config);
   })
-
-    .declareMethod('getIO', function () {
+    .declareMethod('getIOList', function () {
       var gadget = this;
-
-      return gadget.jio.getAttachment({
-        "_id": gadget.jio_key,
-        "_attachment": "content.html"
+      // Should use index storage
+      return gadget.jio.AllDocs({
+        "include_docs": true
       }).then(function (response) {
-        return jIO.util.readBlobAsText(response.data);
+        return response.data.rows;
+      });
+    })
+    .declareMethod('getIO', function (key) {
+      var gadget = this;
+      return gadget.jio.get({
+        "_id": key,
       }).then(function (response) {
-        return response.target.result;
+        return response.data;
       });
     })
 
-    .declareMethod('setIO', function (value) {
+    .declareMethod('setIO', function (document) {
       var gadget = this;
-
-      return gadget.jio.put({"_id": gadget.jio_key})
-        .then(function () {
-          return gadget.jio.putAttachment({
-            "_id": gadget.jio_key,
-            "_attachment": "content.html",
-            "_data": value,
-            "_mimetype": "text/html"
-          });
-        });
+      return gadget.jio.put(document);
     })
 
-    .declareMethod('configureDataSourceCallback', function (that, callback) {
+    .declareMethod('configureDataSourceCallback', function (editor, editor_callback, property, property_callback, key) {
       var g = this;
       $(g.element).find('a').unbind('click').click(function () {
-        callback.apply(that).then(function (value) {
-          g.setIO(value);
+	RSVP.all([
+          editor_callback.apply(editor),
+	  property_callback.apply(property)
+	])
+	  .then(function (result_list) {
+	    var document = result_list[1];
+	    document._id = key;
+	    document.text_content = result_list[0];
+            return g.setIO(document);
         });
       });
     });
 
-}(window, jQuery, jIO, rJS));
+}(window, jQuery, jIO, rJS, RSVP));
