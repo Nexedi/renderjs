@@ -9,7 +9,7 @@
     .declareMethod('getIOList', function () {
       var gadget = this;
       // Should use index storage
-      return gadget.jio.AllDocs({
+      return gadget.jio.allDocs({
         "include_docs": true
       }).then(function (response) {
         return response.data.rows;

@@ -27,6 +27,11 @@
       "title" :     "Blog",
       "interface" : "http://www.renderjs.org/interface/blog"
     },
+    index_1_dict = {
+      "path" :      "./index_list.html",
+      "title" :     "Index",
+      "interface" : "http://www.renderjs.org/interface/index"
+    },
     property_1_dict = {
       "path" :      "./property.html",
       "title" :     "Property",
@@ -46,6 +51,7 @@
   catalog_list.push(editor_4_dict);
   catalog_list.push(property_1_dict);
   catalog_list.push(blog_1_dict);
+  catalog_list.push(index_1_dict);
 
   gk.declareMethod('allDocs', function (filter) {
     var deferred = $.Deferred();
@@ -57,6 +63,9 @@
     } else if (filter.query ===
         'interface: "http://www.renderjs.org/interface/blog"') {
       deferred.resolve([blog_1_dict]);
+    } else if (filter.query ===
+        'interface: "http://www.renderjs.org/interface/index"') {
+      deferred.resolve([index_1_dict]);
     } else if (filter.query ===
         'interface: "http://www.renderjs.org/interface/property"') {
       deferred.resolve([property_1_dict]);

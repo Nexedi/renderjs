@@ -7,6 +7,7 @@
     io = all_param[1],
     id = all_param[2],
     property = all_param[3],
+    index = all_param[4],
     jio_config = {
       "type": "dropbox",
       "access_token": "v43SQLCEoi8AAAAAAAAAAVixCoMfDelgGj3NRPfEnqscAuNGp2LhoS8-GiAaDD4C"
@@ -19,15 +20,20 @@
         return io.configureDataSourceCallback(editor, editor.getContent, property, property.getContent ,'48c3ca06-78b9-2f4c-80db-d5cb2417de45');
       })
       .then(function () {
-        return io.getIO('48c3ca06-78b9-2f4c-80db-d5cb2417de45').fail(function (error) {
+        return io.getIOList().fail(function (error) {
           if (error.status === 404) {
             return "";
           }
           throw error;
         });
       })
-      .then(function (document) {
-        return RSVP.all([editor.setContent(document.text_content), property.setContent(document)]);
+      .then(function (document_list) {
+	console.log(document_list);
+        return RSVP.all([
+	  editor.setContent(document_list[0].doc.text_content),
+	  property.setContent(document_list[0].doc),
+	  index.setDocumentList(document_list)
+	]);
       });
   }
 
@@ -71,22 +77,24 @@
     throw rejectedReason;
   }
 
-  function createLoadNewEditorCallback(g, editor_path, e_c, io_path, i_c, property_path, p_c) {
+  function createLoadNewEditorCallback(g, editor_path, e_c, io_path, i_c, property_path, p_c, index_path,  index_c) {
     return function () {
       e_c.empty();
-      p_c.empty();
+      p_c.empty().attr("style","");
+      index_c.empty().attr("style","");
       $('.editor_a_safe').attr("style","");
-      $('.property_a_safe').attr("style","");
       return RSVP.all([
         g.declareGadget(editor_path, {element: e_c[0], sandbox: 'iframe'}),
         g.declareGadget(io_path),
         "officejs",
-        g.declareGadget(property_path)
+        g.declareGadget(property_path),
+	g.declareGadget(index_path)
       ])
         .then(function (all_param) {
           i_c.empty();
           i_c[0].appendChild(all_param[1].element);
           p_c[0].appendChild(all_param[3].element);
+          index_c[0].appendChild(all_param[4].element);
           return attachIOToEditor(all_param);
         })
         .fail(handleError);
@@ -96,6 +104,7 @@
   function createLoadNewBlogCallback(g, blog_path, e_c, io_path, i_c) {
     return function () {
       e_c.empty();
+      $('.sidebar').empty();
       $('.editor_a_safe').attr("style","display:none");
       $('.property_a_safe').attr("style","display:none");
       return RSVP.all([
@@ -117,6 +126,7 @@
       io_a_context = $(g.element).find(".editor_a_safe").last(),
       io_blog_a_context = $(g.element).find(".editor_a_safe").last(),
     blog_a_context = $(g.element).find(".editor_a").last(),
+    index_a_context = $(g.element).find(".sidebar").last(),
     property_a_context = $(g.element).find(".property_a_safe").last()
     ;
 
@@ -138,6 +148,9 @@
           ),
           catalog.allDocs(
             {query: 'interface: "http://www.renderjs.org/interface/property"'}
+          ),
+          catalog.allDocs(
+            {query: 'interface: "http://www.renderjs.org/interface/index"'}
           )
         ]);
       })
@@ -147,8 +160,10 @@
         io_list = all_list[1],
 	blog_list = all_list[2],
 	property_list = all_list[3],
+	index_list = all_list[4],
         editor_definition,
 	blog_definition,
+	index_definition = index_list[0].path,
 	property_definition,
         i;
         // Load 1 editor and 1 IO and plug them
@@ -192,7 +207,9 @@
                 createLoadNewEditorCallback(
 		  g, editor_definition.path,
                   editor_a_context, io_list[0].path, io_a_context,
-		  property_definition.path, property_a_context)
+		  property_definition.path, property_a_context,
+		  index_definition, index_a_context
+		)
               );
             }
             panel_context.trigger('create');
