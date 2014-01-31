@@ -1,3 +1,5 @@
+/*global window, rJS, jQuery */ 
+
 (function (window, $, rJS) {
   "use strict";
 
@@ -27,6 +29,11 @@
       "title" :     "Aloha Editor Gadget",
       "interface" : "http://www.renderjs.org/interface/editor"
     },
+    editor_5_dict = {
+      "path" :      "./presentation-editor.html",
+      "title" :     "Presentation Editor Gadget",
+      "interface" : "http://www.renderjs.org/interface/editor"
+    },
     catalog_list = [
       {
         "path" :      "./officejs.html",
@@ -40,17 +47,18 @@
   catalog_list.push(editor_2_dict);
   catalog_list.push(editor_3_dict);
   catalog_list.push(editor_4_dict);
+  catalog_list.push(editor_5_dict);
 
   gk.declareMethod('allDocs', function (filter) {
     var deferred = $.Deferred();
     if (filter === undefined) {
       deferred.resolve(catalog_list);
     } else if (filter.query ===
-        'interface: "http://www.renderjs.org/interface/io"') {
+               'interface: "http://www.renderjs.org/interface/io"') {
       deferred.resolve([io_dict]);
     } else if (filter.query ===
-        'interface: "http://www.renderjs.org/interface/editor"') {
-      deferred.resolve([editor_1_dict, editor_2_dict, editor_3_dict, editor_4_dict]);
+               'interface: "http://www.renderjs.org/interface/editor"') {
+      deferred.resolve([editor_1_dict, editor_2_dict, editor_3_dict, editor_4_dict, editor_5_dict]);
     } else {
       deferred.reject("Unsupported filter");
     }
