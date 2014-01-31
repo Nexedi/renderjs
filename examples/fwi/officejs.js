@@ -17,7 +17,7 @@
     $(editor.element).trigger('create');
       return io.configureIO(jio_config)
       .then(function () {
-        return io.configureDataSourceCallback(editor, editor.getContent, property, property.getContent ,'48c3ca06-78b9-2f4c-80db-d5cb2417de45');
+        return ;
       })
       .then(function () {
         return io.getIOList().fail(function (error) {
@@ -32,7 +32,14 @@
         return RSVP.all([
 	  editor.setContent(document_list[0].doc.text_content),
 	  property.setContent(document_list[0].doc),
-	  index.setDocumentList(document_list)
+	  index.setDocumentList(
+	    document_list,
+	    editor, editor.setContent,
+	    property, property.setContent),
+	  io.configureDataSourceCallback(
+	    editor, editor.getContent,
+	    property, property.getContent ,
+	    document_list[0].id)
 	]);
       });
   }
