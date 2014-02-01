@@ -34,13 +34,9 @@
     .declareMethod('setForm', function () {
       return that.declareGadget('./property.html')
 	.then(function(gadget){
-	  console.log('prepared property');
 	  property = gadget;
-	  console.log(property);
 	  property_context = $('.property_a_safe').last();
 	  editor_context = $('.editor_a').last();
-	  console.log('property:');
-	  console.log(property);
 	  property_context[0].appendChild(property.element);
 	})
 	.fail(function(error){
@@ -66,7 +62,6 @@
     });
 
   gk.ready(function (g) {
-    console.log('prepare form');
     that = g;
   });
 }(window, rJS, jQuery, RSVP));

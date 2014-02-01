@@ -25,7 +25,6 @@
         });
       })
       .then(function (document_list) {
-	console.log(document_list);
         return RSVP.all([
 	  form.setContent(document_list[0].doc),
 	  index.setDocumentList(
@@ -127,7 +126,6 @@
       .then(function (catalog) {
         // Fetch the list of editor and io gadgets
         // This is done in 2 different queries to the catalog
-	console.log('catalog ready');
         return RSVP.all([
           catalog.allDocs(
             {query: 'interface: "http://www.renderjs.org/interface/editor"'}
@@ -158,7 +156,6 @@
 	index_definition = index_list[0].path,
         i;
         // Load 1 editor and 1 IO and plug them
-	console.log('Ready to prepare');
         return RSVP.all([
           g.declareGadget(
             blog_list[0].path,
@@ -168,13 +165,11 @@
           "officejs"
         ])
           .then(function (all_param) {
-	    console.log('setting blog');
             io_blog_a_context.empty();
             return attachIOToBlog(all_param);
           })
           .then(function () {
             // Fill the panel
-	    console.log('fill panel');
             for (i = 0; i < blog_list.length; i += 1) {
               blog_definition = blog_list[i];
               panel_context.append(

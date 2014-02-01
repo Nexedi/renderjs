@@ -29,16 +29,15 @@
       return gadget.jio.put(document);
     })
 
-    .declareMethod('configureDataSourceCallback', function (editor, editor_callback, property, property_callback, key) {
+    .declareMethod('configureDataSourceCallback',
+		   function (form, form_callback) {
       var g = this;
       $(g.element).find('a').unbind('click').click(function () {
 	RSVP.all([
-          editor_callback.apply(editor),
-	  property_callback.apply(property)
+          form_callback.apply(form),
 	])
 	  .then(function (result_list) {
-	    var document = result_list[1];
-	    document.text_content = result_list[0];
+	    var document = result_list[0];
             return g.setIO(document);
         });
       });
