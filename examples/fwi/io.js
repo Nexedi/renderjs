@@ -38,7 +38,6 @@
 	])
 	  .then(function (result_list) {
 	    var document = result_list[1];
-	    document._id = key;
 	    document.text_content = result_list[0];
             return g.setIO(document);
         });

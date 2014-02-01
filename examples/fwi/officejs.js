@@ -2,22 +2,19 @@
 (function (window, $, rJS, RSVP) {
   "use strict";
 
-  function attachIOToEditor(all_param) {
-    var editor = all_param[0],
+  function attachIOToForm(all_param, editor_path) {
+    var form = all_param[0],
     io = all_param[1],
-    id = all_param[2],
-    property = all_param[3],
-    index = all_param[4],
+    index = all_param[2],
     jio_config = {
       "type": "dropbox",
       "access_token": "v43SQLCEoi8AAAAAAAAAAVixCoMfDelgGj3NRPfEnqscAuNGp2LhoS8-GiAaDD4C"
     };
     $(io.element).trigger('create');
-    $(property.element).trigger('create');
-    $(editor.element).trigger('create');
-      return io.configureIO(jio_config)
+    $(form.element).trigger('create');
+    return form.setEditor(editor_path)
       .then(function () {
-        return ;
+	return io.configureIO(jio_config)
       })
       .then(function () {
         return io.getIOList().fail(function (error) {
@@ -30,16 +27,13 @@
       .then(function (document_list) {
 	console.log(document_list);
         return RSVP.all([
-	  editor.setContent(document_list[0].doc.text_content),
-	  property.setContent(document_list[0].doc),
+	  form.setContent(document_list[0].doc),
 	  index.setDocumentList(
 	    document_list,
-	    editor, editor.setContent,
-	    property, property.setContent),
+	    form, form.setContent,
+	    io, io.getIO),
 	  io.configureDataSourceCallback(
-	    editor, editor.getContent,
-	    property, property.getContent ,
-	    document_list[0].id)
+	    form, form.getContent)
 	]);
       });
   }
@@ -52,12 +46,8 @@
           "type": "dropbox",
           "access_token": "v43SQLCEoi8AAAAAAAAAAVixCoMfDelgGj3NRPfEnqscAuNGp2LhoS8-GiAaDD4C"
       };
-    $(io.element).trigger('create');
     $(blog.element).trigger('create');
       return io.configureIO(jio_config)
-      .then(function () {
-        return io.configureDataSourceCallback(blog,blog.displayHTML, '48c3ca06-78b9-2f4c-80db-d5cb2417de45');
-      })
       .then(function () {
         return io.getIO('48c3ca06-78b9-2f4c-80db-d5cb2417de45').fail(function (error) {
           if (error.status === 404) {
@@ -84,25 +74,24 @@
     throw rejectedReason;
   }
 
-  function createLoadNewEditorCallback(g, editor_path, e_c, io_path, i_c, property_path, p_c, index_path,  index_c) {
+  function createLoadNewEditorCallback(g, form_path, f_c, editor_path, io_path, i_c, index_path,  index_c) {
     return function () {
-      e_c.empty();
-      p_c.empty().attr("style","");
+      f_c.empty();
       index_c.empty().attr("style","");
-      $('.editor_a_safe').attr("style","");
       return RSVP.all([
-        g.declareGadget(editor_path, {element: e_c[0], sandbox: 'iframe'}),
+        g.declareGadget(form_path),
         g.declareGadget(io_path),
-        "officejs",
-        g.declareGadget(property_path),
 	g.declareGadget(index_path)
       ])
         .then(function (all_param) {
           i_c.empty();
+          f_c[0].appendChild(all_param[0].element);
           i_c[0].appendChild(all_param[1].element);
-          p_c[0].appendChild(all_param[3].element);
-          index_c[0].appendChild(all_param[4].element);
-          return attachIOToEditor(all_param);
+          index_c[0].appendChild(all_param[2].element);
+          return all_param[0].setForm()
+	    .then( function (){
+	      attachIOToForm(all_param, editor_path);
+	    })
         })
         .fail(handleError);
     };
@@ -120,8 +109,6 @@
         "officejs"
       ])
         .then(function (all_param) {
-          i_c.empty();
-          i_c[0].appendChild(all_param[1].element);
           return attachIOToBlog(all_param);
         })
         .fail(handleError);
@@ -129,14 +116,12 @@
   }
 
   rJS(window).ready(function (g) {
-    var editor_a_context = $(g.element).find(".editor_a").last(),
-      io_a_context = $(g.element).find(".editor_a_safe").last(),
-      io_blog_a_context = $(g.element).find(".editor_a_safe").last(),
-    blog_a_context = $(g.element).find(".editor_a").last(),
-    index_a_context = $(g.element).find(".sidebar").last(),
-    property_a_context = $(g.element).find(".property_a_safe").last()
+    var io_a_context = $(g.element).find(".form_a_safe").last(),
+      io_blog_a_context = $(g.element).find(".form_a_safe").last(),
+    blog_a_context = $(g.element).find(".form_a").last(),
+    form_a_context = $(g.element).find(".form_a").last(),
+    index_a_context = $(g.element).find(".sidebar").last()
     ;
-
     // First, load the catalog gadget
     g.declareGadget('./catalog.html')
       .then(function (catalog) {
@@ -163,20 +148,17 @@
       })
       .then(function (all_list) {
         var panel_context = $(g.element).find(".bare_panel"),
-        editor_list = all_list[0],
+        form_path = './form.html',
+	editor_list = all_list[0],
         io_list = all_list[1],
 	blog_list = all_list[2],
-	property_list = all_list[3],
 	index_list = all_list[4],
         editor_definition,
 	blog_definition,
 	index_definition = index_list[0].path,
-	property_definition,
         i;
         // Load 1 editor and 1 IO and plug them
-        editor_a_context.empty();
-	$('.editor_a_safe').attr("style","display:none");
-	$('.property_a_safe').attr("style","display:none");
+	console.log('Ready to prepare');
         return RSVP.all([
           g.declareGadget(
             blog_list[0].path,
@@ -186,13 +168,13 @@
           "officejs"
         ])
           .then(function (all_param) {
+	    console.log('setting blog');
             io_blog_a_context.empty();
-            io_blog_a_context[0].appendChild(all_param[1].element);
             return attachIOToBlog(all_param);
           })
           .then(function () {
             // Fill the panel
-	    property_definition = property_list[0];
+	    console.log('fill panel');
             for (i = 0; i < blog_list.length; i += 1) {
               blog_definition = blog_list[i];
               panel_context.append(
@@ -212,9 +194,9 @@
               );
               panel_context.find('a').last().click(
                 createLoadNewEditorCallback(
-		  g, editor_definition.path,
-                  editor_a_context, io_list[0].path, io_a_context,
-		  property_definition.path, property_a_context,
+		  g, form_path,
+                  form_a_context, editor_definition.path,
+		  io_list[0].path, io_a_context,
 		  index_definition, index_a_context
 		)
               );

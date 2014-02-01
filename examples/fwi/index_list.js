@@ -12,7 +12,7 @@
     document,
     index_list_panel = $('#index_list');
     for (i = 0; i < document_list.length; i += 1) {
-      document = document_list[i].doc;
+      document = $.extend({}, document_list[i].doc);
       index_list_panel.append(
 	"<li><a href=#>"
 	  + document.title 
