@@ -40,7 +40,7 @@
   function attachIOToBlog(all_param) {
     var blog = all_param[0],
       io = all_param[1],
-      id = all_param[2],
+      index = all_param[2],
       jio_config = {
           "type": "dropbox",
           "access_token": "v43SQLCEoi8AAAAAAAAAAVixCoMfDelgGj3NRPfEnqscAuNGp2LhoS8-GiAaDD4C"
@@ -48,15 +48,21 @@
     $(blog.element).trigger('create');
       return io.configureIO(jio_config)
       .then(function () {
-        return io.getIO('48c3ca06-78b9-2f4c-80db-d5cb2417de45').fail(function (error) {
+        return io.getIOList().fail(function (error) {
           if (error.status === 404) {
             return "";
           }
           throw error;
         });
       })
-      .then(function (document) {
-        return blog.displayHTML(document.text_content);
+      .then(function (document_list) {
+        return RSVP.all([
+	  blog.setContent(document_list[0].doc),
+	  index.setDocumentList(
+	    document_list,
+	    blog, blog.setContent,
+	    io, io.getIO)
+	]);
       });
   }
 
@@ -96,19 +102,21 @@
     };
   }
 
-  function createLoadNewBlogCallback(g, blog_path, e_c, io_path, i_c) {
+  function createLoadNewBlogCallback(g, blog_path, e_c, io_path, i_c, index_path,  index_c) {
     return function () {
       e_c.empty();
       i_c.empty();
       $('.sidebar').empty();
       return RSVP.all([
-        g.declareGadget(blog_path, {element: e_c[0], sandbox: 'iframe'}),
+        g.declareGadget(blog_path),
         g.declareGadget(io_path),
-        "officejs"
+        g.declareGadget(index_path)
       ])
         .then(function (all_param) {
+          e_c[0].appendChild(all_param[0].element);
+          index_c[0].appendChild(all_param[2].element);
           return attachIOToBlog(all_param);
-        })
+	})
         .fail(handleError);
     };
   }
@@ -156,14 +164,13 @@
         i;
         // Load 1 editor and 1 IO and plug them
         return RSVP.all([
-          g.declareGadget(
-            blog_list[0].path,
-            {element: blog_a_context[0], sandbox: 'iframe'}
-          ),
-          g.declareGadget(io_list[0].path),// io_a_context),
-          "officejs"
+          g.declareGadget(blog_list[0].path),
+          g.declareGadget(io_list[0].path),
+          g.declareGadget(index_definition)
         ])
           .then(function (all_param) {
+            blog_a_context[0].appendChild(all_param[0].element);
+            index_a_context[0].appendChild(all_param[2].element);
             io_blog_a_context.empty();
             return attachIOToBlog(all_param);
           })
@@ -176,8 +183,12 @@
                   'data-iconpos="left">' + blog_definition.title + '</a>'
               );
               panel_context.find('a').last().click(
-                createLoadNewBlogCallback(g, blog_definition.path,
-                  blog_a_context, io_list[0].path, io_blog_a_context)
+                createLoadNewBlogCallback(
+		  g,
+		  blog_definition.path, blog_a_context,
+		  io_list[0].path, io_blog_a_context,
+		  index_definition, index_a_context
+		)
               );
             }
             for (i = 0; i < editor_list.length; i += 1) {
