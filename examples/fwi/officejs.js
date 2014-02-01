@@ -99,9 +99,8 @@
   function createLoadNewBlogCallback(g, blog_path, e_c, io_path, i_c) {
     return function () {
       e_c.empty();
+      i_c.empty();
       $('.sidebar').empty();
-      $('.editor_a_safe').attr("style","display:none");
-      $('.property_a_safe').attr("style","display:none");
       return RSVP.all([
         g.declareGadget(blog_path, {element: e_c[0], sandbox: 'iframe'}),
         g.declareGadget(io_path),
