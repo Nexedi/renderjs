@@ -1,3 +1,7 @@
+body {
+    background-color: white;
+}
+
 #templates {
     display: none;
 }
@@ -13,12 +17,36 @@
     position: relative;
     padding: 5px;
     cursor: pointer;
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border: 2px solid grey;
+    background-color: #f7f7f7;
+    z-index: 10;
+    overflow: hidden;
 }
 
-section > button#edit-button {
-    display: inline-block;
+#slide-list > section > button.edit {
+    position: absolute;
+    top: 169px;
+    right: -8px;
+    z-index: 20;
 }
 
-section > h1 {
+#slide-list > section > button.delete {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    z-index: 20;
+}
+
+#slide-list .slide > h1 {
     text-align: center;
+}
+
+#slide-list > section > .slide * {
+    position: relative;
+    max-width: 190px;
+    max-height: 190px;
+    word-wrap: break-word; 
 }

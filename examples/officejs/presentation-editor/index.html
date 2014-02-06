@@ -3,20 +3,29 @@
   <head>
     <meta charset="utf-8">        
     <title>Presentation editor</title>
+
+    <!-- Presentation editor -->
     <script src="lib/jquery.min.js"></script>
     <script src="lib/jquery-ui.min.js"></script>
     <script src="lib/jquery.mobile.min.js"></script>
     <script src="lib/beautify-html.js"></script>
+    <script src="lib/presentation-editor.js"></script>
+
+    <!-- Renderjs -->
     <script src="lib/rsvp.min.js"></script>
     <script src="lib/jschannel.js"></script>
     <script src="lib/renderjs.js"></script>
 
-    <script src="presentation-editor.js"></script>
-    
+    <!-- IO definitions for presentation editor gadget-->
+    <script src="gadget.js"></script>
+
+    <!-- Jquery ui and jquery-mobile stylesheet -->
     <link rel="stylesheet" href="css/jquery-ui.min.css">
     <link rel="stylesheet" href="css/jquery.mobile.min.css">
 
-    <link rel="stylesheet" href="presentation-editor.css">    
+    <!-- Presentation editor stylesheet -->
+    <link rel="stylesheet" href="css/presentation-editor.css">    
+
   </head>
   <body>
     
@@ -48,16 +57,14 @@
       <div id="slide-list"></div>
       
       <template id="slide-html">
-        <section>
-          <button class="edit ui-shadow ui-mini ui-corner-all ui-btn ui-btn-inline"
+        <section class="ui-shadow ui-corner-all">
+          <button class="edit ui-shadow ui-corner-all ui-btn ui-btn-inline ui-icon-edit ui-btn-icon-notext"
                   data-inline="true">
-            Edit
           </button>
-          <button class="delete ui-shadow ui-mini ui-corner-all ui-btn ui-btn-inline"
+          <button class="delete ui-shadow ui-corner-all ui-btn ui-btn-inline ui-icon-delete ui-btn-icon-notext"
                   data-inline="true">
-            Delete
           </button>
-          <div class="slide ui-shadow ui-corner-all">
+          <div class="slide">
             <h1></h1>
             <div class="content"></div>
           </div>

@@ -1,24 +1,27 @@
-/*globals window, document, $, html_beautify */ 
+/*globals window, document, $, html_beautify */
 /*jslint unparam: true */
 $(function () {
   "use strict";
-  
-  var presentation=null, slideForm;
+
+  var presentation = null, slideForm;
 
   function blindForm() {
     $('#slide-form').toggle("blind");
   }
-  
-  function Slide (params) {
+
+  function Slide(params) {
     var that = this;
     this.html = document.importNode(this.htmlTemplate, true);
     if (params.section) {
       this.update({
-        title: params.section.querySelector('h1').textContent,
-        type: params.section.className,
-        content: params.section.childNodes[2].textContent
+        title: params.section.querySelector('h1').textContent || "",
+        type: params.section.className || "",
+        content:
+          params
+          .section
+          .childNodes[2] ? (params.section.childNodes[2].textContent || "") : ""
       });
-    }else{
+    } else {
       this.update(params);
     }
     $(this.htmlEditButton()).click(function (e) {
@@ -31,12 +34,12 @@ $(function () {
       e.preventDefault();
     });
   }
-  
+
   Slide.prototype = {
 
     dataTemplate: document.querySelector('template#slide-data').content.firstElementChild,
     htmlTemplate: document.querySelector('template#slide-html').content.firstElementChild,
-    
+
     htmlEditButton: function () {
       return this.html.querySelector("button.edit");
     },
@@ -52,7 +55,7 @@ $(function () {
     htmlTitle: function () {
       return this.html.querySelector("h1");
     },
-    
+
     data: function () {
       var res = document.importNode(this.dataTemplate, true);
       res.className = this.type;
@@ -68,19 +71,19 @@ $(function () {
     }
   };
 
-  function SlideForm () {
+  function SlideForm() {
     this.elt = document.querySelector("#slide-form");
     this.bindToAdd();
   }
-  
+
   SlideForm.prototype = {
-    
-    reset: function() {
+
+    reset: function () {
       this.elt.querySelector('#title').value = "";
       this.elt.querySelector('#type').value = "";
       this.elt.querySelector('#content').value = "";
     },
-    
+
     bindToEdit: function (slide) {
       var that = this;
       $(this.elt).off();
@@ -98,7 +101,7 @@ $(function () {
         slideForm.bindToAdd();
       });
     },
-    
+
     bindToAdd: function () {
       var that = this;
       $(this.elt).off();
@@ -115,14 +118,14 @@ $(function () {
       });
     }
   };
-  
-  function Presentation (DOMElement) {
+
+  function Presentation(DOMElement) {
     this.html = DOMElement;
     slideForm = new SlideForm();
     this.slides = [];
     $("#add-slide").click(blindForm);
     $(this.html).sortable({
-      
+
       update: function (event, ui) {
         presentation.updateOrder(ui.item);
       }
@@ -130,7 +133,7 @@ $(function () {
   }
 
   Presentation.prototype = {
-    
+
     addSlide: function (slide) {
       this.slides.push(slide);
       this.html.appendChild(slide.html);
@@ -139,27 +142,29 @@ $(function () {
 
     deleteSlide: function (slide) {
       var index = this.slides.indexOf(slide);
-      this.slides.splice(index,1);
+      this.slides.splice(index,  1);
       slide.html.remove();
       return index;
     },
 
     updateOrder: function (DOMElement) {
       var newIndex = $(this.html.children).index(DOMElement),
-      oldIndex, i, tmp;
-      for (i=0; i<this.slides.length; i++) {
+        oldIndex,
+        i,
+        tmp;
+      for (i = 0; i < this.slides.length; i++) {
         if (this.slides[i].html === DOMElement[0]) {
           oldIndex = i;
           break;
         }
       }
-      tmp = this.slides.splice(oldIndex,1)[0];
-      this.slides.splice(newIndex,0,tmp);
+      tmp = this.slides.splice(oldIndex, 1)[0];
+      this.slides.splice(newIndex, 0, tmp);
     },
 
     getContent: function () {
       var i, container = document.createElement('div');
-      for (i=0; i<this.slides.length; i++) {
+      for (i = 0; i < this.slides.length; i++) {
         container.appendChild(this.slides[i].data());
       }
       return html_beautify(container.innerHTML);
@@ -169,17 +174,18 @@ $(function () {
       var i, sections, container = document.createElement('div');
       container.innerHTML = content;
       sections = container.children;
-      for (i=0; i<sections.length; i++) {
+      for (i = 0; i < sections.length; i++) {
         this.addSlide(new Slide({section: sections[i]}));
       }
     }
   };
-  
+
   $.fn.extend({
     presentation: function () {
       presentation = new Presentation(this[0]);
+      window.prez = presentation;
       return presentation;
     }
   });
-  
+
 });
