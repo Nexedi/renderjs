@@ -18,5 +18,8 @@
     "jquery-mobile": "1.4.0",
     "jquery-ui": "1.10.3",
     "js-beautify": "1.4.2"
+  },
+  "devDependencies": {
+    "qunit": "1.14.0"
   }
 }
