@@ -3,12 +3,24 @@
 $(function () {
   "use strict";
 
-  var presentation = null, slideForm;
+  var presentation = null,
+    slideForm,
+    newSlideButton = $('#add-slide'),
+    formPanel = $('#form-panel');
 
-  function blindForm() {
-    $('#slide-form').toggle("blind");
+  formPanel.panel({ beforeclose: function () {
+    newSlideButton.show();
+  }});
+  
+  function openForm() {
+    formPanel.panel("open");
+    newSlideButton.hide();
   }
 
+  function closeForm() {
+    formPanel.panel("close");
+  }
+  
   function Slide(params) {
     var that = this;
     this.html = document.importNode(this.htmlTemplate, true);
@@ -24,14 +36,12 @@ $(function () {
     } else {
       this.update(params);
     }
-    $(this.htmlEditButton()).click(function (e) {
+    $(this.htmlEditButton()).click(function () {
       slideForm.bindToEdit(that);
-      blindForm();
-      e.preventDefault();
+      openForm();
     });
-    $(this.htmlDeleteButton()).click(function (e) {
+    $(this.htmlDeleteButton()).click(function () {
       presentation.deleteSlide(that);
-      e.preventDefault();
     });
   }
 
@@ -96,7 +106,6 @@ $(function () {
           type: that.elt.querySelector('#type').value,
           content: that.elt.querySelector('#content').value
         });
-        blindForm();
         e.preventDefault();
         slideForm.bindToAdd();
       });
@@ -112,10 +121,10 @@ $(function () {
           type: that.elt.querySelector('#type').value,
           content: that.elt.querySelector('#content').value
         }));
-        blindForm();
         this.reset();
         e.preventDefault();
       });
+      $(this.elt).find("#cancel").click(closeForm);
     }
   };
 
@@ -123,9 +132,8 @@ $(function () {
     this.html = DOMElement;
     slideForm = new SlideForm();
     this.slides = [];
-    $("#add-slide").click(blindForm);
+    $("#add-slide").click(openForm);
     $(this.html).sortable({
-
       update: function (event, ui) {
         presentation.updateOrder(ui.item);
       }
