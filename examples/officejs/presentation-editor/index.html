@@ -31,28 +31,58 @@
     
     <div data-role="page">
 
-      <div id="form-panel" data-role="panel" data-display="push" data-position-fixed="true">
-        <div class="panel-content">
+      <div id="form-panel" data-role="panel" data-display="push">
+        <div class="panel-content page">
           <form id="slide-form">
             <div data-role="fieldcontain">  
-              <label for="title" >Title:</label>
-              <input type="text" name="title" id="title" value="" />
+              <label for="title" ><strong>Title</strong></label>
+              <input type="text" name="title" id="title" placeholder="Type here the slide title" data-clear-btn="true" required/>
+            </div>
+
+            <br/>
+
+            <div data-role="fieldcontain">
+              <label for="type"><strong>Type</strong></label>
+              <fieldset data-role="controlgroup" data-mini="true" id="type">
+                <input type="radio" name="type" id="basic-type" value="" checked="checked" />
+                <label for="basic-type">basic</label>
+                <input type="radio" name="type" id="chapter-type" value="chapter" />
+                <label for="chapter-type">chapter</label>
+                <input type="radio" name="type" id="screenshot-type" value="screenshot" />
+                <label for="screenshot-type">screenshot</label>
+                <input type="radio" name="type" id="illustration-type" value="illustration" />
+                <label for="illustration-type">illustration</label>
+                <input type="radio" name="type" id="code-type" value="code" />
+                <label for="code-type">code</label>
+                <input type="radio" name="type" id="master-type" value="master" />
+                <label for="master-type">master</label>  
+              </fieldset>
             </div>
             
-            <div data-role="fieldcontain">
-              <select name="Type" id="type" data-inline="true">
-                <option value="chapter">chapter</option>
-                <option value="illustration">illustration</option>
-              </select>
+            <br/>
+
+            <div data-role="fieldcontain" id="image-field">  
+              <label for="image"><strong>Image</strong></label>
+              <input type="file" name="image" id="image-input" class="ui-btn" />
+              <img id="image-preview" class="ui-shadow ui-corner-all">
             </div>
             
             <div data-role="fieldcontain">  
-              <label for="content">Content:</label>
-              <textarea name="content" id="content"></textarea>
+              <label for="content"><strong>Slide text</strong></label>
+              <textarea name="content" id="content" placeholder="This text will appear in the slide"></textarea>
+            </div>
+
+            <div data-role="fieldcontain">  
+              <label for="details"><strong>Slide details</strong></label>
+              <textarea name="details" id="details" placeholder="This text will be hidden"></textarea>
             </div>
             
-            <input data-inline="true" type="submit" id="submit" value="Add slide">
-            <input data-inline="true" type="button" id="cancel" value="Cancel" data-theme="b">
+            <br/>
+            
+            <div id="slide-form-buttons" class="ui-grid-a">
+              <div class="ui-block-a"><input type="button" id="cancel" value="Cancel" data-theme="b"></div>
+              <div class="ui-block-b"><input type="submit" id="submit" value="Add slide" class="ui-block-b"></div>
+            </div>
           </form>
         </div>
       </div>
@@ -80,6 +110,7 @@
           <div class="dummy"></div>
           <div class="slide">
             <h1></h1>
+            <img>
             <div class="content"></div>
           </div>
         </section>

@@ -1,4 +1,4 @@
-/*globals window, document, $, html_beautify */
+/*globals window, document, $, html_beautify, FileReader */
 /*jslint unparam: true */
 $(function () {
   "use strict";
@@ -10,6 +10,7 @@ $(function () {
 
   formPanel.panel({ beforeclose: function () {
     newSlideButton.show();
+    slideForm.reset();
   }});
   
   function openForm() {
@@ -36,11 +37,11 @@ $(function () {
     } else {
       this.update(params);
     }
-    $(this.htmlEditButton()).click(function () {
+    $(this.editBtn()).click(function () {
       slideForm.bindToEdit(that);
       openForm();
     });
-    $(this.htmlDeleteButton()).click(function () {
+    $(this.deleteBtn()).click(function () {
       presentation.deleteSlide(that);
     });
   }
@@ -50,21 +51,11 @@ $(function () {
     dataTemplate: document.querySelector('template#slide-data').content.firstElementChild,
     htmlTemplate: document.querySelector('template#slide-html').content.firstElementChild,
 
-    htmlEditButton: function () {
-      return this.html.querySelector("button.edit");
-    },
-
-    htmlDeleteButton: function () {
-      return this.html.querySelector("button.delete");
-    },
-
-    htmlContent: function () {
-      return this.html.querySelector(".content");
-    },
-
-    htmlTitle: function () {
-      return this.html.querySelector("h1");
-    },
+    editBtn: function () {return this.html.querySelector("button.edit");},
+    deleteBtn: function () {return this.html.querySelector("button.delete");},
+    htmlContent: function () {return this.html.querySelector(".content");},
+    htmlImage: function () {return this.html.querySelector("img");},
+    htmlTitle: function () {return this.html.querySelector("h1");},
 
     data: function () {
       var res = document.importNode(this.dataTemplate, true);
@@ -75,40 +66,134 @@ $(function () {
     },
 
     update: function (params) {
+      console.log(params);
       $.extend(this, params);
       this.htmlTitle().textContent = this.title;
       this.htmlContent().innerHTML = this.content;
+      if (this.type === "screenshot" || this.type === "illustration") {
+        this.htmlImage().src = this.image;
+      }else{
+        this.htmlImage().src= "";
+      }
     }
   };
-
+  
   function SlideForm() {
+    var that = this;
     this.elt = document.querySelector("#slide-form");
     this.bindToAdd();
+    $(this.elt).find("#cancel").click(closeForm);
+    $(this.elt).find('input[type="radio"]').click(function () {
+      that.updateFieldVisibility();
+    });
+    $(this.elt).find('#image-input').change(function (evt) {
+      var file = evt.target.files[0];
+      console.log(file);
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          console.log(e.target);
+          that.attrImageFile(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
   }
 
   SlideForm.prototype = {
 
-    reset: function () {
-      this.elt.querySelector('#title').value = "";
-      this.elt.querySelector('#type').value = "";
-      this.elt.querySelector('#content').value = "";
+    attrTextInput: function (inputElt, content) {
+      if (content !== undefined) {
+        inputElt.value = content;
+      }else{
+        return inputElt.value;
+      }
+    },
+    
+    attrTitle: function(content) {
+      return this.attrTextInput(this.elt.querySelector('#title'), content);
+    },
+    
+    attrContent: function(content) {
+      return this.attrTextInput(this.elt.querySelector('#content'), content);
+    },
+    
+    attrDetails: function(content) {
+      return this.attrTextInput(this.elt.querySelector('#details'), content);
     },
 
+    attrType: function(type) {
+      var radios = $(this.elt).find('input[type="radio"]');
+      if (type !== undefined) {
+        radios.prop('checked', false);
+        if (type === "") {type = "basic";}
+        radios.filter("#"+type+"-type").prop('checked', true);
+        radios.checkboxradio('refresh');
+        this.updateFieldVisibility();
+      }else{
+        return radios.filter(':checked').val();
+      }
+    },
+
+    attrImageFile: function (imageFile) {
+      var input = this.elt.querySelector('#image-input');
+      var preview = this.elt.querySelector('#image-preview');
+      if (imageFile !== undefined) {
+        input.value = "";
+        preview.src = imageFile;
+      }else{
+        return preview.src;
+      }
+    },
+    
+    attrAll: function (slide) {
+      if (slide !== undefined) {
+        this.attrTitle(slide.title);
+        this.attrType(slide.type);
+        this.attrContent(slide.content);
+        this.attrDetails(slide.details);
+        this.attrImageFile(slide.image);
+      }else{
+        return {
+          title: this.attrTitle(),
+          type: this.attrType(),
+          content: this.attrContent(),
+          details: this.attrDetails(),
+          image: this.attrImageFile()
+        };
+      }
+    },
+
+    updateFieldVisibility: function () {
+      var type = this.attrType();
+      if (type === "screenshot" || type === "illustration") {
+        $(this.elt).find('#image-field').show("blind", {direction: "up"});
+      }else{
+        $(this.elt).find('#image-field').hide("blind", {direction: "up"});
+      }
+    },
+    
+    setSubmitLabel: function (label) {
+      var submit = $(this.elt).find("#submit");
+      submit.prop("value", label).button('refresh');
+    },
+    
+    reset: function () {
+      this.attrAll({title: "", type: "basic", content: "", details: "", image: ""}); 
+    },
+    
     bindToEdit: function (slide) {
       var that = this;
+      that.currentSlide = slide;
       $(this.elt).off();
-      this.elt.querySelector('#title').value = slide.title;
-      this.elt.querySelector('#type').value = slide.type;
-      this.elt.querySelector('#content').value = slide.content;
+      this.attrAll(slide);
       $(this.elt).submit(function (e) {
-        slide.update({
-          title: that.elt.querySelector('#title').value,
-          type: that.elt.querySelector('#type').value,
-          content: that.elt.querySelector('#content').value
-        });
+        slide.update(that.attrAll());
         e.preventDefault();
+        that.currentSlide = null;
         slideForm.bindToAdd();
       });
+      this.setSubmitLabel("Save");
     },
 
     bindToAdd: function () {
@@ -116,15 +201,11 @@ $(function () {
       $(this.elt).off();
       this.reset();
       $(this.elt).submit(function (e) {
-        presentation.addSlide(new Slide({
-          title: that.elt.querySelector('#title').value,
-          type: that.elt.querySelector('#type').value,
-          content: that.elt.querySelector('#content').value
-        }));
-        this.reset();
+        presentation.addSlide(new Slide(that.attrAll()));
+        that.reset();
         e.preventDefault();
       });
-      $(this.elt).find("#cancel").click(closeForm);
+      this.setSubmitLabel("Add");
     }
   };
 
@@ -149,6 +230,9 @@ $(function () {
     },
 
     deleteSlide: function (slide) {
+      if (slideForm.currentSlide === slide) {
+        slideForm.bindToAdd();
+      }
       var index = this.slides.indexOf(slide);
       this.slides.splice(index,  1);
       slide.html.remove();

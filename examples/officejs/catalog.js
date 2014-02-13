@@ -30,7 +30,7 @@
       "interface" : "http://www.renderjs.org/interface/editor"
     },
     editor_5_dict = {
-      "path" :      "./presentation-editor.html",
+      "path" :      "./presentation-editor/index.html",
       "title" :     "Presentation Editor Gadget",
       "interface" : "http://www.renderjs.org/interface/editor"
     },
