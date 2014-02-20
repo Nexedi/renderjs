@@ -1,4 +1,4 @@
-/*globals window, document, $, html_beautify, FileReader */
+/*globals window, document, $, html_beautify, FileReader,  */
 /*jslint unparam: true */
 $(function () {
   "use strict";
@@ -9,40 +9,65 @@ $(function () {
     formPanel = $('#form-panel');
 
   formPanel.panel({ beforeclose: function () {
-    newSlideButton.show();
-    slideForm.reset();
+    newSlideButton.show("fade");
+    slideForm.bindToAdd();
   }});
-  
+
   function openForm() {
     formPanel.panel("open");
-    newSlideButton.hide();
+    newSlideButton.hide("fade");
   }
 
   function closeForm() {
     formPanel.panel("close");
   }
-  
+
+  function animate(selector, animation) {
+    var $selector = $(selector);
+    $selector.off("animationend webkitAnimationEnd");
+    $selector.on("animationend webkitAnimationEnd", function () {
+      $selector.removeClass("animated " + animation);
+    });
+    $selector.addClass("animated " + animation);
+  }
+
   function Slide(params) {
     var that = this;
     this.html = document.importNode(this.htmlTemplate, true);
-    if (params.section) {
-      this.update({
-        title: params.section.querySelector('h1').textContent || "",
-        type: params.section.className || "",
-        content:
-          params
-          .section
-          .childNodes[2] ? (params.section.childNodes[2].textContent || "") : ""
-      });
-    } else {
-      this.update(params);
-    }
+    this.update(params);
     $(this.editBtn()).click(function () {
-      slideForm.bindToEdit(that);
-      openForm();
+      if (slideForm.currentSlide !== that) {
+        slideForm.bindToEdit(that);
+        openForm();
+      }
     });
     $(this.deleteBtn()).click(function () {
       presentation.deleteSlide(that);
+    });
+  }
+
+  function readSlide(domElement) {
+    var $el = $(domElement),
+      title = $el.find('h1').first().text(),
+      type = $el.attr('class'),
+      img,
+      content = "";
+
+    if (type === 'screenshot' || type === 'illustration') {
+      img = $el.find('img').first().attr('src');
+    }
+
+    $el.contents().filter(function () {
+      return $(this).is(':not(img, h1, details)') || this.nodeType === 3;
+    }).each(function () {
+      content += this.outerHTML || this.textContent;
+    });
+
+    return new Slide({
+      title: title,
+      type: type,
+      content: content,
+      image: img
     });
   }
 
@@ -51,52 +76,47 @@ $(function () {
     dataTemplate: document.querySelector('template#slide-data').content.firstElementChild,
     htmlTemplate: document.querySelector('template#slide-html').content.firstElementChild,
 
-    editBtn: function () {return this.html.querySelector("button.edit");},
-    deleteBtn: function () {return this.html.querySelector("button.delete");},
-    htmlContent: function () {return this.html.querySelector(".content");},
-    htmlImage: function () {return this.html.querySelector("img");},
-    htmlTitle: function () {return this.html.querySelector("h1");},
+    editBtn: function () {return this.html.querySelector("button.edit"); },
+    deleteBtn: function () {return this.html.querySelector("button.delete"); },
+    htmlContent: function () {return this.html.querySelector(".content"); },
+    htmlImage: function () {return this.html.querySelector("img"); },
+    htmlTitle: function () {return this.html.querySelector("h1"); },
 
     data: function () {
-      var res = document.importNode(this.dataTemplate, true);
+      var res = document.importNode(this.dataTemplate, true), img;
       res.className = this.type;
       res.querySelector('h1').textContent = this.title;
-      res.appendChild(document.createTextNode(this.content));
+      $(res).append(this.content);
+      if (this.type === "screenshot" || this.type === "illustration") {
+        img = document.createElement('img');
+        img.src = this.image;
+        res.appendChild(img);
+      }
       return res;
     },
 
     update: function (params) {
-      console.log(params);
       $.extend(this, params);
       this.htmlTitle().textContent = this.title;
       this.htmlContent().innerHTML = this.content;
       if (this.type === "screenshot" || this.type === "illustration") {
         this.htmlImage().src = this.image;
-      }else{
-        this.htmlImage().src= "";
+      } else {
+        this.htmlImage().src = "";
       }
     }
   };
-  
+
   function SlideForm() {
     var that = this;
     this.elt = document.querySelector("#slide-form");
     this.bindToAdd();
     $(this.elt).find("#cancel").click(closeForm);
     $(this.elt).find('input[type="radio"]').click(function () {
-      that.updateFieldVisibility();
+      that.updateFieldVisibility(true);
     });
-    $(this.elt).find('#image-input').change(function (evt) {
-      var file = evt.target.files[0];
-      console.log(file);
-      if (file) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          console.log(e.target);
-          that.attrImageFile(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
+    $("#image-url").on("change", function () {
+      that.updatePreview(that.attrImageURL());
     });
   }
 
@@ -105,104 +125,122 @@ $(function () {
     attrTextInput: function (inputElt, content) {
       if (content !== undefined) {
         inputElt.value = content;
-      }else{
+      } else {
         return inputElt.value;
       }
     },
-    
-    attrTitle: function(content) {
+
+    attrTitle: function (content) {
       return this.attrTextInput(this.elt.querySelector('#title'), content);
     },
-    
-    attrContent: function(content) {
+
+    attrContent: function (content) {
       return this.attrTextInput(this.elt.querySelector('#content'), content);
     },
-    
-    attrDetails: function(content) {
+
+    attrDetails: function (content) {
       return this.attrTextInput(this.elt.querySelector('#details'), content);
     },
 
-    attrType: function(type) {
+    attrType: function (type) {
       var radios = $(this.elt).find('input[type="radio"]');
       if (type !== undefined) {
         radios.prop('checked', false);
-        if (type === "") {type = "basic";}
-        radios.filter("#"+type+"-type").prop('checked', true);
+        if (type === "") {type = "basic"; }
+        radios.filter("#" + type + "-type").prop('checked', true);
         radios.checkboxradio('refresh');
         this.updateFieldVisibility();
-      }else{
+      } else {
         return radios.filter(':checked').val();
       }
     },
 
-    attrImageFile: function (imageFile) {
-      var input = this.elt.querySelector('#image-input');
+    attrImageURL: function (content) {
+      return this.attrTextInput(this.elt.querySelector('#image-url'), content);
+    },
+
+    updatePreview: function (content) {
       var preview = this.elt.querySelector('#image-preview');
-      if (imageFile !== undefined) {
-        input.value = "";
-        preview.src = imageFile;
-      }else{
-        return preview.src;
+      if (content) {
+        $(preview).show();
+        preview.src = content;
+      } else {
+        $(preview).hide();
       }
     },
-    
+
     attrAll: function (slide) {
       if (slide !== undefined) {
         this.attrTitle(slide.title);
         this.attrType(slide.type);
         this.attrContent(slide.content);
         this.attrDetails(slide.details);
-        this.attrImageFile(slide.image);
-      }else{
+        this.attrImageURL(slide.image);
+        this.updatePreview(slide.image);
+      } else {
         return {
           title: this.attrTitle(),
           type: this.attrType(),
           content: this.attrContent(),
           details: this.attrDetails(),
-          image: this.attrImageFile()
+          image: this.attrImageURL()
         };
       }
     },
 
-    updateFieldVisibility: function () {
-      var type = this.attrType();
+    updateFieldVisibility: function (withEffect) {
+      var type = this.attrType(),
+        $imageField = $(this.elt).find('#image-field'),
+        $imageInputURL = $(this.elt).find('input#image-url');
       if (type === "screenshot" || type === "illustration") {
-        $(this.elt).find('#image-field').show("blind", {direction: "up"});
-      }else{
-        $(this.elt).find('#image-field').hide("blind", {direction: "up"});
+        if (withEffect) {
+          $imageField.show("blind", {direction: "up"});
+        } else {
+          $imageField.show();
+        }
+        $imageInputURL.attr('required', true);
+      } else {
+        if (withEffect) {
+          $imageField.hide("blind", {direction: "up"});
+        } else {
+          $imageField.hide();
+        }
+        $imageInputURL.attr('required', false);
       }
     },
-    
+
     setSubmitLabel: function (label) {
       var submit = $(this.elt).find("#submit");
       submit.prop("value", label).button('refresh');
     },
-    
+
     reset: function () {
-      this.attrAll({title: "", type: "basic", content: "", details: "", image: ""}); 
+      this.attrAll({title: "", type: "basic", content: "", details: "", image: ""});
+      this.currentSlide = null;
+      $(this.elt).off("submit");
     },
-    
+
     bindToEdit: function (slide) {
       var that = this;
+      this.reset();
+      animate(this.elt, "fadeIn");
       that.currentSlide = slide;
-      $(this.elt).off();
       this.attrAll(slide);
       $(this.elt).submit(function (e) {
         slide.update(that.attrAll());
+        animate(slide.html, "bounce");
         e.preventDefault();
-        that.currentSlide = null;
-        slideForm.bindToAdd();
+        that.bindToAdd();
       });
       this.setSubmitLabel("Save");
     },
 
     bindToAdd: function () {
       var that = this;
-      $(this.elt).off();
       this.reset();
       $(this.elt).submit(function (e) {
         presentation.addSlide(new Slide(that.attrAll()));
-        that.reset();
+        that.bindToAdd();
         e.preventDefault();
       });
       this.setSubmitLabel("Add");
@@ -226,6 +264,7 @@ $(function () {
     addSlide: function (slide) {
       this.slides.push(slide);
       this.html.appendChild(slide.html);
+      animate(slide.html, "pulse");
       return slide;
     },
 
@@ -235,7 +274,10 @@ $(function () {
       }
       var index = this.slides.indexOf(slide);
       this.slides.splice(index,  1);
-      slide.html.remove();
+      animate(slide.html, 'rollOut');
+      $(slide.html).on("animationend webkitAnimationEnd", function () {
+        slide.html.remove();
+      });
       return index;
     },
 
@@ -267,7 +309,7 @@ $(function () {
       container.innerHTML = content;
       sections = container.children;
       for (i = 0; i < sections.length; i++) {
-        this.addSlide(new Slide({section: sections[i]}));
+        this.addSlide(readSlide(sections[i]));
       }
     }
   };

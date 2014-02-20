@@ -7,13 +7,12 @@ module.exports = function(grunt) {
     jslint: {
       client: {
         src: [
-          'lib/presentation-editor.js'
+          'presentation-editor.js'
         ],
         directives: {
           browser: true,
           maxlen: 100,
           indent: 2,
-          maxerr: 3,
           unparam: true,
           plusplus: true,
           predef: [

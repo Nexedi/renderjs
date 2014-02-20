@@ -14,7 +14,7 @@
 
 .block.slide-thumb {
     background-color: white;
-    box-shadow: 2px 2px 2px 3px #ccc;
+    /* box-shadow: 2px 2px 2px 3px #ccc; */
     border: 2px solid grey;
 }
 
@@ -71,6 +71,21 @@
  
 .ui-panel-dismiss-display-push {
     display: none;
+}
+
+body {
+    background: url('images/tweed.png');
+    background-repeat: repeat;
+    background-position: center center;
+    background-attachment: scroll;
+    background-size: 100% 100%;
+}
+
+.ui-page  .ui-overlay-a, .ui-page-theme-a, .ui-page-theme-a .ui-panel-wrapper{
+    background: url('images/tweed.png');
+}
+.ui-content{
+    background: transparent;
 }
 
 @media (max-width: 1000px) {
