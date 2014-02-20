@@ -57,6 +57,7 @@
         .then(function (all_param) {
           i_c.empty();
           i_c[0].appendChild(all_param[1].element);
+          $('iframe').css('height', $(window).height()-200+'px');
           return attachIOToEditor(all_param);
         })
         .fail(handleError);
