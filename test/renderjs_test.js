@@ -1282,7 +1282,9 @@
     gadget.acquire()
       .fail(function (error) {
         ok(error instanceof TypeError);
-        equal(error.message, "gadget.aq_parent is undefined");
+        console.log(error.message);
+        ok((error.message === "gadget.aq_parent is undefined" )||
+           (error.message === "Cannot call method 'apply' of undefined"));
       })
       .always(function () {
         start();
