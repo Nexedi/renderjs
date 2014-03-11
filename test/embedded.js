@@ -21,6 +21,9 @@
     })
     .declareMethod('getContent', function () {
       return this.embedded_property;
+    })
+    .declareMethod('callAcquire', function (method_name, param_list) {
+      return this.acquire(method_name, param_list);
     });
 
 }(window, rJS));

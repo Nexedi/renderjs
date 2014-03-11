@@ -81,6 +81,24 @@
         throw new Error("No element defined");
       }
       return this.element;
+    })
+    .declareMethod('acquire', function () {
+      var gadget = this,
+        argument_list = arguments;
+      return new RSVP.Queue()
+        .push(function () {
+          var aq_dynamic = gadget.aq_dynamic;
+          if (aq_dynamic !== undefined) {
+            return aq_dynamic.apply(gadget, argument_list);
+          }
+          throw new renderJS.AcquisitionError("aq_dynamic is not defined");
+        })
+        .push(undefined, function (error) {
+          if (error instanceof renderJS.AcquisitionError) {
+            return gadget.aq_parent.apply(gadget, argument_list);
+          }
+          throw error;
+        });
     });
 
   /////////////////////////////////////////////////////////////////
@@ -250,6 +268,16 @@
     gadget_instance.chan.bind("trigger", function (trans, params) {
       return gadget_instance.trigger(params.event_name, params.options);
     });
+    gadget_instance.chan.bind("acquire", function (trans, params) {
+      gadget_instance.acquire.apply(gadget_instance, params)
+        .then(function (g) {
+          trans.complete(g);
+        }).fail(function (e) {
+          trans.error(e.toString());
+        });
+      trans.delayReturn(true);
+    });
+
     return RSVP.any([
       iframe_loading_deferred.promise,
       // Timeout to prevent non renderJS embeddable gadget
@@ -263,6 +291,7 @@
   /////////////////////////////////////////////////////////////////
   RenderJSGadget.prototype.declareGadget = function (url, options) {
     var queue,
+      parent_gadget = this,
       previous_loading_gadget_promise = loading_gadget_promise;
 
     if (options === undefined) {
@@ -297,6 +326,10 @@
       // Set the HTML context
       .push(function (gadget_instance) {
         var i;
+        // Define aq_parent to reach parent gadget
+        gadget_instance.aq_parent = function (method_name, argument_list) {
+          return parent_gadget.acquire(method_name, argument_list);
+        };
         // Drop the current loading klass info used by selector
         gadget_loading_klass = undefined;
         // Trigger calling of all ready callback
@@ -337,6 +370,20 @@
     }
     return result;
   };
+
+  /////////////////////////////////////////////////////////////////
+  // renderJS.AcquisitionError
+  /////////////////////////////////////////////////////////////////
+  renderJS.AcquisitionError = function (message) {
+    this.name = "AcquisitionError";
+    if ((message !== undefined) && (typeof message !== "string")) {
+      throw new TypeError('You must pass a string.');
+    }
+    this.message = message || "Acquisition failed";
+  };
+  renderJS.AcquisitionError.prototype = new Error();
+  renderJS.AcquisitionError.prototype.constructor =
+    renderJS.AcquisitionError;
 
   /////////////////////////////////////////////////////////////////
   // renderJS.declareJS
@@ -579,6 +626,14 @@
         // Create the root gadget instance and put it in the loading stack
         root_gadget = new gadget_model_dict[url]();
 
+        // Stop acquisition on the original root gadget
+        // Do not put this on the klass, as their could be multiple instances
+        root_gadget.aq_parent = function (method_name) {
+          throw new renderJS.AcquisitionError(
+            "No gadget provides " + method_name
+          );
+        };
+
       } else {
         // Create the communication channel
         embedded_channel = Channel.build({
@@ -657,6 +712,26 @@
             );
           notifyTrigger(eventName, options);
           return result;
+        };
+
+        // Define aq_parent to inform parent window
+        tmp_constructor.prototype.aq_parent = function (method_name,
+          argument_list) {
+          return new RSVP.Promise(function (resolve, reject) {
+            embedded_channel.call({
+              method: "acquire",
+              params: [
+                method_name,
+                argument_list
+              ],
+              success: function (s) {
+                resolve(s);
+              },
+              error: function (e) {
+                reject(e);
+              }
+            });
+          });
         };
       }
 
