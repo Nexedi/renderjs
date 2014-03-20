@@ -13,14 +13,14 @@
         return S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4();
     }
     var app = StatelessJS.App(), root_gadget, // XXX Hardcoded gadget
-    // gadget_url = "http://git.erp5.org/gitweb/officejs.git/blob_plain/" +
+    // editor_gadget_url = "http://git.erp5.org/gitweb/officejs.git/blob_plain/" +
     //   "refs/heads/jqs:/src/gadget/bootstrap-wysiwyg.html",
-    // gadget_url = "http://192.168.242.82:8001/src/gadget/jqs.html",
-    gadget_url = "http://git.erp5.org/gitweb/renderjs.git/blob_plain/" + "refs/heads/presentation:/examples/officejs/presentation-editor/index.html?js=1", // XXX Hardcoded storage
+    // editor_gadget_url = "http://192.168.242.82:8001/src/gadget/jqs.html",
+    editor_gadget_url = "http://git.erp5.org/gitweb/renderjs.git/blob_plain/" + "refs/heads/presentation:/examples/officejs/presentation-editor/index.html?js=1", display_gadget_url = "http://git.erp5.org/gitweb/renderjs.git/blob_plain/" + "refs/heads/presentation:/examples/officejs/presentation-viewer/index.html?js=1", // XXX Hardcoded storage
     jio_storage = jIO.createJIO({
         type: "local",
-        username: gadget_url,
-        application_name: gadget_url
+        username: editor_gadget_url,
+        application_name: editor_gadget_url
     });
     ///////////////////////////////////////////////
     // Default view
@@ -47,7 +47,7 @@
                     entry = document.createElement("li");
                     link = document.createElement("a");
                     link.textContent = data.rows[i].id;
-                    link.href = app.url_for("display_file", "GET", {
+                    link.href = app.url_for("edit_file", "GET", {
                         id: data.rows[i].id
                     });
                     entry.appendChild(link);
@@ -58,7 +58,7 @@
             }
         });
     });
-    app.add_url_rule("display_file", "#/document/{id}", function(options) {
+    app.add_url_rule("view_file", "#/view/{id}", function(options) {
         var id = options.id, gadget;
         return new RSVP.Queue().push(function() {
             // XXX Clear content
@@ -67,7 +67,7 @@
             jio_storage.get({
                 _id: id
             }), // Load the gadget
-            root_gadget.declareGadget(gadget_url, {
+            root_gadget.declareGadget(display_gadget_url, {
                 sandbox: "iframe",
                 element: document.getElementById("mainarticle")
             }) ]);
@@ -80,14 +80,50 @@
                 return gadget.setContent(doc.data.content);
             }
         }).push(function() {
-            var form1 = document.createElement("form"), form2 = document.createElement("form");
+            var display_link = document.createElement("a");
+            display_link.href = app.url_for("edit_file", "GET", {
+                id: id
+            });
+            display_link.innerHTML = "Edit";
+            document.getElementById("mainarticle").appendChild(display_link);
+            $(document.getElementById("mainarticle")).enhanceWithin();
+        });
+    });
+    app.add_url_rule("edit_file", "#/edit/{id}", function(options) {
+        var id = options.id, gadget;
+        return new RSVP.Queue().push(function() {
+            // XXX Clear content
+            document.getElementById("mainarticle").innerHTML = "";
+            return RSVP.all([ // Load the content
+            jio_storage.get({
+                _id: id
+            }), // Load the gadget
+            root_gadget.declareGadget(editor_gadget_url, {
+                sandbox: "iframe",
+                element: document.getElementById("mainarticle")
+            }) ]);
+        }).push(function(result_list) {
+            var doc = result_list[0];
+            gadget = result_list[1];
+            // XXX Howto make it fullscreen?
+            gadget.element.getElementsByTagName("iframe")[0].style.height = window.innerHeight - 150 + "px";
+            if (doc.data.content !== "") {
+                return gadget.setContent(doc.data.content);
+            }
+        }).push(function() {
+            var form1 = document.createElement("form"), form2 = document.createElement("form"), display_link = document.createElement("a");
             form1.id = "save";
             form2.id = "delete";
             // XXX Add save button
             form1.innerHTML = "<input data-role='button' data-inline='true' type='submit' value='Save' />";
             form2.innerHTML = "<input data-role='button' data-inline='true' type='submit' value='Delete' />";
+            display_link.href = app.url_for("view_file", "GET", {
+                id: id
+            });
+            display_link.innerHTML = "Display";
             document.getElementById("mainarticle").appendChild(form1);
             document.getElementById("mainarticle").appendChild(form2);
+            document.getElementById("mainarticle").appendChild(display_link);
             $(document.getElementById("mainarticle")).enhanceWithin();
             return RSVP.all([ StatelessJS.loopEventListener(document.getElementById("save"), "submit", true, function(evt) {
                 evt.stopPropagation();
@@ -120,7 +156,7 @@
                 content: ""
             });
         }).push(function() {
-            location.replace(app.url_for("display_file", "GET", {
+            location.replace(app.url_for("edit_file", "GET", {
                 id: new_id
             }));
         });
