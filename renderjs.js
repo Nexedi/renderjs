@@ -293,77 +293,77 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget
   /////////////////////////////////////////////////////////////////
-  RenderJSGadget.prototype.declareGadget = function (url, options) {
-    var queue,
-      parent_gadget = this,
-      previous_loading_gadget_promise = loading_gadget_promise;
-
-    if (options === undefined) {
-      options = {};
-    }
-    if (options.sandbox === undefined) {
-      options.sandbox = "public";
-    }
-
-    // Change the global variable to update the loading queue
-    queue = new RSVP.Queue()
-      // Wait for previous gadget loading to finish first
-      .push(function () {
-        return previous_loading_gadget_promise;
-      })
-      .push(undefined, function () {
-        // Forget previous declareGadget error
-        return;
-      })
-      .push(function () {
-        var method;
-        if (options.sandbox === "public") {
-          method = privateDeclarePublicGadget;
-        } else if (options.sandbox === "iframe") {
-          method = privateDeclareIframeGadget;
-        } else {
-          throw new Error("Unsupported sandbox options '" +
-                          options.sandbox + "'");
-        }
-        return method(url, options);
-      })
-      // Set the HTML context
-      .push(function (gadget_instance) {
-        var i;
-        // Define aq_parent to reach parent gadget
-        gadget_instance.aq_parent = function (method_name, argument_list) {
-          return parent_gadget.acquire(method_name, argument_list);
-        };
-        // Drop the current loading klass info used by selector
-        gadget_loading_klass = undefined;
-        // Trigger calling of all ready callback
-        function ready_wrapper() {
-          return gadget_instance;
-        }
-        for (i = 0; i < gadget_instance.constructor.ready_list.length;
-             i += 1) {
-          // Put a timeout?
-          queue.push(gadget_instance.constructor.ready_list[i]);
-          // Always return the gadget instance after ready function
-          queue.push(ready_wrapper);
-        }
-
-        // Store local reference to the gadget instance
-        if (options.scope !== undefined) {
-          parent_gadget.sub_gadget_dict[options.scope] = gadget_instance;
-        }
-        return gadget_instance;
-      })
-      .push(undefined, function (e) {
-        // Drop the current loading klass info used by selector
-        // even in case of error
-        gadget_loading_klass = undefined;
-        throw e;
-      });
-    loading_gadget_promise = queue;
-    return loading_gadget_promise;
-  };
   RenderJSGadget
+    .declareMethod('declareGadget', function (url, options) {
+      var queue,
+        parent_gadget = this,
+        previous_loading_gadget_promise = loading_gadget_promise;
+
+      if (options === undefined) {
+        options = {};
+      }
+      if (options.sandbox === undefined) {
+        options.sandbox = "public";
+      }
+
+      // Change the global variable to update the loading queue
+      queue = new RSVP.Queue()
+        // Wait for previous gadget loading to finish first
+        .push(function () {
+          return previous_loading_gadget_promise;
+        })
+        .push(undefined, function () {
+          // Forget previous declareGadget error
+          return;
+        })
+        .push(function () {
+          var method;
+          if (options.sandbox === "public") {
+            method = privateDeclarePublicGadget;
+          } else if (options.sandbox === "iframe") {
+            method = privateDeclareIframeGadget;
+          } else {
+            throw new Error("Unsupported sandbox options '" +
+                            options.sandbox + "'");
+          }
+          return method(url, options);
+        })
+        // Set the HTML context
+        .push(function (gadget_instance) {
+          var i;
+          // Define aq_parent to reach parent gadget
+          gadget_instance.aq_parent = function (method_name, argument_list) {
+            return parent_gadget.acquire(method_name, argument_list);
+          };
+          // Drop the current loading klass info used by selector
+          gadget_loading_klass = undefined;
+          // Trigger calling of all ready callback
+          function ready_wrapper() {
+            return gadget_instance;
+          }
+          for (i = 0; i < gadget_instance.constructor.ready_list.length;
+               i += 1) {
+            // Put a timeout?
+            queue.push(gadget_instance.constructor.ready_list[i]);
+            // Always return the gadget instance after ready function
+            queue.push(ready_wrapper);
+          }
+
+          // Store local reference to the gadget instance
+          if (options.scope !== undefined) {
+            parent_gadget.sub_gadget_dict[options.scope] = gadget_instance;
+          }
+          return gadget_instance;
+        })
+        .push(undefined, function (e) {
+          // Drop the current loading klass info used by selector
+          // even in case of error
+          gadget_loading_klass = undefined;
+          throw e;
+        });
+      loading_gadget_promise = queue;
+      return loading_gadget_promise;
+    })
     .declareMethod('getDeclaredGadget', function (gadget_scope) {
       if (!this.sub_gadget_dict.hasOwnProperty(gadget_scope)) {
         throw new Error("Gadget scope '" + gadget_scope + "' is not known.");
