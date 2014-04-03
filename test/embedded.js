@@ -10,6 +10,10 @@
     .declareMethod('wasReadyCalled', function () {
       return ready_called;
     })
+    .declareMethod('isSubGadgetDictInitialize', function () {
+      return ((this.hasOwnProperty("sub_gadget_dict")) &&
+              (JSON.stringify(this.sub_gadget_dict) === "{}"));
+    })
     .declareMethod('triggerError', function (value) {
       throw new Error("Manually triggered embedded error");
     })

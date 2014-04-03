@@ -1647,6 +1647,31 @@
       });
   });
 
+  test('Initialize sub_gadget_dict private property', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = 'https://example.org/files/qunittest/test',
+      html = "<html>" +
+        "<body>" +
+        "<script src='../lib/qunit/qunit.js' " +
+        "type='text/javascript'></script>" +
+        "</body></html>";
+
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
+    }, html]);
+
+    stop();
+    gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
+      .then(function (new_gadget) {
+        ok(new_gadget.hasOwnProperty("sub_gadget_dict"));
+        deepEqual(new_gadget.sub_gadget_dict, {});
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('no parameter', function () {
     // Check that missing url reject the declaration
     var gadget = new RenderJSGadget();
@@ -2017,6 +2042,38 @@
       });
   });
 
+  test('Can take a scope options', function () {
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test98.html';
+    gadget.sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><p>foo</p></body></html>"]);
+
+    document.getElementById('qunit-fixture').textContent = "";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        return gadget.declareGadget(
+          html_url,
+          {scope: "foo"}
+        );
+      })
+      .then(function (child_gadget) {
+        ok(gadget.sub_gadget_dict.hasOwnProperty("foo"));
+        equal(gadget.sub_gadget_dict.foo, child_gadget);
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('Generate aq_parent on created gadget', function () {
     // Check that aq_parent returns parent gadget acquire result
     var gadget = new RenderJSGadget(),
@@ -2123,6 +2180,32 @@
       });
   });
 
+  test('Can take a scope options', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      url = "./embedded.html";
+    gadget.sub_gadget_dict = {};
+
+    document.getElementById("qunit-fixture").textContent = "";
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture'),
+      scope: "foo"
+    })
+      .then(function (child_gadget) {
+        ok(gadget.sub_gadget_dict.hasOwnProperty("foo"));
+        equal(gadget.sub_gadget_dict.foo, child_gadget);
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('provide an iframed gadget as callback parameter', function () {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
@@ -2143,6 +2226,27 @@
           '<iframe src="' + url + '"></iframe>'
         );
         ok(new_gadget.chan !== undefined);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('Initialize sub_gadget_dict private property', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded.html";
+
+    document.getElementById("qunit-fixture").textContent = "";
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        ok(new_gadget.hasOwnProperty("sub_gadget_dict"));
+        deepEqual(new_gadget.sub_gadget_dict, {});
       })
       .always(function () {
         start();
@@ -2231,6 +2335,14 @@
               });
           })
 
+          // sub_gadget_dict private property is created
+          .push(function () {
+            return new_gadget.isSubGadgetDictInitialize();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
           // acquire check correctly returns result
           .push(function () {
             return new_gadget.callAcquire(
@@ -2291,6 +2403,87 @@
   });
 
   /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.getDeclaredGadget
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadget.getDeclaredGadget", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+  test('returns value from sub_gadget_dict attribute', function () {
+    // Check that getDeclaredGadget return a Promise
+    var gadget = new RenderJSGadget();
+    gadget.sub_gadget_dict = {foo: "bar"};
+    stop();
+    gadget.getDeclaredGadget("foo")
+      .then(function (result) {
+        equal(result, "bar");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('throw an error if scope is unknown', function () {
+    // Check that getDeclaredGadget return a Promise
+    var gadget = new RenderJSGadget();
+    gadget.sub_gadget_dict = {};
+    stop();
+    gadget.getDeclaredGadget("foo")
+      .then(function () {
+        ok(false, "getDeclaredGadget should fail");
+      })
+      .fail(function (e) {
+        ok(e instanceof Error);
+        equal(e.message, "Gadget scope 'foo' is not known.");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.dropGadget
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadget.dropGadget", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+  test('returns value from sub_gadget_dict attribute', function () {
+    // Check that dropGadget return a Promise
+    var gadget = new RenderJSGadget();
+    gadget.sub_gadget_dict = {foo: "bar"};
+    stop();
+    gadget.dropGadget("foo")
+      .then(function (result) {
+        equal(result, undefined);
+        equal(JSON.stringify(gadget.sub_gadget_dict), "{}");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('throw an error if scope is unknown', function () {
+    // Check that dropGadget return a Promise
+    var gadget = new RenderJSGadget();
+    gadget.sub_gadget_dict = {};
+    stop();
+    gadget.dropGadget("foo")
+      .then(function () {
+        ok(false, "dropGadget should fail");
+      })
+      .fail(function (e) {
+        ok(e instanceof Error);
+        equal(e.message, "Gadget scope 'foo' is not known.");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
   // RenderJSGadget bootstrap
   /////////////////////////////////////////////////////////////////
 
@@ -2340,6 +2533,8 @@
         ok(root_gadget instanceof RenderJSGadget);
         ok(root_gadget_klass, root_gadget.constructor);
         ok(root_gadget.aq_parent !== undefined);
+        ok(root_gadget.hasOwnProperty("sub_gadget_dict"));
+        deepEqual(root_gadget.sub_gadget_dict, {});
       })
       .fail(function (e) {
         ok(false, e);

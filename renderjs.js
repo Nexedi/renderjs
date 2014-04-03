@@ -31,7 +31,11 @@
 
   RSVP.EventTarget.mixin(RenderJSGadget.prototype);
 
-  RenderJSGadget.ready_list = [];
+  function clearGadgetInternalParameters(g) {
+    g.sub_gadget_dict = {};
+  }
+
+  RenderJSGadget.ready_list = [clearGadgetInternalParameters];
   RenderJSGadget.ready = function (callback) {
     this.ready_list.push(callback);
     return this;
@@ -111,7 +115,7 @@
     }
     RenderJSGadget.call(this);
   }
-  RenderJSEmbeddedGadget.ready_list = [];
+  RenderJSEmbeddedGadget.ready_list = RenderJSGadget.ready_list.slice();
   RenderJSEmbeddedGadget.ready =
     RenderJSGadget.ready;
   RenderJSEmbeddedGadget.prototype = new RenderJSGadget();
@@ -182,7 +186,7 @@
     }
     RenderJSGadget.call(this);
   }
-  RenderJSIframeGadget.ready_list = [];
+  RenderJSIframeGadget.ready_list = RenderJSGadget.ready_list.slice();
   RenderJSIframeGadget.ready =
     RenderJSGadget.ready;
   RenderJSIframeGadget.prototype = new RenderJSGadget();
@@ -343,6 +347,11 @@
           // Always return the gadget instance after ready function
           queue.push(ready_wrapper);
         }
+
+        // Store local reference to the gadget instance
+        if (options.scope !== undefined) {
+          parent_gadget.sub_gadget_dict[options.scope] = gadget_instance;
+        }
         return gadget_instance;
       })
       .push(undefined, function (e) {
@@ -354,6 +363,20 @@
     loading_gadget_promise = queue;
     return loading_gadget_promise;
   };
+  RenderJSGadget
+    .declareMethod('getDeclaredGadget', function (gadget_scope) {
+      if (!this.sub_gadget_dict.hasOwnProperty(gadget_scope)) {
+        throw new Error("Gadget scope '" + gadget_scope + "' is not known.");
+      }
+      return this.sub_gadget_dict[gadget_scope];
+    })
+    .declareMethod('dropGadget', function (gadget_scope) {
+      if (!this.sub_gadget_dict.hasOwnProperty(gadget_scope)) {
+        throw new Error("Gadget scope '" + gadget_scope + "' is not known.");
+      }
+      // http://perfectionkills.com/understanding-delete/
+      delete this.sub_gadget_dict[gadget_scope];
+    });
 
   /////////////////////////////////////////////////////////////////
   // renderJS selector
@@ -460,7 +483,7 @@
         tmp_constructor = function () {
           RenderJSGadget.call(this);
         };
-        tmp_constructor.ready_list = [];
+        tmp_constructor.ready_list = RenderJSGadget.ready_list.slice();
         tmp_constructor.declareMethod =
           RenderJSGadget.declareMethod;
         tmp_constructor.ready =
@@ -616,7 +639,7 @@
           RenderJSGadget.call(this);
         };
         tmp_constructor.declareMethod = RenderJSGadget.declareMethod;
-        tmp_constructor.ready_list = [];
+        tmp_constructor.ready_list = RenderJSGadget.ready_list.slice();
         tmp_constructor.ready = RenderJSGadget.ready;
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
