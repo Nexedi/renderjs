@@ -78,12 +78,12 @@ module.exports = function (grunt) {
             'QUnit',
             'renderJS',
             'rJS',
-            'RenderJSGadget',
+            '__RenderJSGadget',
             'sinon',
             'RSVP',
             'DOMParser',
-            'RenderJSIframeGadget',
-            'RenderJSEmbeddedGadget'
+            '__RenderJSIframeGadget',
+            '__RenderJSEmbeddedGadget'
           ]
         }
       },

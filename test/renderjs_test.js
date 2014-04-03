@@ -1,3 +1,4 @@
+/*jslint nomen: true*/
 (function (document, renderJS, QUnit, sinon) {
   "use strict";
   var test = QUnit.test,
@@ -9,7 +10,10 @@
     deepEqual = QUnit.deepEqual,
     module = QUnit.module,
     root_gadget_klass = renderJS(window),
-    root_gadget_defer = RSVP.defer();
+    root_gadget_defer = RSVP.defer(),
+    RenderJSGadget = __RenderJSGadget,
+    RenderJSEmbeddedGadget = __RenderJSEmbeddedGadget,
+    RenderJSIframeGadget = __RenderJSIframeGadget;
 
   // Keep track of the root gadget
   renderJS(window).ready(function (g) {
@@ -402,9 +406,9 @@
       .then(function (Klass) {
         var instance;
 
-        equal(Klass.prototype.path, url);
-        equal(Klass.prototype.foo, 'bar');
-        equal(Klass.template_element.nodeType, 9);
+        equal(Klass.prototype.__path, url);
+        equal(Klass.prototype.__foo, 'bar');
+        equal(Klass.__template_element.nodeType, 9);
 
         instance = new Klass();
         ok(instance instanceof RenderJSGadget);
@@ -473,7 +477,7 @@
       .then(function (Klass) {
         var instance;
 
-        equal(Klass.prototype.path, url);
+        equal(Klass.prototype.__path, url);
 
         instance = new Klass();
         ok(instance instanceof RenderJSGadget);
@@ -931,7 +935,7 @@
   test('returns interface_list', function () {
     // Check that getInterfaceList return a Promise
     var gadget = new RenderJSGadget();
-    gadget.interface_list = "foo";
+    gadget.__interface_list = "foo";
     stop();
     gadget.getInterfaceList()
       .then(function (result) {
@@ -966,7 +970,7 @@
   test('returns interface_list', function () {
     // Check that getRequiredCSSList return a Promise
     var gadget = new RenderJSGadget();
-    gadget.required_css_list = "foo";
+    gadget.__required_css_list = "foo";
     stop();
     gadget.getRequiredCSSList()
       .then(function (result) {
@@ -1001,7 +1005,7 @@
   test('returns interface_list', function () {
     // Check that getRequiredJSList return a Promise
     var gadget = new RenderJSGadget();
-    gadget.required_js_list = "foo";
+    gadget.__required_js_list = "foo";
     stop();
     gadget.getRequiredJSList()
       .then(function (result) {
@@ -1036,7 +1040,7 @@
   test('returns path', function () {
     // Check that getPath return a Promise
     var gadget = new RenderJSGadget();
-    gadget.path = "foo";
+    gadget.__path = "foo";
     stop();
     gadget.getPath()
       .then(function (result) {
@@ -1071,7 +1075,7 @@
   test('returns title', function () {
     // Check that getTitle return a Promise
     var gadget = new RenderJSGadget();
-    gadget.title = "foo";
+    gadget.__title = "foo";
     stop();
     gadget.getTitle()
       .then(function (result) {
@@ -1106,7 +1110,7 @@
   test('returns element property', function () {
     // Check that getElement return a Promise
     var gadget = new RenderJSGadget();
-    gadget.element = "foo";
+    gadget.__element = "foo";
     stop();
     gadget.getElement()
       .then(function (result) {
@@ -1461,7 +1465,7 @@
     }, result;
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
-    Klass.ready_list = [];
+    Klass.__ready_list = [];
     Klass.ready = RenderJSGadget.ready;
 
     result = Klass.ready(function () {
@@ -1481,12 +1485,12 @@
       callback = function () {return; };
     Klass.prototype = new RenderJSGadget();
     Klass.prototype.constructor = Klass;
-    Klass.ready_list = [];
+    Klass.__ready_list = [];
     Klass.ready = RenderJSGadget.ready;
 
     Klass.ready(callback);
     // ready is chainable
-    deepEqual(Klass.ready_list, [callback]);
+    deepEqual(Klass.__ready_list, [callback]);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -1639,7 +1643,7 @@
     stop();
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function (new_gadget) {
-        equal(new_gadget.path, url);
+        equal(new_gadget.__path, url);
         ok(new_gadget instanceof RenderJSGadget);
       })
       .always(function () {
@@ -1664,8 +1668,8 @@
     stop();
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function (new_gadget) {
-        ok(new_gadget.hasOwnProperty("sub_gadget_dict"));
-        deepEqual(new_gadget.sub_gadget_dict, {});
+        ok(new_gadget.hasOwnProperty("__sub_gadget_dict"));
+        deepEqual(new_gadget.__sub_gadget_dict, {});
       })
       .always(function () {
         start();
@@ -1734,7 +1738,7 @@
       .then(function (new_gadget) {
         equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou2</div><div>bar</div>");
-        equal(new_gadget.element.outerHTML,
+        equal(new_gadget.__element.outerHTML,
               "<div><p>Bar content</p></div>");
         ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
         equal(spy_js.firstCall.args[0], js1_url, "First JS call");
@@ -2047,7 +2051,7 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98.html';
-    gadget.sub_gadget_dict = {};
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2063,8 +2067,8 @@
         );
       })
       .then(function (child_gadget) {
-        ok(gadget.sub_gadget_dict.hasOwnProperty("foo"));
-        equal(gadget.sub_gadget_dict.foo, child_gadget);
+        ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
+        equal(gadget.__sub_gadget_dict.foo, child_gadget);
       })
       .fail(function (e) {
         ok(false, e);
@@ -2184,7 +2188,7 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       url = "./embedded.html";
-    gadget.sub_gadget_dict = {};
+    gadget.__sub_gadget_dict = {};
 
     document.getElementById("qunit-fixture").textContent = "";
 
@@ -2195,8 +2199,8 @@
       scope: "foo"
     })
       .then(function (child_gadget) {
-        ok(gadget.sub_gadget_dict.hasOwnProperty("foo"));
-        equal(gadget.sub_gadget_dict.foo, child_gadget);
+        ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
+        equal(gadget.__sub_gadget_dict.foo, child_gadget);
       })
       .fail(function (e) {
         ok(false, e);
@@ -2219,13 +2223,13 @@
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        equal(new_gadget.path, url);
+        equal(new_gadget.__path, url);
         ok(new_gadget instanceof RenderJSIframeGadget);
         equal(
-          new_gadget.element.innerHTML,
+          new_gadget.__element.innerHTML,
           '<iframe src="' + url + '"></iframe>'
         );
-        ok(new_gadget.chan !== undefined);
+        ok(new_gadget.__chan !== undefined);
       })
       .always(function () {
         start();
@@ -2245,8 +2249,8 @@
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        ok(new_gadget.hasOwnProperty("sub_gadget_dict"));
-        deepEqual(new_gadget.sub_gadget_dict, {});
+        ok(new_gadget.hasOwnProperty("__sub_gadget_dict"));
+        deepEqual(new_gadget.__sub_gadget_dict, {});
       })
       .always(function () {
         start();
@@ -2413,7 +2417,7 @@
   test('returns value from sub_gadget_dict attribute', function () {
     // Check that getDeclaredGadget return a Promise
     var gadget = new RenderJSGadget();
-    gadget.sub_gadget_dict = {foo: "bar"};
+    gadget.__sub_gadget_dict = {foo: "bar"};
     stop();
     gadget.getDeclaredGadget("foo")
       .then(function (result) {
@@ -2427,7 +2431,7 @@
   test('throw an error if scope is unknown', function () {
     // Check that getDeclaredGadget return a Promise
     var gadget = new RenderJSGadget();
-    gadget.sub_gadget_dict = {};
+    gadget.__sub_gadget_dict = {};
     stop();
     gadget.getDeclaredGadget("foo")
       .then(function () {
@@ -2453,12 +2457,12 @@
   test('returns value from sub_gadget_dict attribute', function () {
     // Check that dropGadget return a Promise
     var gadget = new RenderJSGadget();
-    gadget.sub_gadget_dict = {foo: "bar"};
+    gadget.__sub_gadget_dict = {foo: "bar"};
     stop();
     gadget.dropGadget("foo")
       .then(function (result) {
         equal(result, undefined);
-        equal(JSON.stringify(gadget.sub_gadget_dict), "{}");
+        equal(JSON.stringify(gadget.__sub_gadget_dict), "{}");
       })
       .always(function () {
         start();
@@ -2468,7 +2472,7 @@
   test('throw an error if scope is unknown', function () {
     // Check that dropGadget return a Promise
     var gadget = new RenderJSGadget();
-    gadget.sub_gadget_dict = {};
+    gadget.__sub_gadget_dict = {};
     stop();
     gadget.dropGadget("foo")
       .then(function () {
@@ -2499,33 +2503,33 @@
     root_gadget_defer.promise
       .then(function (root_gadget) {
         // Check instance
-        equal(root_gadget.path, window.location.href);
-        equal(root_gadget.title, document.title);
-        deepEqual(root_gadget.interface_list, []);
-        deepEqual(root_gadget.required_css_list,
+        equal(root_gadget.__path, window.location.href);
+        equal(root_gadget.__title, document.title);
+        deepEqual(root_gadget.__interface_list, []);
+        deepEqual(root_gadget.__required_css_list,
                   ["../node_modules/grunt-contrib-qunit/test/libs/qunit.css"]);
-        deepEqual(root_gadget.required_js_list, [
+        deepEqual(root_gadget.__required_js_list, [
           "../node_modules/rsvp/dist/rsvp-2.0.4.js",
           "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
           "../node_modules/sinon/pkg/sinon.js",
           "../dist/renderjs-latest.js",
           "renderjs_test.js"
         ]);
-        equal(root_gadget.element.outerHTML, document.body.outerHTML);
+        equal(root_gadget.__element.outerHTML, document.body.outerHTML);
         // Check klass
-        equal(root_gadget.constructor.prototype.path, window.location.href);
-        equal(root_gadget.constructor.prototype.title, document.title);
-        deepEqual(root_gadget.constructor.prototype.interface_list, []);
-        deepEqual(root_gadget.constructor.prototype.required_css_list,
+        equal(root_gadget.constructor.prototype.__path, window.location.href);
+        equal(root_gadget.constructor.prototype.__title, document.title);
+        deepEqual(root_gadget.constructor.prototype.__interface_list, []);
+        deepEqual(root_gadget.constructor.prototype.__required_css_list,
                   ["../node_modules/grunt-contrib-qunit/test/libs/qunit.css"]);
-        deepEqual(root_gadget.constructor.prototype.required_js_list, [
+        deepEqual(root_gadget.constructor.prototype.__required_js_list, [
           "../node_modules/rsvp/dist/rsvp-2.0.4.js",
           "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
           "../node_modules/sinon/pkg/sinon.js",
           "../dist/renderjs-latest.js",
           "renderjs_test.js"
         ]);
-        var html = root_gadget.constructor.template_element.outerHTML;
+        var html = root_gadget.constructor.__template_element.outerHTML;
         ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
         ok(root_gadget.on !== undefined);
         ok(root_gadget.off !== undefined);
@@ -2533,8 +2537,8 @@
         ok(root_gadget instanceof RenderJSGadget);
         ok(root_gadget_klass, root_gadget.constructor);
         ok(root_gadget.aq_parent !== undefined);
-        ok(root_gadget.hasOwnProperty("sub_gadget_dict"));
-        deepEqual(root_gadget.sub_gadget_dict, {});
+        ok(root_gadget.hasOwnProperty("__sub_gadget_dict"));
+        deepEqual(root_gadget.__sub_gadget_dict, {});
       })
       .fail(function (e) {
         ok(false, e);

@@ -1,4 +1,5 @@
 /*! RenderJs */
+/*jslint nomen: true*/
 
 /*
  * renderJs - Generic Gadget library renderer.
@@ -22,22 +23,22 @@
       return new RenderJSGadget();
     }
   }
-  RenderJSGadget.prototype.title = "";
-  RenderJSGadget.prototype.interface_list = [];
-  RenderJSGadget.prototype.path = "";
-  RenderJSGadget.prototype.html = "";
-  RenderJSGadget.prototype.required_css_list = [];
-  RenderJSGadget.prototype.required_js_list = [];
+  RenderJSGadget.prototype.__title = "";
+  RenderJSGadget.prototype.__interface_list = [];
+  RenderJSGadget.prototype.__path = "";
+  RenderJSGadget.prototype.__html = "";
+  RenderJSGadget.prototype.__required_css_list = [];
+  RenderJSGadget.prototype.__required_js_list = [];
 
   RSVP.EventTarget.mixin(RenderJSGadget.prototype);
 
   function clearGadgetInternalParameters(g) {
-    g.sub_gadget_dict = {};
+    g.__sub_gadget_dict = {};
   }
 
-  RenderJSGadget.ready_list = [clearGadgetInternalParameters];
+  RenderJSGadget.__ready_list = [clearGadgetInternalParameters];
   RenderJSGadget.ready = function (callback) {
-    this.ready_list.push(callback);
+    this.__ready_list.push(callback);
     return this;
   };
 
@@ -61,30 +62,30 @@
   RenderJSGadget
     .declareMethod('getInterfaceList', function () {
       // Returns the list of gadget prototype
-      return this.interface_list;
+      return this.__interface_list;
     })
     .declareMethod('getRequiredCSSList', function () {
       // Returns a list of CSS required by the gadget
-      return this.required_css_list;
+      return this.__required_css_list;
     })
     .declareMethod('getRequiredJSList', function () {
       // Returns a list of JS required by the gadget
-      return this.required_js_list;
+      return this.__required_js_list;
     })
     .declareMethod('getPath', function () {
       // Returns the path of the code of a gadget
-      return this.path;
+      return this.__path;
     })
     .declareMethod('getTitle', function () {
       // Returns the title of a gadget
-      return this.title;
+      return this.__title;
     })
     .declareMethod('getElement', function () {
       // Returns the DOM Element of a gadget
-      if (this.element === undefined) {
+      if (this.__element === undefined) {
         throw new Error("No element defined");
       }
-      return this.element;
+      return this.__element;
     })
     .declareMethod('acquire', function () {
       var gadget = this,
@@ -115,7 +116,7 @@
     }
     RenderJSGadget.call(this);
   }
-  RenderJSEmbeddedGadget.ready_list = RenderJSGadget.ready_list.slice();
+  RenderJSEmbeddedGadget.__ready_list = RenderJSGadget.__ready_list.slice();
   RenderJSEmbeddedGadget.ready =
     RenderJSGadget.ready;
   RenderJSEmbeddedGadget.prototype = new RenderJSGadget();
@@ -143,12 +144,12 @@
       // Get the gadget class and instanciate it
       .push(function (Klass) {
         var i,
-          template_node_list = Klass.template_element.body.childNodes;
+          template_node_list = Klass.__template_element.body.childNodes;
         gadget_loading_klass = Klass;
         gadget_instance = new Klass();
-        gadget_instance.element = options.element;
+        gadget_instance.__element = options.element;
         for (i = 0; i < template_node_list.length; i += 1) {
-          gadget_instance.element.appendChild(
+          gadget_instance.__element.appendChild(
             template_node_list[i].cloneNode(true)
           );
         }
@@ -186,7 +187,7 @@
     }
     RenderJSGadget.call(this);
   }
-  RenderJSIframeGadget.ready_list = RenderJSGadget.ready_list.slice();
+  RenderJSIframeGadget.__ready_list = RenderJSGadget.__ready_list.slice();
   RenderJSIframeGadget.ready =
     RenderJSGadget.ready;
   RenderJSIframeGadget.prototype = new RenderJSGadget();
@@ -223,8 +224,8 @@
     iframe = document.createElement("iframe");
 //    gadget_instance.element.setAttribute("seamless", "seamless");
     iframe.setAttribute("src", url);
-    gadget_instance.path = url;
-    gadget_instance.element = options.element;
+    gadget_instance.__path = url;
+    gadget_instance.__element = options.element;
 
     // Attach it to the DOM
     options.element.appendChild(iframe);
@@ -232,47 +233,48 @@
     // XXX Manage unbind when deleting the gadget
 
     // Create the communication channel with the iframe
-    gadget_instance.chan = Channel.build({
+    gadget_instance.__chan = Channel.build({
       window: iframe.contentWindow,
       origin: "*",
       scope: "renderJS"
     });
 
     // Create new method from the declareMethod call inside the iframe
-    gadget_instance.chan.bind("declareMethod", function (trans, method_name) {
-      gadget_instance[method_name] = function () {
-        var argument_list = arguments;
-        return new RSVP.Promise(function (resolve, reject) {
-          gadget_instance.chan.call({
-            method: "methodCall",
-            params: [
-              method_name,
-              Array.prototype.slice.call(argument_list, 0)],
-            success: function (s) {
-              resolve(s);
-            },
-            error: function (e) {
-              reject(e);
-            }
+    gadget_instance.__chan.bind("declareMethod",
+                                function (trans, method_name) {
+        gadget_instance[method_name] = function () {
+          var argument_list = arguments;
+          return new RSVP.Promise(function (resolve, reject) {
+            gadget_instance.__chan.call({
+              method: "methodCall",
+              params: [
+                method_name,
+                Array.prototype.slice.call(argument_list, 0)],
+              success: function (s) {
+                resolve(s);
+              },
+              error: function (e) {
+                reject(e);
+              }
+            });
           });
-        });
-      };
-      return "OK";
-    });
+        };
+        return "OK";
+      });
 
     // Wait for the iframe to be loaded before continuing
-    gadget_instance.chan.bind("ready", function (trans) {
+    gadget_instance.__chan.bind("ready", function (trans) {
       iframe_loading_deferred.resolve(gadget_instance);
       return "OK";
     });
-    gadget_instance.chan.bind("failed", function (trans, params) {
+    gadget_instance.__chan.bind("failed", function (trans, params) {
       iframe_loading_deferred.reject(params);
       return "OK";
     });
-    gadget_instance.chan.bind("trigger", function (trans, params) {
+    gadget_instance.__chan.bind("trigger", function (trans, params) {
       return gadget_instance.trigger(params.event_name, params.options);
     });
-    gadget_instance.chan.bind("acquire", function (trans, params) {
+    gadget_instance.__chan.bind("acquire", function (trans, params) {
       gadget_instance.acquire.apply(gadget_instance, params)
         .then(function (g) {
           trans.complete(g);
@@ -341,17 +343,17 @@
           function ready_wrapper() {
             return gadget_instance;
           }
-          for (i = 0; i < gadget_instance.constructor.ready_list.length;
+          for (i = 0; i < gadget_instance.constructor.__ready_list.length;
                i += 1) {
             // Put a timeout?
-            queue.push(gadget_instance.constructor.ready_list[i]);
+            queue.push(gadget_instance.constructor.__ready_list[i]);
             // Always return the gadget instance after ready function
             queue.push(ready_wrapper);
           }
 
           // Store local reference to the gadget instance
           if (options.scope !== undefined) {
-            parent_gadget.sub_gadget_dict[options.scope] = gadget_instance;
+            parent_gadget.__sub_gadget_dict[options.scope] = gadget_instance;
           }
           return gadget_instance;
         })
@@ -365,17 +367,17 @@
       return loading_gadget_promise;
     })
     .declareMethod('getDeclaredGadget', function (gadget_scope) {
-      if (!this.sub_gadget_dict.hasOwnProperty(gadget_scope)) {
+      if (!this.__sub_gadget_dict.hasOwnProperty(gadget_scope)) {
         throw new Error("Gadget scope '" + gadget_scope + "' is not known.");
       }
-      return this.sub_gadget_dict[gadget_scope];
+      return this.__sub_gadget_dict[gadget_scope];
     })
     .declareMethod('dropGadget', function (gadget_scope) {
-      if (!this.sub_gadget_dict.hasOwnProperty(gadget_scope)) {
+      if (!this.__sub_gadget_dict.hasOwnProperty(gadget_scope)) {
         throw new Error("Gadget scope '" + gadget_scope + "' is not known.");
       }
       // http://perfectionkills.com/understanding-delete/
-      delete this.sub_gadget_dict[gadget_scope];
+      delete this.__sub_gadget_dict[gadget_scope];
     });
 
   /////////////////////////////////////////////////////////////////
@@ -483,25 +485,25 @@
         tmp_constructor = function () {
           RenderJSGadget.call(this);
         };
-        tmp_constructor.ready_list = RenderJSGadget.ready_list.slice();
+        tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
         tmp_constructor.declareMethod =
           RenderJSGadget.declareMethod;
         tmp_constructor.ready =
           RenderJSGadget.ready;
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
-        tmp_constructor.prototype.path = url;
+        tmp_constructor.prototype.__path = url;
         // https://developer.mozilla.org/en-US/docs/HTML_in_XMLHttpRequest
         // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
         // https://developer.mozilla.org/en-US/docs/Code_snippets/HTML_to_DOM
-        tmp_constructor.template_element =
+        tmp_constructor.__template_element =
           (new DOMParser()).parseFromString(xhr.responseText, "text/html");
         parsed_html = renderJS.parseGadgetHTMLDocument(
-          tmp_constructor.template_element
+          tmp_constructor.__template_element
         );
         for (key in parsed_html) {
           if (parsed_html.hasOwnProperty(key)) {
-            tmp_constructor.prototype[key] = parsed_html[key];
+            tmp_constructor.prototype['__' + key] = parsed_html[key];
           }
         }
 
@@ -608,9 +610,9 @@
   // global
   /////////////////////////////////////////////////////////////////
   window.rJS = window.renderJS = renderJS;
-  window.RenderJSGadget = RenderJSGadget;
-  window.RenderJSEmbeddedGadget = RenderJSEmbeddedGadget;
-  window.RenderJSIframeGadget = RenderJSIframeGadget;
+  window.__RenderJSGadget = RenderJSGadget;
+  window.__RenderJSEmbeddedGadget = RenderJSEmbeddedGadget;
+  window.__RenderJSIframeGadget = RenderJSIframeGadget;
 
   ///////////////////////////////////////////////////
   // Bootstrap process. Register the self gadget.
@@ -639,11 +641,11 @@
           RenderJSGadget.call(this);
         };
         tmp_constructor.declareMethod = RenderJSGadget.declareMethod;
-        tmp_constructor.ready_list = RenderJSGadget.ready_list.slice();
+        tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
         tmp_constructor.ready = RenderJSGadget.ready;
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
-        tmp_constructor.prototype.path = url;
+        tmp_constructor.prototype.__path = url;
         gadget_model_dict[url] = tmp_constructor;
 
         // Create the root gadget instance and put it in the loading stack
@@ -767,14 +769,14 @@
           key;
         for (key in settings) {
           if (settings.hasOwnProperty(key)) {
-            tmp_constructor.prototype[key] = settings[key];
+            tmp_constructor.prototype['__' + key] = settings[key];
           }
         }
-        tmp_constructor.template_element = document.createElement("div");
-        root_gadget.element = document.body;
-        for (j = 0; j < root_gadget.element.childNodes.length; j += 1) {
-          tmp_constructor.template_element.appendChild(
-            root_gadget.element.childNodes[j].cloneNode(true)
+        tmp_constructor.__template_element = document.createElement("div");
+        root_gadget.__element = document.body;
+        for (j = 0; j < root_gadget.__element.childNodes.length; j += 1) {
+          tmp_constructor.__template_element.appendChild(
+            root_gadget.__element.childNodes[j].cloneNode(true)
           );
         }
         RSVP.all([root_gadget.getRequiredJSList(),
@@ -796,9 +798,9 @@
               return root_gadget;
             }
             queue.push(ready_wrapper);
-            for (i = 0; i < tmp_constructor.ready_list.length; i += 1) {
+            for (i = 0; i < tmp_constructor.__ready_list.length; i += 1) {
               // Put a timeout?
-              queue.push(tmp_constructor.ready_list[i])
+              queue.push(tmp_constructor.__ready_list[i])
               // Always return the gadget instance after ready function
                    .push(ready_wrapper);
             }

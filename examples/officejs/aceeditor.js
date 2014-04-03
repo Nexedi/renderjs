@@ -1,4 +1,5 @@
 /*global ace */
+/*jslint nomen: true*/
 (function (window, rJS) {
   "use strict";
 
@@ -12,7 +13,7 @@
     });
 
   gk.ready(function (g) {
-    g.editor = ace.edit(g.element.getElementsByTagName('div')[0]);
+    g.editor = ace.edit(g.__element.getElementsByTagName('div')[0]);
     g.editor.setTheme("ace/theme/monokai");
   });
 

@@ -1,3 +1,4 @@
+/*jslint nomen: true*/
 (function (window, rJS) {
   "use strict";
 
@@ -11,11 +12,11 @@
   var gk = rJS(window);
 
   gk.declareMethod('setContent', function (value) {
-    this.element.getElementsByTagName('textarea')[0].value =
+    this.__element.getElementsByTagName('textarea')[0].value =
       escape_text(value);
   })
     .declareMethod('getContent', function () {
-      return this.element.getElementsByTagName('textarea')[0].value;
+      return this.__element.getElementsByTagName('textarea')[0].value;
     });
 
 }(window, rJS));

@@ -1,4 +1,5 @@
 /*global console */
+/*jslint nomen: true*/
 (function (window, $, rJS, RSVP) {
   "use strict";
 
@@ -6,8 +7,8 @@
     var editor = all_param[0],
       io = all_param[1],
       id = all_param[2];
-    $(io.element).trigger('create');
-    $(editor.element).trigger('create');
+    $(io.__element).trigger('create');
+    $(editor.__element).trigger('create');
 //       .then(function (element) {
 //         element.trigger('create');
 //       });
@@ -56,7 +57,7 @@
       ])
         .then(function (all_param) {
           i_c.empty();
-          i_c[0].appendChild(all_param[1].element);
+          i_c[0].appendChild(all_param[1].__element);
           return attachIOToEditor(all_param);
         })
         .fail(handleError);
@@ -64,8 +65,8 @@
   }
 
   rJS(window).ready(function (g) {
-    var editor_a_context = $(g.element).find(".editor_a").last(),
-      io_a_context = $(g.element).find(".editor_a_safe").last();
+    var editor_a_context = $(g.__element).find(".editor_a").last(),
+      io_a_context = $(g.__element).find(".editor_a_safe").last();
 //       editor_b_context = g.context.find(".editor_b").last(),
 //       io_b_context = g.context.find(".editor_b_safe").last();
 
@@ -84,7 +85,7 @@
         ]);
       })
       .then(function (all_list) {
-        var panel_context = $(g.element).find(".bare_panel"),
+        var panel_context = $(g.__element).find(".bare_panel"),
           editor_list = all_list[0],
           io_list = all_list[1],
           editor_definition,
@@ -102,7 +103,7 @@
         ])
           .then(function (all_param) {
             io_a_context.empty();
-            io_a_context[0].appendChild(all_param[1].element);
+            io_a_context[0].appendChild(all_param[1].__element);
             return attachIOToEditor(all_param);
           })
           .then(function () {
