@@ -84,25 +84,40 @@
         throw new Error("No element defined");
       }
       return this.__element;
-    })
-    .declareMethod('acquire', function () {
-      var gadget = this,
-        argument_list = arguments;
-      return new RSVP.Queue()
-        .push(function () {
-          var aq_dynamic = gadget.aq_dynamic;
-          if (aq_dynamic !== undefined) {
-            return aq_dynamic.apply(gadget, argument_list);
-          }
-          throw new renderJS.AcquisitionError("aq_dynamic is not defined");
-        })
-        .push(undefined, function (error) {
-          if (error instanceof renderJS.AcquisitionError) {
-            return gadget.aq_parent.apply(gadget, argument_list);
-          }
-          throw error;
-        });
     });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareAcquiredMethod
+  /////////////////////////////////////////////////////////////////
+  function acquire() {
+    var gadget = this,
+      argument_list = arguments;
+    return new RSVP.Queue()
+      .push(function () {
+        var aq_dynamic = gadget.aq_dynamic;
+        if (aq_dynamic !== undefined) {
+          return aq_dynamic.apply(gadget, argument_list);
+        }
+        throw new renderJS.AcquisitionError("aq_dynamic is not defined");
+      })
+      .push(undefined, function (error) {
+        if (error instanceof renderJS.AcquisitionError) {
+          return gadget.aq_parent.apply(gadget, argument_list);
+        }
+        throw error;
+      });
+  }
+
+  RenderJSGadget.declareAcquiredMethod =
+    function (name, method_name_to_acquire) {
+      this.prototype[name] = function () {
+        return acquire.apply(this, [method_name_to_acquire,
+                                    Array.prototype.slice.call(arguments, 0)]);
+      };
+
+      // Allow chain
+      return this;
+    };
 
   /////////////////////////////////////////////////////////////////
   // RenderJSEmbeddedGadget
@@ -270,7 +285,7 @@
       return "OK";
     });
     gadget_instance.__chan.bind("acquire", function (trans, params) {
-      gadget_instance.acquire.apply(gadget_instance, params)
+      acquire.apply(gadget_instance, params)
         .then(function (g) {
           trans.complete(g);
         }).fail(function (e) {
@@ -330,7 +345,7 @@
           var i;
           // Define aq_parent to reach parent gadget
           gadget_instance.aq_parent = function (method_name, argument_list) {
-            return parent_gadget.acquire(method_name, argument_list);
+            return acquire.apply(parent_gadget, [method_name, argument_list]);
           };
           // Drop the current loading klass info used by selector
           gadget_loading_klass = undefined;
@@ -483,6 +498,8 @@
         tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
         tmp_constructor.declareMethod =
           RenderJSGadget.declareMethod;
+        tmp_constructor.declareAcquiredMethod =
+          RenderJSGadget.declareAcquiredMethod;
         tmp_constructor.ready =
           RenderJSGadget.ready;
         tmp_constructor.prototype = new RenderJSGadget();
@@ -635,6 +652,8 @@
           RenderJSGadget.call(this);
         };
         tmp_constructor.declareMethod = RenderJSGadget.declareMethod;
+        tmp_constructor.declareAcquiredMethod =
+          RenderJSGadget.declareAcquiredMethod;
         tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
         tmp_constructor.ready = RenderJSGadget.ready;
         tmp_constructor.prototype = new RenderJSGadget();
@@ -712,6 +731,9 @@
           notifyDeclareMethod(name);
           return result;
         };
+
+        tmp_constructor.declareAcquiredMethod =
+          RenderJSGadget.declareAcquiredMethod;
 
         // Define aq_parent to inform parent window
         tmp_constructor.prototype.aq_parent = function (method_name,

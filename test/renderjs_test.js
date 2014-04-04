@@ -1,4 +1,5 @@
 /*jslint nomen: true*/
+/*global console */
 (function (document, renderJS, QUnit, sinon) {
   "use strict";
   var test = QUnit.test,
@@ -1135,32 +1136,83 @@
   });
 
   /////////////////////////////////////////////////////////////////
-  // RenderJSGadget.acquire
+  // RenderJSGadgetKlass.declareAcquiredMethod
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.acquire", {
+  module("RenderJSGadgetKlass.declareAcquiredMethod", {
     setup: function () {
       renderJS.clearGadgetKlassList();
     }
   });
 
+  test('is chainable', function () {
+    // Check that declareAcquiredMethod is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+    gadget = new Klass();
+    equal(gadget.testFoo, undefined);
+    result = Klass.declareAcquiredMethod('testFoo', 'testBar');
+    // declareAcquiredMethod is chainable
+    equal(result, Klass);
+  });
+
+  test('creates methods on the prototype', function () {
+    // Check that declareAcquiredMethod create a callable on the prototype
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+    gadget = new Klass();
+    equal(gadget.testFoo, undefined);
+    Klass.declareAcquiredMethod('testFoo', 'testBar');
+    // Method is added on the instance class prototype
+    equal(RenderJSGadget.prototype.testFoo, undefined);
+    ok(gadget.testFoo !== undefined);
+    ok(Klass.prototype.testFoo !== undefined);
+    equal(Klass.prototype.testFoo, gadget.testFoo);
+
+  });
+
   test('returns aq_dynamic result if available', function () {
-    var gadget = new RenderJSGadget(),
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
       aq_dynamic_called = false,
       original_method_name = "foo",
       original_argument_list = ["foobar", "barfoo"];
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+    Klass.declareAcquiredMethod("checkIfAqDynamicIsCalled",
+                               original_method_name);
+
+    gadget = new Klass();
 
     gadget.aq_dynamic = function (method_name, argument_list) {
       aq_dynamic_called = true;
       equal(this, gadget, "Context should be kept");
       equal(method_name, original_method_name, "Method name should be kept");
-      equal(argument_list, original_argument_list,
+      deepEqual(argument_list, original_argument_list,
             "Argument list should be kept"
         );
       return "FOO";
     };
 
     stop();
-    gadget.acquire(original_method_name, original_argument_list)
+    gadget.checkIfAqDynamicIsCalled("foobar", "barfoo")
       .then(function (result) {
         equal(result, "FOO");
         equal(aq_dynamic_called, true);
@@ -1171,15 +1223,26 @@
   });
 
   test('fails if aq_dynamic throws an error', function () {
-    var gadget = new RenderJSGadget(),
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
       original_error = new Error("Custom error for the test");
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+    Klass.declareAcquiredMethod("checkIfAqDynamicThrowsError",
+                               "foo");
+
+    gadget = new Klass();
 
     gadget.aq_dynamic = function () {
       throw original_error;
     };
 
     stop();
-    gadget.acquire()
+    gadget.checkIfAqDynamicThrowsError()
       .fail(function (error) {
         equal(error, original_error);
         equal(error.message, "Custom error for the test");
@@ -1191,12 +1254,23 @@
 
   test('returns aq_parent result if aq_dynamic raises AcquisitionError',
     function () {
-      var gadget = new RenderJSGadget(),
+      // Subclass RenderJSGadget to not pollute its namespace
+      var Klass = function () {
+        RenderJSGadget.call(this);
+      }, gadget,
         i = 0,
         aq_dynamic_called = false,
         aq_parent_called = false,
         original_method_name = "foo",
         original_argument_list = ["foobar", "barfoo"];
+      Klass.prototype = new RenderJSGadget();
+      Klass.prototype.constructor = Klass;
+      Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+      Klass.declareAcquiredMethod("checkIfAqDynamicThrowsAcqError",
+                                 original_method_name);
+
+      gadget = new Klass();
 
       gadget.aq_dynamic = function (method_name, argument_list) {
         aq_dynamic_called = true;
@@ -1210,14 +1284,14 @@
         equal(i, 1, "aq_parent called after aq_dynamic");
         equal(this, gadget, "Context should be kept");
         equal(method_name, original_method_name, "Method name should be kept");
-        equal(argument_list, original_argument_list,
+        deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
         return "FOO";
       };
 
       stop();
-      gadget.acquire(original_method_name, original_argument_list)
+      gadget.checkIfAqDynamicThrowsAcqError("foobar", "barfoo")
         .then(function (result) {
           equal(result, "FOO");
           equal(aq_dynamic_called, true);
@@ -1230,23 +1304,35 @@
 
   test('returns aq_parent result if aq_dynamic does not exists',
     function () {
-      var gadget = new RenderJSGadget(),
+      // Subclass RenderJSGadget to not pollute its namespace
+      var Klass = function () {
+        RenderJSGadget.call(this);
+      }, gadget,
         aq_parent_called = false,
         original_method_name = "foo",
         original_argument_list = ["foobar", "barfoo"];
+      Klass.prototype = new RenderJSGadget();
+      Klass.prototype.constructor = Klass;
+      Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+      Klass.declareAcquiredMethod("checkIfAqDynamicIsUndefined",
+                                 original_method_name);
+
+      gadget = new Klass();
+
 
       gadget.aq_parent = function (method_name, argument_list) {
         aq_parent_called = true;
         equal(this, gadget, "Context should be kept");
         equal(method_name, original_method_name, "Method name should be kept");
-        equal(argument_list, original_argument_list,
+        deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
         return "FOO";
       };
 
       stop();
-      gadget.acquire(original_method_name, original_argument_list)
+      gadget.checkIfAqDynamicIsUndefined("foobar", "barfoo")
         .then(function (result) {
           equal(result, "FOO");
           equal(aq_parent_called, true);
@@ -1257,15 +1343,26 @@
     });
 
   test('fails if aq_parent throws an error', function () {
-    var gadget = new RenderJSGadget(),
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
       original_error = new Error("Custom error for the test");
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+    Klass.declareAcquiredMethod("checkIfAqParentThrowsError",
+                               "foo");
+
+    gadget = new Klass();
 
     gadget.aq_parent = function () {
       throw original_error;
     };
 
     stop();
-    gadget.acquire()
+    gadget.checkIfAqParentThrowsError()
       .fail(function (error) {
         equal(error, original_error);
         equal(error.message, "Custom error for the test");
@@ -1276,11 +1373,21 @@
   });
 
   test('fails if aq_parent is not defined', function () {
-    // Gadget klass should break the acquisition chain
-    var gadget = new RenderJSGadget();
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
+
+    Klass.declareAcquiredMethod("checkIfAqParentIsUndefined",
+                               "foo");
+
+    gadget = new Klass();
 
     stop();
-    gadget.acquire()
+    gadget.checkIfAqParentIsUndefined()
       .fail(function (error) {
         ok(error instanceof TypeError);
         ok((error.message === "gadget.aq_parent is undefined") ||
@@ -2076,7 +2183,7 @@
       original_argument_list = ["foobar", "barfoo"],
       html_url = 'http://example.org/files/qunittest/test353.html';
 
-    gadget.acquire = function (method_name, argument_list) {
+    gadget.aq_parent = function (method_name, argument_list) {
       acquire_called = true;
       equal(this, gadget, "Context should be kept");
       equal(method_name, original_method_name, "Method name should be kept");
@@ -2093,7 +2200,7 @@
     stop();
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        return new_gadget.acquire(
+        return new_gadget.aq_parent(
           original_method_name,
           original_argument_list
         );
@@ -2253,7 +2360,7 @@
       acquire_called = false,
       url = "./embedded.html";
 
-    gadget.acquire = function (method_name, argument_list) {
+    gadget.aq_parent = function (method_name, argument_list) {
       acquire_called = true;
       equal(this, gadget, "Context should be kept");
       if (method_name === "acquireMethodRequested") {
@@ -2315,10 +2422,7 @@
 
           // acquire check correctly returns result
           .push(function () {
-            return new_gadget.callAcquire(
-              "acquireMethodRequested",
-              ["param1", "param2"]
-            );
+            return new_gadget.callOKAcquire("param1", "param2");
           })
           .push(function (result) {
             ok(acquire_called);
@@ -2327,7 +2431,7 @@
 
           // acquire correctly returns error
           .push(function () {
-            return new_gadget.callAcquire(
+            return new_gadget.callErrorAcquire(
               "acquireMethodRequestedWithAcquisitionError",
               ["param1", "param2"]
             );
@@ -2339,7 +2443,8 @@
             equal(
               error,
               "AcquisitionError: Can not handle " +
-                "acquireMethodRequestedWithAcquisitionError"
+                "acquireMethodRequestedWithAcquisitionError",
+              error
             );
           });
       })

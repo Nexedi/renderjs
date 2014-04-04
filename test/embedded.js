@@ -24,8 +24,14 @@
     .declareMethod('getContent', function () {
       return this.embedded_property;
     })
-    .declareMethod('callAcquire', function (method_name, param_list) {
-      return this.acquire(method_name, param_list);
+    .declareAcquiredMethod('plugOKAcquire', 'acquireMethodRequested')
+    .declareMethod('callOKAcquire', function (param1, param2) {
+      return this.plugOKAcquire(param1, param2);
+    })
+    .declareAcquiredMethod('plugErrorAcquire',
+                          'acquireMethodRequestedWithAcquisitionError')
+    .declareMethod('callErrorAcquire', function (param1, param2) {
+      return this.plugErrorAcquire(param1, param2);
     });
 
 }(window, rJS));
