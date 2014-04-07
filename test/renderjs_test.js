@@ -423,10 +423,12 @@
 
     stop();
     renderJS.declareGadgetKlass(url)
-      .always(function () {
-        start();
+      .then(function () {
         equal(spy.args[0][1], url);
+      })
+      .always(function () {
         spy.restore();
+        start();
       });
   });
 
