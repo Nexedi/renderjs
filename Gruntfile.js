@@ -82,6 +82,7 @@ module.exports = function (grunt) {
             'sinon',
             'RSVP',
             'DOMParser',
+            'URI',
             '__RenderJSIframeGadget',
             '__RenderJSEmbeddedGadget'
           ]

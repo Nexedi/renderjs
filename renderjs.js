@@ -318,6 +318,9 @@
         options.sandbox = "public";
       }
 
+      // transform url to absolute url if it is relative
+      url = renderJS.getAbsoluteURL(url, this.__path);
+
       // Change the global variable to update the loading queue
       queue = new RSVP.Queue()
         // Wait for previous gadget loading to finish first
@@ -421,6 +424,27 @@
     renderJS.AcquisitionError;
 
   /////////////////////////////////////////////////////////////////
+  // renderJS.getAbsoluteURL
+  /////////////////////////////////////////////////////////////////
+  renderJS.getAbsoluteURL = function (url, base_url) {
+    var doc, base, link,
+      html = "<!doctype><html><head></head></html>",
+      isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i');
+
+    if (url && base_url && !isAbsoluteOrDataURL.test(url)) {
+      doc = (new DOMParser()).parseFromString(html, 'text/html');
+      base = doc.createElement('base');
+      link = doc.createElement('link');
+      doc.head.appendChild(base);
+      doc.head.appendChild(link);
+      base.href = base_url;
+      link.href = url;
+      return link.href;
+    }
+    return url;
+  };
+
+  /////////////////////////////////////////////////////////////////
   // renderJS.declareJS
   /////////////////////////////////////////////////////////////////
   renderJS.declareJS = function (url) {
@@ -511,7 +535,8 @@
         tmp_constructor.__template_element =
           (new DOMParser()).parseFromString(xhr.responseText, "text/html");
         parsed_html = renderJS.parseGadgetHTMLDocument(
-          tmp_constructor.__template_element
+          tmp_constructor.__template_element,
+          url
         );
         for (key in parsed_html) {
           if (parsed_html.hasOwnProperty(key)) {
@@ -586,7 +611,7 @@
   /////////////////////////////////////////////////////////////////
   // renderJS.parseGadgetHTMLDocument
   /////////////////////////////////////////////////////////////////
-  renderJS.parseGadgetHTMLDocument = function (document_element) {
+  renderJS.parseGadgetHTMLDocument = function (document_element, url) {
     var settings = {
         title: "",
         interface_list: [],
@@ -594,7 +619,13 @@
         required_js_list: []
       },
       i,
-      element;
+      element,
+      isAbsoluteURL = new RegExp('^(?:[a-z]+:)?//', 'i');
+
+    if (!url || !isAbsoluteURL.test(url)) {
+      throw new Error("The second parameter should be an absolute url");
+    }
+
     if (document_element.nodeType === 9) {
       settings.title = document_element.title;
 
@@ -604,13 +635,19 @@
           // XXX Manage relative URL during extraction of URLs
           // element.href returns absolute URL in firefox but "" in chrome;
           if (element.rel === "stylesheet") {
-            settings.required_css_list.push(element.getAttribute("href"));
+            settings.required_css_list.push(
+              renderJS.getAbsoluteURL(element.getAttribute("href"), url)
+            );
           } else if (element.nodeName === "SCRIPT" &&
                      (element.type === "text/javascript" ||
                       !element.type)) {
-            settings.required_js_list.push(element.getAttribute("src"));
+            settings.required_js_list.push(
+              renderJS.getAbsoluteURL(element.getAttribute("src"), url)
+            );
           } else if (element.rel === "http://www.renderjs.org/rel/interface") {
-            settings.interface_list.push(element.getAttribute("href"));
+            settings.interface_list.push(
+              renderJS.getAbsoluteURL(element.getAttribute("href"), url)
+            );
           }
         }
       }
@@ -762,7 +799,7 @@
 
       function init() {
         // XXX HTML properties can only be set when the DOM is fully loaded
-        var settings = renderJS.parseGadgetHTMLDocument(document),
+        var settings = renderJS.parseGadgetHTMLDocument(document, url),
           j,
           key;
         for (key in settings) {

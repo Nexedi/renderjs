@@ -19,7 +19,8 @@
     "sinon": "~1.7.3",
     "connect-livereload": "~0.3.0",
     "grunt-open": "~0.2.2",
-    "grunt-contrib-concat": "~0.3.0"
+    "grunt-contrib-concat": "~0.3.0",
+    "URIjs": "~1.12.x"
   },
   "scripts": {
     "test": "./node_modules/.bin/grunt test",

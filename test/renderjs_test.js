@@ -1,6 +1,6 @@
 /*jslint nomen: true*/
 /*global console */
-(function (document, renderJS, QUnit, sinon) {
+(function (document, renderJS, QUnit, sinon, URI) {
   "use strict";
   var test = QUnit.test,
     stop = QUnit.stop,
@@ -28,9 +28,10 @@
 //     console.log(message);
 //   };
 
-  function parseGadgetHTML(html) {
+  function parseGadgetHTML(html, url) {
     return renderJS.parseGadgetHTMLDocument(
-      (new DOMParser()).parseFromString(html, "text/html")
+      (new DOMParser()).parseFromString(html, "text/html"),
+      url
     );
   }
 
@@ -45,7 +46,7 @@
   test('Not valid HTML string', function () {
     // Check that parseGadgetHTMLDocument returns the default value
     // if the string is not a valid xml
-    deepEqual(parseGadgetHTML(""), {
+    deepEqual(parseGadgetHTML("", "http://example.org"), {
       title: "",
       interface_list: [],
       required_css_list: [],
@@ -57,14 +58,26 @@
     // Check that parseGadgetHTMLDocument throws an error if the parameter is
     // not a HTMLDocument
     throws(function () {
-      renderJS.parseGadgetHTMLDocument({});
+      renderJS.parseGadgetHTMLDocument({}, "http://example.org/gadget.html");
+    });
+  });
+
+  test("Base url not set with absolute url", function () {
+    // Check that parseGadgetHTMLDocument throws an error if the base url is
+    // not set with absolute url
+    throws(function () {
+      parseGadgetHTML("");
+    });
+    throws(function () {
+      parseGadgetHTML("", "./path/to/a/gadget");
     });
   });
 
   test('Default result value', function () {
     // Check default value returned by parseGadgetHTMLDocument
     deepEqual(renderJS.parseGadgetHTMLDocument(
-      document.implementation.createHTMLDocument("")
+      document.implementation.createHTMLDocument(""),
+      "http://example.org"
     ), {
       title: "",
       interface_list: [],
@@ -81,7 +94,7 @@
         "<title>Great title</title>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org");
     equal(settings.title, 'Great title', 'Title extracted');
   });
 
@@ -94,7 +107,7 @@
         "<title>Great title 2</title>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org");
     equal(settings.title, 'Great title', 'First title extracted');
   });
 
@@ -157,9 +170,9 @@
         "type='text/css'/>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.required_css_list,
-              ['../lib/qunit/qunit.css'],
+              ['http://example.org/lib/qunit/qunit.css'],
               "CSS extracted");
   });
 
@@ -174,9 +187,10 @@
         "type='text/css'/>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.required_css_list,
-              ['../lib/qunit/qunit.css', '../lib/qunit/qunit2.css'],
+              ['http://example.org/lib/qunit/qunit.css',
+               'http://example.org/lib/qunit/qunit2.css'],
               "CSS order kept");
   });
 
@@ -189,7 +203,7 @@
         "type='text/css'/>" +
         "</body></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.required_css_list, [], "CSS not found");
   });
 
@@ -202,9 +216,9 @@
         "      href='./interface/renderable'/>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.interface_list,
-              ['./interface/renderable'],
+              ['http://example.org/foo/interface/renderable'],
               "interface extracted");
   });
 
@@ -219,10 +233,10 @@
         "      href='./interface/field'/>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.interface_list,
-              ['./interface/renderable',
-               './interface/field'],
+              ['http://example.org/foo/interface/renderable',
+               'http://example.org/foo/interface/field'],
               "interface order kept");
   });
 
@@ -235,7 +249,7 @@
         "      href='./interface/renderable'/>" +
         "</body></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.interface_list, [], "interface not found");
   });
 
@@ -248,9 +262,9 @@
         "type='text/javascript'></script>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.required_js_list,
-              ['../lib/qunit/qunit.js'],
+              ['http://example.org/lib/qunit/qunit.js'],
               "JS extracted");
   });
 
@@ -265,9 +279,10 @@
         "type='text/javascript'></script>" +
         "</head></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.required_js_list,
-              ['../lib/qunit/qunit.js', '../lib/qunit/qunit2.js'],
+              ['http://example.org/lib/qunit/qunit.js',
+               'http://example.org/lib/qunit/qunit2.js'],
               "JS order kept");
   });
 
@@ -280,7 +295,7 @@
         "type='text/javascript'></script>" +
         "</body></html>";
 
-    settings = parseGadgetHTML(html);
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
     deepEqual(settings.required_js_list, [], "JS not found");
   });
 
@@ -289,7 +304,8 @@
     deepEqual(parseGadgetHTML('<!doctype html><html><head>' +
       '<title>Test non valid XML</title>' +
       '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' +
-      '</head><body><p>Non valid XML</p></body></html>'), {
+      '</head><body><p>Non valid XML</p></body></html>',
+      'http://example.org/foo/'), {
       title: "Test non valid XML",
       interface_list: [],
       required_css_list: [],
@@ -303,9 +319,9 @@
       html = "<html><head>" +
         "<script src='../lib/qunit/qunit.js'></script" +
         "</head></html>";
-    settings = parseGadgetHTML(html, "http://test.org/foo");
+    settings = parseGadgetHTML(html, "http://example.org/foo");
     deepEqual(settings.required_js_list,
-              ["../lib/qunit/qunit.js"]);
+              ["http://example.org/lib/qunit/qunit.js"]);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -394,6 +410,24 @@
         start();
         mock.verify();
         mock.restore();
+      });
+  });
+
+  test("should call parseGadgetHTMLDocument with url", function () {
+    var url = "http://example.org/foo/gadget", spy;
+
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
+    }, "foo"]);
+
+    spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
+
+    stop();
+    renderJS.declareGadgetKlass(url)
+      .always(function () {
+        start();
+        equal(spy.args[0][1], url);
+        spy.restore();
       });
   });
 
@@ -1437,6 +1471,38 @@
   });
 
   /////////////////////////////////////////////////////////////////
+  // RenderJS.getAbsoluteURL
+  /////////////////////////////////////////////////////////////////
+
+  module("RenderJS.getAbsoluteURL");
+
+  test('make a relative url absolute with an absolute base url', function () {
+    var url = "../foo/bar",
+      base_url = "http://example.org/some/path/";
+
+    equal(renderJS.getAbsoluteURL(url, base_url),
+          "http://example.org/some/foo/bar");
+  });
+
+  test('do not translate absolute url', function () {
+    var url = "http://example.net/foo/bar",
+      base_url = "http://example.org/some/path/";
+
+    equal(renderJS.getAbsoluteURL(url, base_url), url);
+  });
+
+  test('do not translate data url', function () {
+    var first_url = "data:application/javascript;base64,something()",
+      second_url = "http://example.org/some/path/";
+
+    equal(renderJS.getAbsoluteURL(first_url, second_url), first_url);
+  });
+
+  test('return undefined if relative url not passed', function () {
+    equal(renderJS.getAbsoluteURL(), undefined);
+  });
+
+  /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.declareMethod
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareMethod", {
@@ -2227,6 +2293,28 @@
       });
   });
 
+  test('path must be absolute to parent path if relative', function () {
+    var parent_gadget = new RenderJSGadget(),
+      gadget_path = "./some/path/to/a/gadget",
+      parent_path = "http://something.org",
+      absolute_path = "http://something.org/some/path/to/a/gadget";
+
+    parent_gadget.__path = parent_path;
+    this.server.respondWith("GET", absolute_path, [200, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    stop();
+    parent_gadget.declareGadget(gadget_path)
+      .then(function (gadget) {
+        equal(gadget.__path, absolute_path);
+      })
+      .fail(function (e) {
+        ok(false);
+      })
+      .always(start);
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget (iframe)
   /////////////////////////////////////////////////////////////////
@@ -2319,22 +2407,29 @@
 
   test('provide an iframed gadget as callback parameter', function () {
     // Check that declare gadget returns the gadget
-    var gadget = new RenderJSGadget(),
-      url = "./embedded.html";
+    var parent_gadget = new RenderJSGadget(),
+      parsed = URI.parse(window.location.href),
+      parent_path = URI.build({protocol: parsed.protocol,
+                               hostname: parsed.hostname,
+                               port: parsed.port,
+                               path: parsed.path}).toString(),
+      gadget_path = "./embedded.html",
+      absolute_path = parent_path + "embedded.html";
 
     document.getElementById("qunit-fixture").textContent = "";
+    parent_gadget.__path = parent_path;
 
     stop();
-    gadget.declareGadget(url, {
+    parent_gadget.declareGadget(gadget_path, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        equal(new_gadget.__path, url);
+        equal(new_gadget.__path, absolute_path);
         ok(new_gadget instanceof RenderJSIframeGadget);
         equal(
           new_gadget.__element.innerHTML,
-          '<iframe src="' + url + '"></iframe>'
+          '<iframe src="' + absolute_path + '"></iframe>'
         );
         ok(new_gadget.__chan !== undefined);
       })
@@ -2580,6 +2675,11 @@
 //   });
 
   test('Check that the root gadget is cleanly implemented', function () {
+    var parsed = URI.parse(window.location.href),
+      parent_path = URI.build({protocol: parsed.protocol,
+                               hostname: parsed.hostname,
+                               port: parsed.port,
+                               path: parsed.path}).toString();
     stop();
     root_gadget_defer.promise
       .then(function (root_gadget) {
@@ -2588,13 +2688,21 @@
         equal(root_gadget.__title, document.title);
         deepEqual(root_gadget.__interface_list, []);
         deepEqual(root_gadget.__required_css_list,
-                  ["../node_modules/grunt-contrib-qunit/test/libs/qunit.css"]);
+          [URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.css")
+            .absoluteTo(parent_path).toString()]);
         deepEqual(root_gadget.__required_js_list, [
-          "../node_modules/rsvp/dist/rsvp-2.0.4.js",
-          "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
-          "../node_modules/sinon/pkg/sinon.js",
-          "../dist/renderjs-latest.js",
-          "renderjs_test.js"
+          URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../node_modules/sinon/pkg/sinon.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../node_modules/URIjs/src/URI.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../dist/renderjs-latest.js")
+            .absoluteTo(parent_path).toString(),
+          URI("renderjs_test.js")
+            .absoluteTo(parent_path).toString()
         ]);
         equal(root_gadget.__element.outerHTML, document.body.outerHTML);
         // Check klass
@@ -2602,13 +2710,21 @@
         equal(root_gadget.constructor.prototype.__title, document.title);
         deepEqual(root_gadget.constructor.prototype.__interface_list, []);
         deepEqual(root_gadget.constructor.prototype.__required_css_list,
-                  ["../node_modules/grunt-contrib-qunit/test/libs/qunit.css"]);
+          [URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.css")
+            .absoluteTo(parent_path).toString()]);
         deepEqual(root_gadget.constructor.prototype.__required_js_list, [
-          "../node_modules/rsvp/dist/rsvp-2.0.4.js",
-          "../node_modules/grunt-contrib-qunit/test/libs/qunit.js",
-          "../node_modules/sinon/pkg/sinon.js",
-          "../dist/renderjs-latest.js",
-          "renderjs_test.js"
+          URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../node_modules/sinon/pkg/sinon.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../node_modules/URIjs/src/URI.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../dist/renderjs-latest.js")
+            .absoluteTo(parent_path).toString(),
+          URI("renderjs_test.js")
+            .absoluteTo(parent_path).toString()
         ]);
         var html = root_gadget.constructor.__template_element.outerHTML;
         ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
@@ -2641,4 +2757,5 @@
       });
   });
 
-}(document, renderJS, QUnit, sinon));
+}(document, renderJS, QUnit, sinon, URI));
+
