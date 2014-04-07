@@ -605,7 +605,9 @@
           // element.href returns absolute URL in firefox but "" in chrome;
           if (element.rel === "stylesheet") {
             settings.required_css_list.push(element.getAttribute("href"));
-          } else if (element.type === "text/javascript") {
+          } else if (element.nodeName === "SCRIPT" &&
+                     (element.type === "text/javascript" ||
+                      !element.type)) {
             settings.required_js_list.push(element.getAttribute("src"));
           } else if (element.rel === "http://www.renderjs.org/rel/interface") {
             settings.interface_list.push(element.getAttribute("href"));

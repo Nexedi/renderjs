@@ -298,6 +298,16 @@
     });
   });
 
+  test('Extract JS even if type="text/javascript" not set', function () {
+    var settings,
+      html = "<html><head>" +
+        "<script src='../lib/qunit/qunit.js'></script" +
+        "</head></html>";
+    settings = parseGadgetHTML(html, "http://test.org/foo");
+    deepEqual(settings.required_js_list,
+              ["../lib/qunit/qunit.js"]);
+  });
+
   /////////////////////////////////////////////////////////////////
   // declareGadgetKlass
   /////////////////////////////////////////////////////////////////
