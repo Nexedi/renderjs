@@ -15,6 +15,9 @@
       return ((this.hasOwnProperty("__sub_gadget_dict")) &&
               (JSON.stringify(this.__sub_gadget_dict) === "{}"));
     })
+    .declareMethod('isAcquisitionDictInitialize', function () {
+      return (this.__acquired_method_dict !== undefined);
+    })
     .declareMethod('triggerError', function (value) {
       throw new Error("Manually triggered embedded error");
     })

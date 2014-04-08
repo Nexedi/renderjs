@@ -89,20 +89,22 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareAcquiredMethod
   /////////////////////////////////////////////////////////////////
-  function acquire() {
-    var gadget = this,
-      argument_list = arguments;
+  function acquire(method_name, argument_list) {
+    var gadget = this;
     return new RSVP.Queue()
       .push(function () {
-        var aq_dynamic = gadget.aq_dynamic;
-        if (aq_dynamic !== undefined) {
-          return aq_dynamic.apply(gadget, argument_list);
+        // Do not specify default __acquired_method_dict on prototype
+        // to prevent modifying this default value (with
+        // allowPublicAcquiredMethod for example)
+        var aq_dict = gadget.__acquired_method_dict || {};
+        if (aq_dict.hasOwnProperty(method_name)) {
+          return aq_dict[method_name].apply(gadget, [argument_list]);
         }
         throw new renderJS.AcquisitionError("aq_dynamic is not defined");
       })
       .push(undefined, function (error) {
         if (error instanceof renderJS.AcquisitionError) {
-          return gadget.aq_parent.apply(gadget, argument_list);
+          return gadget.aq_parent(method_name, argument_list);
         }
         throw error;
       });
@@ -114,6 +116,17 @@
         return acquire.apply(this, [method_name_to_acquire,
                                     Array.prototype.slice.call(arguments, 0)]);
       };
+
+      // Allow chain
+      return this;
+    };
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.allowPublicAcquiredMethod
+  /////////////////////////////////////////////////////////////////
+  RenderJSGadget.allowPublicAcquisition =
+    function (method_name, callback) {
+      this.prototype.__acquired_method_dict[method_name] = callback;
 
       // Allow chain
       return this;
@@ -529,6 +542,7 @@
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
         tmp_constructor.prototype.__path = url;
+        tmp_constructor.prototype.__acquired_method_dict = {};
         // https://developer.mozilla.org/en-US/docs/HTML_in_XMLHttpRequest
         // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
         // https://developer.mozilla.org/en-US/docs/Code_snippets/HTML_to_DOM
@@ -795,6 +809,7 @@
         };
       }
 
+      tmp_constructor.prototype.__acquired_method_dict = {};
       gadget_loading_klass = tmp_constructor;
 
       function init() {
