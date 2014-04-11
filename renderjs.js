@@ -122,7 +122,7 @@
     };
 
   /////////////////////////////////////////////////////////////////
-  // RenderJSGadget.allowPublicAcquiredMethod
+  // RenderJSGadget.allowPublicAcquisition
   /////////////////////////////////////////////////////////////////
   RenderJSGadget.allowPublicAcquisition =
     function (method_name, callback) {
@@ -537,6 +537,8 @@
           RenderJSGadget.declareMethod;
         tmp_constructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
+        tmp_constructor.allowPublicAcquisition =
+          RenderJSGadget.allowPublicAcquisition;
         tmp_constructor.ready =
           RenderJSGadget.ready;
         tmp_constructor.prototype = new RenderJSGadget();
@@ -707,6 +709,8 @@
         tmp_constructor.declareMethod = RenderJSGadget.declareMethod;
         tmp_constructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
+        tmp_constructor.allowPublicAcquisition =
+          RenderJSGadget.allowPublicAcquisition;
         tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
         tmp_constructor.ready = RenderJSGadget.ready;
         tmp_constructor.prototype = new RenderJSGadget();
@@ -734,6 +738,8 @@
         });
         // Create the root gadget instance and put it in the loading stack
         tmp_constructor = RenderJSEmbeddedGadget;
+        tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
+        tmp_constructor.prototype.__path = url;
         root_gadget = new RenderJSEmbeddedGadget();
 
         // Bind calls to renderJS method on the instance
@@ -787,6 +793,8 @@
 
         tmp_constructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
+        tmp_constructor.allowPublicAcquisition =
+          RenderJSGadget.allowPublicAcquisition;
 
         // Define aq_parent to inform parent window
         tmp_constructor.prototype.aq_parent = function (method_name,
