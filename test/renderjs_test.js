@@ -1449,7 +1449,7 @@
         ok((error.message ===
               "gadget.aq_parent is not a function") ||
            (error.message ===
-              "Object [object Object] has no method 'aq_parent'"), error);
+              "undefined is not a function"), error);
       })
       .always(function () {
         start();
