@@ -104,7 +104,7 @@
       })
       .push(undefined, function (error) {
         if (error instanceof renderJS.AcquisitionError) {
-          return gadget.aq_parent(method_name, argument_list);
+          return gadget.__aq_parent(method_name, argument_list);
         }
         throw error;
       });
@@ -359,8 +359,8 @@
         // Set the HTML context
         .push(function (gadget_instance) {
           var i;
-          // Define aq_parent to reach parent gadget
-          gadget_instance.aq_parent = function (method_name, argument_list) {
+          // Define __aq_parent to reach parent gadget
+          gadget_instance.__aq_parent = function (method_name, argument_list) {
             return acquire.apply(parent_gadget, [method_name, argument_list]);
           };
           // Drop the current loading klass info used by selector
@@ -723,7 +723,7 @@
 
         // Stop acquisition on the original root gadget
         // Do not put this on the klass, as their could be multiple instances
-        root_gadget.aq_parent = function (method_name) {
+        root_gadget.__aq_parent = function (method_name) {
           throw new renderJS.AcquisitionError(
             "No gadget provides " + method_name
           );
@@ -796,8 +796,8 @@
         tmp_constructor.allowPublicAcquisition =
           RenderJSGadget.allowPublicAcquisition;
 
-        // Define aq_parent to inform parent window
-        tmp_constructor.prototype.aq_parent = function (method_name,
+        // Define __aq_parent to inform parent window
+        tmp_constructor.prototype.__aq_parent = function (method_name,
           argument_list) {
           return new RSVP.Promise(function (resolve, reject) {
             embedded_channel.call({

@@ -1306,7 +1306,7 @@
       });
   });
 
-  test('returns aq_parent result if acquired_method raises AcquisitionError',
+  test('returns __aq_parent result if acquired_method raises AcquisitionError',
     function () {
       // Subclass RenderJSGadget to not pollute its namespace
       var Klass = function () {
@@ -1314,7 +1314,7 @@
       }, gadget,
         i = 0,
         aq_dynamic_called = false,
-        aq_parent_called = false,
+        __aq_parent_called = false,
         original_method_name = "foo",
         original_argument_list = ["foobar", "barfoo"];
       Klass.prototype = new RenderJSGadget();
@@ -1330,14 +1330,14 @@
           aq_dynamic_called = true;
           equal(i, 0, "aquired_method called first");
           i += 1;
-          throw new renderJS.AcquisitionError("please call aq_parent!");
+          throw new renderJS.AcquisitionError("please call __aq_parent!");
         };
 
       gadget = new Klass();
 
-      gadget.aq_parent = function (method_name, argument_list) {
-        aq_parent_called = true;
-        equal(i, 1, "aq_parent called after acquired_method");
+      gadget.__aq_parent = function (method_name, argument_list) {
+        __aq_parent_called = true;
+        equal(i, 1, "__aq_parent called after acquired_method");
         equal(this, gadget, "Context should be kept");
         equal(method_name, original_method_name, "Method name should be kept");
         deepEqual(argument_list, original_argument_list,
@@ -1351,20 +1351,20 @@
         .then(function (result) {
           equal(result, "FOO");
           equal(aq_dynamic_called, true);
-          equal(aq_parent_called, true);
+          equal(__aq_parent_called, true);
         })
         .always(function () {
           start();
         });
     });
 
-  test('returns aq_parent result if acquired_method does not exists',
+  test('returns __aq_parent result if acquired_method does not exists',
     function () {
       // Subclass RenderJSGadget to not pollute its namespace
       var Klass = function () {
         RenderJSGadget.call(this);
       }, gadget,
-        aq_parent_called = false,
+        __aq_parent_called = false,
         original_method_name = "foo",
         original_argument_list = ["foobar", "barfoo"];
       Klass.prototype = new RenderJSGadget();
@@ -1377,8 +1377,8 @@
       gadget = new Klass();
 
 
-      gadget.aq_parent = function (method_name, argument_list) {
-        aq_parent_called = true;
+      gadget.__aq_parent = function (method_name, argument_list) {
+        __aq_parent_called = true;
         equal(this, gadget, "Context should be kept");
         equal(method_name, original_method_name, "Method name should be kept");
         deepEqual(argument_list, original_argument_list,
@@ -1391,14 +1391,14 @@
       gadget.checkIfAqDynamicIsUndefined("foobar", "barfoo")
         .then(function (result) {
           equal(result, "FOO");
-          equal(aq_parent_called, true);
+          equal(__aq_parent_called, true);
         })
         .always(function () {
           start();
         });
     });
 
-  test('fails if aq_parent throws an error', function () {
+  test('fails if __aq_parent throws an error', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -1413,7 +1413,7 @@
 
     gadget = new Klass();
 
-    gadget.aq_parent = function () {
+    gadget.__aq_parent = function () {
       throw original_error;
     };
 
@@ -1428,7 +1428,7 @@
       });
   });
 
-  test('fails if aq_parent is not defined', function () {
+  test('fails if __aq_parent is not defined', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -1447,7 +1447,7 @@
       .fail(function (error) {
         ok(error instanceof TypeError);
         ok((error.message ===
-              "gadget.aq_parent is not a function") ||
+              "gadget.__aq_parent is not a function") ||
            (error.message ===
               "undefined is not a function"), error);
       })
@@ -1507,17 +1507,17 @@
   });
 
   /////////////////////////////////////////////////////////////////
-  // RenderJSGadget.aq_parent
+  // RenderJSGadget.__aq_parent
   /////////////////////////////////////////////////////////////////
-  module("RenderJSGadget.aq_parent", {
+  module("RenderJSGadget.__aq_parent", {
     setup: function () {
       renderJS.clearGadgetKlassList();
     }
   });
 
-  test('aq_parent does not exist by default', function () {
+  test('__aq_parent does not exist by default', function () {
     var gadget = new RenderJSGadget();
-    equal(gadget.aq_parent, undefined);
+    equal(gadget.__aq_parent, undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -1761,7 +1761,7 @@
     ok(gadget instanceof RenderJSGadget);
     ok(gadget instanceof RenderJSIframeGadget);
     ok(RenderJSIframeGadget !== RenderJSGadget);
-    ok(gadget.aq_parent === undefined);
+    ok(gadget.__aq_parent === undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -1803,7 +1803,7 @@
     ok(gadget instanceof RenderJSGadget);
     ok(gadget instanceof RenderJSEmbeddedGadget);
     ok(RenderJSEmbeddedGadget !== RenderJSGadget);
-    ok(gadget.aq_parent === undefined);
+    ok(gadget.__aq_parent === undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -2302,15 +2302,15 @@
       });
   });
 
-  test('Generate aq_parent on created gadget', function () {
-    // Check that aq_parent returns parent gadget acquire result
+  test('Generate __aq_parent on created gadget', function () {
+    // Check that __aq_parent returns parent gadget acquire result
     var gadget = new RenderJSGadget(),
       acquire_called = false,
       original_method_name = "foo",
       original_argument_list = ["foobar", "barfoo"],
       html_url = 'http://example.org/files/qunittest/test353.html';
 
-    gadget.aq_parent = function (method_name, argument_list) {
+    gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
       equal(this, gadget, "Context should be kept");
       equal(method_name, original_method_name, "Method name should be kept");
@@ -2327,7 +2327,7 @@
     stop();
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        return new_gadget.aq_parent(
+        return new_gadget.__aq_parent(
           original_method_name,
           original_argument_list
         );
@@ -2517,7 +2517,7 @@
       acquire_called = false,
       url = "./embedded.html";
 
-    gadget.aq_parent = function (method_name, argument_list) {
+    gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
       equal(this, gadget, "Context should be kept");
       if (method_name === "acquireMethodRequested") {
@@ -2791,7 +2791,7 @@
         ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
         ok(root_gadget instanceof RenderJSGadget);
         ok(root_gadget_klass, root_gadget.constructor);
-        ok(root_gadget.aq_parent !== undefined);
+        ok(root_gadget.__aq_parent !== undefined);
         ok(root_gadget.hasOwnProperty("__sub_gadget_dict"));
         deepEqual(root_gadget.__sub_gadget_dict, {});
       })
@@ -2803,11 +2803,11 @@
       });
   });
 
-  test('aq_parent fails on the root gadget', function () {
+  test('__aq_parent fails on the root gadget', function () {
     stop();
     root_gadget_defer.promise
       .then(function (root_gadget) {
-        return root_gadget.aq_parent("foo", "bar");
+        return root_gadget.__aq_parent("foo", "bar");
       })
       .fail(function (error) {
         ok(error instanceof renderJS.AcquisitionError);
