@@ -89,8 +89,18 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareAcquiredMethod
   /////////////////////////////////////////////////////////////////
-  function acquire(method_name, argument_list) {
-    var gadget = this;
+  function acquire(child_gadget, method_name, argument_list) {
+    var gadget = this,
+      key,
+      gadget_scope;
+
+    for (key in gadget.__sub_gadget_dict) {
+      if (gadget.__sub_gadget_dict.hasOwnProperty(key)) {
+        if (gadget.__sub_gadget_dict[key] === child_gadget) {
+          gadget_scope = key;
+        }
+      }
+    }
     return new RSVP.Queue()
       .push(function () {
         // Do not specify default __acquired_method_dict on prototype
@@ -98,7 +108,8 @@
         // allowPublicAcquiredMethod for example)
         var aq_dict = gadget.__acquired_method_dict || {};
         if (aq_dict.hasOwnProperty(method_name)) {
-          return aq_dict[method_name].apply(gadget, [argument_list]);
+          return aq_dict[method_name].apply(gadget,
+                                            [argument_list, gadget_scope]);
         }
         throw new renderJS.AcquisitionError("aq_dynamic is not defined");
       })
@@ -365,7 +376,8 @@
           var i;
           // Define __aq_parent to reach parent gadget
           gadget_instance.__aq_parent = function (method_name, argument_list) {
-            return acquire.apply(parent_gadget, [method_name, argument_list]);
+            return acquire.apply(parent_gadget, [gadget_instance, method_name,
+                                                 argument_list]);
           };
           // Drop the current loading klass info used by selector
           gadget_loading_klass = undefined;

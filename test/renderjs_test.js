@@ -2184,12 +2184,13 @@
 
     gadget.__acquired_method_dict = {};
     gadget.__acquired_method_dict[original_method_name] =
-      function (argument_list) {
+      function (argument_list, child_scope) {
         aq_dynamic_called = true;
         equal(this, gadget, "Context should be kept");
         deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
+        equal(child_scope, undefined, "No child scope if unknown");
         return "FOO";
       };
 
@@ -2207,6 +2208,48 @@
       })
       .then(function (result) {
         equal(result, "FOO");
+        equal(aq_dynamic_called, true);
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('__aq_parent propagate child_scope to acquired_method', function () {
+    var gadget = new RenderJSGadget(),
+      aq_dynamic_called = false,
+      original_method_name = "foo",
+      original_argument_list = ["foobar", "barfoo"],
+      html_url = 'http://example.org/files/qunittest/test353.html';
+
+    gadget.__acquired_method_dict = {};
+    gadget.__sub_gadget_dict = {};
+    gadget.__acquired_method_dict[original_method_name] =
+      function (argument_list, child_scope) {
+        aq_dynamic_called = true;
+        equal(this, gadget, "Context should be kept");
+        deepEqual(argument_list, original_argument_list,
+              "Argument list should be kept"
+          );
+        equal(child_scope, "bar", "Child scope should be provided");
+      };
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    stop();
+    gadget.declareGadget(html_url, {scope: "bar"})
+      .then(function (new_gadget) {
+        return new_gadget.__aq_parent(
+          original_method_name,
+          original_argument_list
+        );
+      })
+      .then(function (result) {
         equal(aq_dynamic_called, true);
       })
       .fail(function (e) {
