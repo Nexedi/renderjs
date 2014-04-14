@@ -113,8 +113,12 @@
   RenderJSGadget.declareAcquiredMethod =
     function (name, method_name_to_acquire) {
       this.prototype[name] = function () {
-        return acquire.apply(this, [method_name_to_acquire,
-                                    Array.prototype.slice.call(arguments, 0)]);
+        var argument_list = Array.prototype.slice.call(arguments, 0),
+          gadget = this;
+        return new RSVP.Queue()
+          .push(function () {
+            return gadget.__aq_parent(method_name_to_acquire, argument_list);
+          });
       };
 
       // Allow chain
@@ -298,7 +302,7 @@
       return "OK";
     });
     gadget_instance.__chan.bind("acquire", function (trans, params) {
-      acquire.apply(gadget_instance, params)
+      gadget_instance.__aq_parent.apply(gadget_instance, params)
         .then(function (g) {
           trans.complete(g);
         }).fail(function (e) {

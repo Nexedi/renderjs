@@ -1231,133 +1231,6 @@
 
   });
 
-  test('returns acquired_method result if available', function () {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var Klass = function () {
-      RenderJSGadget.call(this);
-    }, gadget,
-      aq_dynamic_called = false,
-      original_method_name = "foo",
-      original_argument_list = ["foobar", "barfoo"];
-    Klass.prototype = new RenderJSGadget();
-    Klass.prototype.constructor = Klass;
-    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
-
-    Klass.declareAcquiredMethod("checkIfAqDynamicIsCalled",
-                                original_method_name);
-
-    Klass.prototype.__acquired_method_dict = {};
-    Klass.prototype.__acquired_method_dict[original_method_name] =
-      function (argument_list) {
-        aq_dynamic_called = true;
-        equal(this, gadget, "Context should be kept");
-        deepEqual(argument_list, original_argument_list,
-              "Argument list should be kept"
-          );
-        return "FOO";
-      };
-
-    gadget = new Klass();
-
-    stop();
-    gadget.checkIfAqDynamicIsCalled("foobar", "barfoo")
-      .then(function (result) {
-        equal(result, "FOO");
-        equal(aq_dynamic_called, true);
-      })
-      .fail(function (e) {
-        ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
-
-  test('fails if aquired_method throws an error', function () {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var Klass = function () {
-      RenderJSGadget.call(this);
-    }, gadget,
-      original_error = new Error("Custom error for the test");
-    Klass.prototype = new RenderJSGadget();
-    Klass.prototype.constructor = Klass;
-    Klass.prototype.__acquired_method_dict = {};
-    Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
-
-    Klass.declareAcquiredMethod("checkIfAqDynamicThrowsError",
-                               "foo");
-
-    Klass.prototype.__acquired_method_dict = {};
-    Klass.prototype.__acquired_method_dict.foo =
-      function () {
-        throw original_error;
-      };
-
-    gadget = new Klass();
-
-    stop();
-    gadget.checkIfAqDynamicThrowsError()
-      .fail(function (error) {
-        equal(error, original_error);
-        equal(error.message, "Custom error for the test");
-      })
-      .always(function () {
-        start();
-      });
-  });
-
-  test('returns __aq_parent result if acquired_method raises AcquisitionError',
-    function () {
-      // Subclass RenderJSGadget to not pollute its namespace
-      var Klass = function () {
-        RenderJSGadget.call(this);
-      }, gadget,
-        i = 0,
-        aq_dynamic_called = false,
-        __aq_parent_called = false,
-        original_method_name = "foo",
-        original_argument_list = ["foobar", "barfoo"];
-      Klass.prototype = new RenderJSGadget();
-      Klass.prototype.constructor = Klass;
-      Klass.prototype.__acquired_method_dict = {};
-      Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
-
-      Klass.declareAcquiredMethod("checkIfAqDynamicThrowsAcqError",
-                                 original_method_name);
-
-      Klass.prototype.__acquired_method_dict.foo =
-        function () {
-          aq_dynamic_called = true;
-          equal(i, 0, "aquired_method called first");
-          i += 1;
-          throw new renderJS.AcquisitionError("please call __aq_parent!");
-        };
-
-      gadget = new Klass();
-
-      gadget.__aq_parent = function (method_name, argument_list) {
-        __aq_parent_called = true;
-        equal(i, 1, "__aq_parent called after acquired_method");
-        equal(this, gadget, "Context should be kept");
-        equal(method_name, original_method_name, "Method name should be kept");
-        deepEqual(argument_list, original_argument_list,
-              "Argument list should be kept"
-          );
-        return "FOO";
-      };
-
-      stop();
-      gadget.checkIfAqDynamicThrowsAcqError("foobar", "barfoo")
-        .then(function (result) {
-          equal(result, "FOO");
-          equal(aq_dynamic_called, true);
-          equal(__aq_parent_called, true);
-        })
-        .always(function () {
-          start();
-        });
-    });
-
   test('returns __aq_parent result if acquired_method does not exists',
     function () {
       // Subclass RenderJSGadget to not pollute its namespace
@@ -2302,23 +2175,23 @@
       });
   });
 
-  test('Generate __aq_parent on created gadget', function () {
-    // Check that __aq_parent returns parent gadget acquire result
+  test('__aq_parent returns acquired_method result if available', function () {
     var gadget = new RenderJSGadget(),
-      acquire_called = false,
+      aq_dynamic_called = false,
       original_method_name = "foo",
       original_argument_list = ["foobar", "barfoo"],
       html_url = 'http://example.org/files/qunittest/test353.html';
 
-    gadget.__aq_parent = function (method_name, argument_list) {
-      acquire_called = true;
-      equal(this, gadget, "Context should be kept");
-      equal(method_name, original_method_name, "Method name should be kept");
-      equal(argument_list, original_argument_list,
-            "Argument list should be kept"
-        );
-      return "OK";
-    };
+    gadget.__acquired_method_dict = {};
+    gadget.__acquired_method_dict[original_method_name] =
+      function (argument_list) {
+        aq_dynamic_called = true;
+        equal(this, gadget, "Context should be kept");
+        deepEqual(argument_list, original_argument_list,
+              "Argument list should be kept"
+          );
+        return "FOO";
+      };
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2333,16 +2206,94 @@
         );
       })
       .then(function (result) {
-        ok(acquire_called, "acquire called on parent");
-        equal(result, "OK");
+        equal(result, "FOO");
+        equal(aq_dynamic_called, true);
       })
-      .fail(function (error) {
-        ok(false, error);
+      .fail(function (e) {
+        ok(false, e);
       })
       .always(function () {
         start();
       });
   });
+
+  test('__aq_parent fails if aquired_method throws an error', function () {
+    var gadget = new RenderJSGadget(),
+      original_error = new Error("Custom error for the test"),
+      html_url = 'http://example.org/files/qunittest/test353.html';
+
+    gadget.__acquired_method_dict = {};
+    gadget.__acquired_method_dict.foo = function () {
+      throw original_error;
+    };
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    stop();
+    gadget.declareGadget(html_url)
+      .then(function (new_gadget) {
+        return new_gadget.__aq_parent("foo", []);
+      })
+      .fail(function (error) {
+        equal(error, original_error);
+        equal(error.message, "Custom error for the test");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('returns __aq_parent result if acquired_method raises AcquisitionError',
+    function () {
+      var gadget = new RenderJSGadget(),
+        i = 0,
+        aq_dynamic_called = false,
+        __aq_parent_called = false,
+        original_method_name = "foo",
+        original_argument_list = ["foobar", "barfoo"],
+        html_url = 'http://example.org/files/qunittest/test353.html';
+
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
+
+      gadget.__acquired_method_dict = {};
+      gadget.__acquired_method_dict[original_method_name] =
+        function () {
+          aq_dynamic_called = true;
+          equal(i, 0, "aquired_method called first");
+          i += 1;
+          throw new renderJS.AcquisitionError("please call __aq_parent!");
+        };
+
+      gadget.__aq_parent = function (method_name, argument_list) {
+        __aq_parent_called = true;
+        equal(i, 1, "__aq_parent called after acquired_method");
+        equal(this, gadget, "Context should be kept");
+        equal(method_name, original_method_name, "Method name should be kept");
+        deepEqual(argument_list, original_argument_list,
+              "Argument list should be kept"
+          );
+        return "FOO";
+      };
+
+      stop();
+      gadget.declareGadget(html_url)
+        .then(function (new_gadget) {
+          return new_gadget.__aq_parent(original_method_name,
+                                        original_argument_list);
+        })
+        .then(function (result) {
+          equal(result, "FOO");
+          equal(aq_dynamic_called, true);
+          equal(__aq_parent_called, true);
+        })
+        .always(function () {
+          start();
+        });
+    });
 
   test('path must be absolute to parent path if relative', function () {
     var parent_gadget = new RenderJSGadget(),
