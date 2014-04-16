@@ -8,6 +8,14 @@
   gk.ready(function (g) {
     ready_called = true;
   })
+    .declareMethod('getBaseHref', function () {
+      return document.querySelector('base')
+        .getAttribute('href');
+    })
+    .declareMethod('getBaseTarget', function () {
+      return document.querySelector('base')
+        .getAttribute('target');
+    })
     .declareMethod('wasReadyCalled', function () {
       return ready_called;
     })

@@ -147,6 +147,14 @@
       return this;
     };
 
+  // Set aq_parent on gadget_instance which call acquire on parent_gadget
+  function setAqParent(gadget_instance, parent_gadget) {
+    gadget_instance.__aq_parent = function (method_name, argument_list) {
+      return acquire.apply(parent_gadget, [gadget_instance, method_name,
+                                           argument_list]);
+    };
+  }
+
   /////////////////////////////////////////////////////////////////
   // RenderJSEmbeddedGadget
   /////////////////////////////////////////////////////////////////
@@ -166,7 +174,7 @@
   /////////////////////////////////////////////////////////////////
   // privateDeclarePublicGadget
   /////////////////////////////////////////////////////////////////
-  function privateDeclarePublicGadget(url, options) {
+  function privateDeclarePublicGadget(url, options, parent_gadget) {
     var gadget_instance;
     if (options.element === undefined) {
       options.element = document.createElement("div");
@@ -194,6 +202,7 @@
             template_node_list[i].cloneNode(true)
           );
         }
+        setAqParent(gadget_instance, parent_gadget);
         // Load dependencies if needed
         return RSVP.all([
           gadget_instance.getRequiredJSList(),
@@ -237,12 +246,11 @@
   /////////////////////////////////////////////////////////////////
   // privateDeclareIframeGadget
   /////////////////////////////////////////////////////////////////
-  function privateDeclareIframeGadget(url, options) {
+  function privateDeclareIframeGadget(url, options, parent_gadget) {
     var gadget_instance,
       iframe,
       node,
       iframe_loading_deferred = RSVP.defer();
-
     if (options.element === undefined) {
       throw new Error("DOM element is required to create Iframe Gadget " +
                       url);
@@ -262,12 +270,12 @@
     }
 
     gadget_instance = new RenderJSIframeGadget();
+    setAqParent(gadget_instance, parent_gadget);
     iframe = document.createElement("iframe");
 //    gadget_instance.element.setAttribute("seamless", "seamless");
     iframe.setAttribute("src", url);
     gadget_instance.__path = url;
     gadget_instance.__element = options.element;
-
     // Attach it to the DOM
     options.element.appendChild(iframe);
 
@@ -348,7 +356,6 @@
 
       // transform url to absolute url if it is relative
       url = renderJS.getAbsoluteURL(url, this.__path);
-
       // Change the global variable to update the loading queue
       queue = new RSVP.Queue()
         // Wait for previous gadget loading to finish first
@@ -369,16 +376,11 @@
             throw new Error("Unsupported sandbox options '" +
                             options.sandbox + "'");
           }
-          return method(url, options);
+          return method(url, options, parent_gadget);
         })
         // Set the HTML context
         .push(function (gadget_instance) {
           var i;
-          // Define __aq_parent to reach parent gadget
-          gadget_instance.__aq_parent = function (method_name, argument_list) {
-            return acquire.apply(parent_gadget, [gadget_instance, method_name,
-                                                 argument_list]);
-          };
           // Drop the current loading klass info used by selector
           gadget_loading_klass = undefined;
           // Trigger calling of all ready callback
@@ -711,7 +713,6 @@
       notifyDeclareMethod,
       gadget_ready = false;
 
-
     // Create the gadget class for the current url
     if (gadget_model_dict.hasOwnProperty(url)) {
       throw new Error("bootstrap should not be called twice");
@@ -745,6 +746,12 @@
           );
         };
 
+        tmp_constructor.prototype.__acquired_method_dict = {};
+
+        // Allow acquisition of getTopURL returning the top gadget path
+        tmp_constructor.allowPublicAcquisition('getTopURL', function () {
+          return root_gadget.__path;
+        });
       } else {
         // Create the communication channel
         embedded_channel = Channel.build({
@@ -831,9 +838,8 @@
             });
           });
         };
+        tmp_constructor.prototype.__acquired_method_dict = {};
       }
-
-      tmp_constructor.prototype.__acquired_method_dict = {};
       gadget_loading_klass = tmp_constructor;
 
       function init() {
@@ -871,6 +877,19 @@
             function ready_wrapper() {
               return root_gadget;
             }
+
+            if (window.top !== window.self) {
+              tmp_constructor.ready(function () {
+                var base = document.createElement('base');
+                return root_gadget.__aq_parent('getTopURL', [])
+                  .then(function (topURL) {
+                    base.href = topURL;
+                    base.target = "_top";
+                    document.head.appendChild(base);
+                  });
+              });
+            }
+
             queue.push(ready_wrapper);
             for (i = 0; i < tmp_constructor.__ready_list.length; i += 1) {
               // Put a timeout?
