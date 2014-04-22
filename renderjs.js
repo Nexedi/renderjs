@@ -711,7 +711,8 @@
       embedded_channel,
       notifyReady,
       notifyDeclareMethod,
-      gadget_ready = false;
+      gadget_ready = false,
+      last_acquisition_gadget;
 
     // Create the gadget class for the current url
     if (gadget_model_dict.hasOwnProperty(url)) {
@@ -719,6 +720,21 @@
     }
     loading_gadget_promise = new RSVP.Promise(function (resolve, reject) {
       if (window.self === window.top) {
+
+        last_acquisition_gadget = new RenderJSGadget();
+        last_acquisition_gadget.__acquired_method_dict = {
+          getTopURL: function () {
+            return url;
+          }
+        };
+        // Stop acquisition on the last acquisition gadget
+        // Do not put this on the klass, as their could be multiple instances
+        last_acquisition_gadget.__aq_parent = function (method_name) {
+          throw new renderJS.AcquisitionError(
+            "No gadget provides " + method_name
+          );
+        };
+
         // XXX Copy/Paste from declareGadgetKlass
         tmp_constructor = function () {
           RenderJSGadget.call(this);
@@ -738,20 +754,8 @@
         // Create the root gadget instance and put it in the loading stack
         root_gadget = new gadget_model_dict[url]();
 
-        // Stop acquisition on the original root gadget
-        // Do not put this on the klass, as their could be multiple instances
-        root_gadget.__aq_parent = function (method_name) {
-          throw new renderJS.AcquisitionError(
-            "No gadget provides " + method_name
-          );
-        };
+        setAqParent(root_gadget, last_acquisition_gadget);
 
-        tmp_constructor.prototype.__acquired_method_dict = {};
-
-        // Allow acquisition of getTopURL returning the top gadget path
-        tmp_constructor.allowPublicAcquisition('getTopURL', function () {
-          return root_gadget.__path;
-        });
       } else {
         // Create the communication channel
         embedded_channel = Channel.build({
@@ -838,8 +842,9 @@
             });
           });
         };
-        tmp_constructor.prototype.__acquired_method_dict = {};
       }
+
+      tmp_constructor.prototype.__acquired_method_dict = {};
       gadget_loading_klass = tmp_constructor;
 
       function init() {

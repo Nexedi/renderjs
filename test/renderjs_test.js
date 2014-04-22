@@ -2765,10 +2765,22 @@
 
   test('Check that the root gadget is cleanly implemented', function () {
     var parsed = URI.parse(window.location.href),
+      getTopURLCalled = false,
       parent_path = URI.build({protocol: parsed.protocol,
                                hostname: parsed.hostname,
                                port: parsed.port,
                                path: parsed.path}).toString();
+
+    root_gadget_klass
+      .declareAcquiredMethod('getTopURL', 'getTopURL')
+      .allowPublicAcquisition('getTopURL', function () {
+        getTopURLCalled = true;
+        this.getTopURL().then(function (topURL) {
+          equal(topURL, this.__path);
+        });
+        return this.getTopURL();
+      });
+
     stop();
     root_gadget_defer.promise
       .then(function (root_gadget) {
@@ -2824,8 +2836,30 @@
         ok(root_gadget.__aq_parent !== undefined);
         ok(root_gadget.hasOwnProperty("__sub_gadget_dict"));
         deepEqual(root_gadget.__sub_gadget_dict, {});
-        equal(root_gadget.__acquired_method_dict.getTopURL(),
-              window.location.href);
+        return new RSVP.Queue()
+          .push(function () {
+            return root_gadget.getTopURL().then(function (topURL) {
+              equal(topURL, root_gadget.__path);
+            });
+          })
+          .push(function () {
+            return root_gadget.declareGadget("./embedded.html", {
+              sandbox: 'iframe',
+              element: document.querySelector('#qunit-fixture')
+            })
+              .then(function (new_gadget) {
+                return new_gadget.__aq_parent('getTopURL', []);
+              })
+              .then(function (topURL) {
+                equal(topURL, root_gadget.__path);
+              })
+              .then(function () {
+                ok(getTopURLCalled);
+              })
+              .fail(function () {
+                ok(false);
+              });
+          });
       })
       .fail(function (e) {
         ok(false, e);
