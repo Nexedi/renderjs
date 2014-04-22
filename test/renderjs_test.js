@@ -2769,7 +2769,18 @@
       parent_path = URI.build({protocol: parsed.protocol,
                                hostname: parsed.hostname,
                                port: parsed.port,
-                               path: parsed.path}).toString();
+                               path: parsed.path}).toString(),
+      root_gadget_path_without_hash,
+      hash_index;
+
+    window.location.hash = 'testHash';
+    hash_index = window.location.href.indexOf('#');
+    if (hash_index > 0) {
+      root_gadget_path_without_hash =
+        window.location.href.substring(0, hash_index);
+    } else {
+      root_gadget_path_without_hash = window.location.href;
+    }
 
     root_gadget_klass
       .declareAcquiredMethod('getTopURL', 'getTopURL')
@@ -2785,7 +2796,8 @@
     root_gadget_defer.promise
       .then(function (root_gadget) {
         // Check instance
-        equal(root_gadget.__path, window.location.href);
+        equal(root_gadget.__path,
+              root_gadget_path_without_hash);
         equal(typeof root_gadget.__acquired_method_dict, 'object');
         equal(Object.keys(root_gadget.__acquired_method_dict).length, 1);
         equal(root_gadget.__title, document.title);
@@ -2809,7 +2821,8 @@
         ]);
         equal(root_gadget.__element.outerHTML, document.body.outerHTML);
         // Check klass
-        equal(root_gadget.constructor.prototype.__path, window.location.href);
+        equal(root_gadget.constructor.prototype.__path,
+              root_gadget_path_without_hash);
         equal(root_gadget.constructor.prototype.__title, document.title);
         deepEqual(root_gadget.constructor.prototype.__interface_list, []);
         deepEqual(root_gadget.constructor.prototype.__required_css_list,

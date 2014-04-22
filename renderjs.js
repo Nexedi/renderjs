@@ -15,6 +15,14 @@
     loading_gadget_promise,
     renderJS;
 
+  function removeHash(url) {
+    var index = url.indexOf('#');
+    if (index > 0) {
+      url = url.substring(0, index);
+    }
+    return url;
+  }
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget
   /////////////////////////////////////////////////////////////////
@@ -704,7 +712,7 @@
   ///////////////////////////////////////////////////
 
   function bootstrap() {
-    var url = window.location.href,
+    var url = removeHash(window.location.href),
       tmp_constructor,
       root_gadget,
       declare_method_count = 0,
