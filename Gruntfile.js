@@ -87,23 +87,6 @@ module.exports = function (grunt) {
             '__RenderJSEmbeddedGadget'
           ]
         }
-      },
-      examples: {
-        src: ['examples/officejs/*.js'],
-        directives: {
-          maxlen: 79,
-          indent: 2,
-          maxerr: 3,
-          unparam: true,
-          predef: [
-            'window',
-            'document',
-            'rJS',
-            'RSVP',
-            'jQuery',
-            'jIO'
-          ]
-        }
       }
     },
 
@@ -145,8 +128,7 @@ module.exports = function (grunt) {
           '<%= jslint.config.src %>',
           '<%= jslint.test.src %>',
           ['lib/**'],
-          ['test/*.html', 'test/*.js'],
-          ['examples/**']
+          ['test/*.html', 'test/*.js']
         ],
         tasks: ['default'],
         options: {
