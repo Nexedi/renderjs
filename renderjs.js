@@ -423,7 +423,14 @@
           // Store local reference to the gadget instance
           if (options.scope !== undefined) {
             parent_gadget.__sub_gadget_dict[options.scope] = gadget_instance;
+            gadget_instance.__element.setAttribute("data-gadget-scope",
+                                                   options.scope);
           }
+
+          // Put some attribute to ease page layout comprehension
+          gadget_instance.__element.setAttribute("data-gadget-url", url);
+          gadget_instance.__element.setAttribute("data-gadget-sandbox",
+                                                 options.sandbox);
 
           return gadget_instance;
         });

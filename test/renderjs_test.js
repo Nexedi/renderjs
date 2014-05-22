@@ -1835,8 +1835,16 @@
       .then(function (new_gadget) {
         equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou2</div><div>bar</div>");
-        equal(new_gadget.__element.outerHTML,
-              "<div><p>Bar content</p></div>");
+        equal(new_gadget.__element.innerHTML,
+              "<p>Bar content</p>");
+        equal(new_gadget.__element.tagName,
+              "DIV");
+        equal(new_gadget.__element.getAttribute("data-gadget-url"),
+              html_url);
+        equal(new_gadget.__element.getAttribute("data-gadget-sandbox"),
+              "public");
+        equal(new_gadget.__element.getAttribute("data-gadget-scope"),
+              null);
         ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
         equal(spy_js.firstCall.args[0], js1_url, "First JS call");
         equal(spy_js.secondCall.args[0], js2_url, "Second JS call");
@@ -2200,6 +2208,8 @@
       .then(function (child_gadget) {
         ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
         equal(gadget.__sub_gadget_dict.foo, child_gadget);
+        equal(child_gadget.__element.getAttribute("data-gadget-scope"),
+              "foo");
       })
       .fail(function (e) {
         ok(false, e);
@@ -2481,6 +2491,10 @@
       .then(function (child_gadget) {
         ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
         equal(gadget.__sub_gadget_dict.foo, child_gadget);
+        equal(child_gadget.__element.getAttribute("data-gadget-scope"),
+              "foo");
+        equal(child_gadget.__element.getAttribute("data-gadget-sandbox"),
+              "iframe");
       })
       .fail(function (e) {
         ok(false, e);
