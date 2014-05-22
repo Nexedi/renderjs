@@ -12,7 +12,7 @@
     javascript_registration_dict = {},
     stylesheet_registration_dict = {},
     gadget_loading_klass,
-    loading_gadget_promise,
+    loading_klass_promise,
     renderJS;
 
   function removeHash(url) {
@@ -353,7 +353,8 @@
     .declareMethod('declareGadget', function (url, options) {
       var queue,
         parent_gadget = this,
-        previous_loading_gadget_promise = loading_gadget_promise;
+        local_loading_klass_promise,
+        previous_loading_klass_promise = loading_klass_promise;
 
       if (options === undefined) {
         options = {};
@@ -365,10 +366,10 @@
       // transform url to absolute url if it is relative
       url = renderJS.getAbsoluteURL(url, this.__path);
       // Change the global variable to update the loading queue
-      queue = new RSVP.Queue()
+      loading_klass_promise = new RSVP.Queue()
         // Wait for previous gadget loading to finish first
         .push(function () {
-          return previous_loading_gadget_promise;
+          return previous_loading_klass_promise;
         })
         .push(undefined, function () {
           // Forget previous declareGadget error
@@ -388,9 +389,25 @@
         })
         // Set the HTML context
         .push(function (gadget_instance) {
-          var i;
           // Drop the current loading klass info used by selector
           gadget_loading_klass = undefined;
+          return gadget_instance;
+        })
+        .push(undefined, function (e) {
+          // Drop the current loading klass info used by selector
+          // even in case of error
+          gadget_loading_klass = undefined;
+          throw e;
+        });
+      local_loading_klass_promise = loading_klass_promise;
+
+      queue = new RSVP.Queue()
+        .push(function () {
+          return local_loading_klass_promise;
+        })
+        // Set the HTML context
+        .push(function (gadget_instance) {
+          var i;
           // Trigger calling of all ready callback
           function ready_wrapper() {
             return gadget_instance;
@@ -407,16 +424,10 @@
           if (options.scope !== undefined) {
             parent_gadget.__sub_gadget_dict[options.scope] = gadget_instance;
           }
+
           return gadget_instance;
-        })
-        .push(undefined, function (e) {
-          // Drop the current loading klass info used by selector
-          // even in case of error
-          gadget_loading_klass = undefined;
-          throw e;
         });
-      loading_gadget_promise = queue;
-      return loading_gadget_promise;
+      return queue;
     })
     .declareMethod('getDeclaredGadget', function (gadget_scope) {
       if (!this.__sub_gadget_dict.hasOwnProperty(gadget_scope)) {
@@ -715,6 +726,7 @@
     var url = removeHash(window.location.href),
       tmp_constructor,
       root_gadget,
+      loading_gadget_promise = new RSVP.Queue(),
       declare_method_count = 0,
       embedded_channel,
       notifyReady,
@@ -726,7 +738,7 @@
     if (gadget_model_dict.hasOwnProperty(url)) {
       throw new Error("bootstrap should not be called twice");
     }
-    loading_gadget_promise = new RSVP.Promise(function (resolve, reject) {
+    loading_klass_promise = new RSVP.Promise(function (resolve, reject) {
       if (window.self === window.top) {
 
         last_acquisition_gadget = new RenderJSGadget();
@@ -877,8 +889,7 @@
           .then(function (all_list) {
             var i,
               js_list = all_list[0],
-              css_list = all_list[1],
-              queue;
+              css_list = all_list[1];
             for (i = 0; i < js_list.length; i += 1) {
               javascript_registration_dict[js_list[i]] = null;
             }
@@ -886,53 +897,60 @@
               stylesheet_registration_dict[css_list[i]] = null;
             }
             gadget_loading_klass = undefined;
-            queue = new RSVP.Queue();
-            function ready_wrapper() {
-              return root_gadget;
-            }
-
-            if (window.top !== window.self) {
-              tmp_constructor.ready(function () {
-                var base = document.createElement('base');
-                return root_gadget.__aq_parent('getTopURL', [])
-                  .then(function (topURL) {
-                    base.href = topURL;
-                    base.target = "_top";
-                    document.head.appendChild(base);
-                  });
-              });
-            }
-
-            queue.push(ready_wrapper);
-            for (i = 0; i < tmp_constructor.__ready_list.length; i += 1) {
-              // Put a timeout?
-              queue.push(tmp_constructor.__ready_list[i])
-              // Always return the gadget instance after ready function
-                   .push(ready_wrapper);
-            }
-            queue.push(resolve, function (e) {
-              reject(e);
-              throw e;
-            });
-            return queue;
-          }).fail(function (e) {
+            return root_gadget;
+          }).then(resolve, function (e) {
             reject(e);
             /*global console */
             console.error(e);
+            throw e;
           });
       }
       document.addEventListener('DOMContentLoaded', init, false);
     });
 
+    loading_gadget_promise
+      .push(function () {
+        return loading_klass_promise;
+      })
+      .push(function (root_gadget) {
+        var i;
+
+        function ready_wrapper() {
+          return root_gadget;
+        }
+
+        if (window.top !== window.self) {
+          tmp_constructor.ready(function () {
+            var base = document.createElement('base');
+            return root_gadget.__aq_parent('getTopURL', [])
+              .then(function (topURL) {
+                base.href = topURL;
+                base.target = "_top";
+                document.head.appendChild(base);
+              });
+          });
+        }
+
+        loading_gadget_promise.push(ready_wrapper);
+        for (i = 0; i < tmp_constructor.__ready_list.length; i += 1) {
+          // Put a timeout?
+          loading_gadget_promise
+            .push(tmp_constructor.__ready_list[i])
+            // Always return the gadget instance after ready function
+            .push(ready_wrapper);
+        }
+      });
     if (window.self !== window.top) {
       // Inform parent window that gadget is correctly loaded
-      loading_gadget_promise.then(function () {
-        gadget_ready = true;
-        notifyReady();
-      }).fail(function (e) {
-        embedded_channel.notify({method: "failed", params: e.toString()});
-        throw e;
-      });
+      loading_gadget_promise
+        .then(function () {
+          gadget_ready = true;
+          notifyReady();
+        })
+        .fail(function (e) {
+          embedded_channel.notify({method: "failed", params: e.toString()});
+          throw e;
+        });
     }
 
   }

@@ -2110,6 +2110,40 @@
       });
   });
 
+  test('getDeclareGadget can be called in ready', function () {
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test98.html',
+      html_url2 = 'https://example.org/files/qunittest/test989.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+    this.server.respondWith("GET", html_url2, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        // Create a ready function
+        Klass.ready(function (g) {
+          return g.declareGadget(html_url2);
+        });
+        return gadget.declareGadget(html_url);
+      })
+      .then(function () {
+        ok(true);
+      })
+      .fail(function (e) {
+        ok(false);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('Can take a DOM element options', function () {
 
     // Subclass RenderJSGadget to not pollute its namespace
