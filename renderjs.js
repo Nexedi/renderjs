@@ -683,7 +683,7 @@
       isAbsoluteURL = new RegExp('^(?:[a-z]+:)?//', 'i');
 
     if (!url || !isAbsoluteURL.test(url)) {
-      throw new Error("The second parameter should be an absolute url");
+      throw new Error("The url should be absolute: " + url);
     }
 
     if (document_element.nodeType === 9) {
