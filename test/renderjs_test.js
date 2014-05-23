@@ -2404,6 +2404,121 @@
       .always(start);
   });
 
+  test('can declareGadget with scope in HTML directly', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test12345.html',
+      html_url2 = 'https://example.org/files/qunittest/test12346.html',
+      spy;
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div data-foo='bar' " +
+       "data-gadget-scope='bar' data-gadget-url='" + html_url2 +
+       "'></div></body></html>"]);
+    this.server.respondWith("GET", html_url2, [200, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
+
+    stop();
+    gadget.declareGadget(html_url)
+      .then(function (g) {
+        equal(spy.callCount, 2);
+        equal(spy.firstCall.args[1], html_url);
+        equal(spy.secondCall.args[1], html_url2);
+        // Second gadget is a child
+        return g.getDeclaredGadget("bar");
+      })
+      .then(function (g2) {
+        equal(g2.__path, html_url2);
+        // The gadget element is the one defined in HTML
+        equal(g2.__element.getAttribute("data-foo"), "bar");
+        // The gadget is public by default
+        equal(g2.__element.innerHTML, "raw html");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+        spy.restore();
+      });
+  });
+
+  test('can declareGadget a sandboxed gadget in HTML directly', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test123456.html',
+      html_url2 = renderJS.getAbsoluteURL('./embedded.html',
+                                          window.location.href),
+      topURL = "http://example.org/topGadget";
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div data-foo='bar' " +
+       "data-gadget-sandbox='iframe' " +
+       "data-gadget-scope='bar' data-gadget-url='" + html_url2 +
+       "'></div></body></html>"]);
+
+    gadget.__aq_parent = function (method_name, argument_list) {
+      throw new renderJS.AcquisitionError("Can not handle " + method_name);
+    };
+
+    gadget.__acquired_method_dict = {
+      getTopURL: function () {return topURL; }
+    };
+
+    document.getElementById("qunit-fixture").textContent = "";
+
+    stop();
+    gadget.declareGadget(html_url, {
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (g) {
+        return g.getDeclaredGadget("bar");
+      })
+      .then(function (g2) {
+        equal(g2.__path, html_url2);
+        // The gadget element is the one defined in HTML
+        equal(g2.__element.getAttribute("data-foo"), "bar");
+        // The gadget is inside an iframe
+        equal(g2.__element.innerHTML,
+              '<iframe src="' + html_url2 + '"></iframe>');
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('fail if declareGadget with scope in HTML fail', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test12345.html',
+      html_url2 = 'https://example.org/files/qunittest/test12346.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div data-foo='bar' " +
+       "data-gadget-scope='bar' data-gadget-url='" + html_url2 +
+       "'></div></body></html>"]);
+    this.server.respondWith("GET", html_url2, [403, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    stop();
+    gadget.declareGadget(html_url)
+      .then(function () {
+        ok(false);
+      })
+      .fail(function (e) {
+        equal(e.status, 403);
+        equal(e.url, html_url2);
+      })
+      .always(start);
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget (iframe)
   /////////////////////////////////////////////////////////////////

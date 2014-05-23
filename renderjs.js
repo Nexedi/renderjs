@@ -42,7 +42,34 @@
     g.__sub_gadget_dict = {};
   }
 
-  RenderJSGadget.__ready_list = [clearGadgetInternalParameters];
+  function loadSubGadgetDOMDeclaration(g) {
+    var element_list = g.__element.querySelectorAll('[data-gadget-scope]'),
+      element,
+      promise_list = [],
+      scope,
+      url,
+      sandbox,
+      i;
+
+    for (i = 0; i < element_list.length; i += 1) {
+      element = element_list[i];
+      scope = element.getAttribute("data-gadget-scope");
+      url = element.getAttribute("data-gadget-url");
+      sandbox = element.getAttribute("data-gadget-sandbox");
+      if ((scope !== null) && (url !== null)) {
+        promise_list.push(g.declareGadget(url, {
+          element: element,
+          scope: scope || undefined,
+          sandbox: sandbox || undefined
+        }));
+      }
+    }
+
+    return RSVP.all(promise_list);
+  }
+
+  RenderJSGadget.__ready_list = [clearGadgetInternalParameters,
+                                 loadSubGadgetDOMDeclaration];
   RenderJSGadget.ready = function (callback) {
     this.__ready_list.push(callback);
     return this;
