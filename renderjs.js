@@ -284,7 +284,6 @@
   function privateDeclareIframeGadget(url, options, parent_gadget) {
     var gadget_instance,
       iframe,
-      node,
       iframe_loading_deferred = RSVP.defer();
     if (options.element === undefined) {
       throw new Error("DOM element is required to create Iframe Gadget " +
@@ -292,14 +291,7 @@
     }
 
     // Check if the element is attached to the DOM
-    node = options.element.parentNode;
-    while (node !== null) {
-      if (node === document) {
-        break;
-      }
-      node = node.parentNode;
-    }
-    if (node === null) {
+    if (!document.contains(options.element)) {
       throw new Error("The parent element is not attached to the DOM for " +
                       url);
     }
