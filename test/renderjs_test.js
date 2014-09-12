@@ -986,6 +986,9 @@
       .then(function (result) {
         equal(result, "foo");
       })
+      .fail(function (e) {
+        ok(false, e);
+      })
       .always(function () {
         start();
       });
@@ -1175,7 +1178,8 @@
         ok(false, "getElement should fail");
       })
       .fail(function (e) {
-        ok(e instanceof Error);
+        ok(e instanceof Error, e);
+        equal(e.message, "No element defined");
       })
       .always(function () {
         start();
@@ -3032,8 +3036,8 @@
               .then(function () {
                 ok(getTopURLCalled);
               })
-              .fail(function () {
-                ok(false);
+              .fail(function (e) {
+                ok(false, e);
               });
           });
       })
