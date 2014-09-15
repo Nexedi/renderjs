@@ -7,20 +7,20 @@
     "rsvp": "git+http://git.erp5.org/repos/rsvp.js.git"
   },
   "devDependencies": {
+    "URIjs": "~1.12.x",
+    "connect-livereload": "~0.3.0",
     "grunt": "~0.4.1",
     "grunt-cli": "~0.1.11",
-    "grunt-jslint": "~1.1.x",
-    "grunt-contrib-uglify": "~0.2.x",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-contrib-qunit": "~0.3.0",
+    "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-connect": "~0.5.0",
     "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-qunit": "~0.3.0",
+    "grunt-contrib-uglify": "~0.2.x",
+    "grunt-contrib-watch": "~0.5.3",
     "grunt-curl": "~1.2.1",
-    "sinon": "~1.7.3",
-    "connect-livereload": "~0.3.0",
+    "grunt-jslint": "~1.1.x",
     "grunt-open": "~0.2.2",
-    "grunt-contrib-concat": "~0.3.0",
-    "URIjs": "~1.12.x"
+    "sinon": "~1.7.3"
   },
   "scripts": {
     "test": "./node_modules/.bin/grunt test",
