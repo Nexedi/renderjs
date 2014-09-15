@@ -61,7 +61,9 @@ module.exports = function (grunt) {
             'document',
             'DOMParser',
             'Channel',
-            'XMLHttpRequest'
+            'XMLHttpRequest',
+            'MutationObserver',
+            'Node'
           ]
         }
       },

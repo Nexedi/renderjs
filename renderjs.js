@@ -5,7 +5,8 @@
  * renderJs - Generic Gadget library renderer.
  * http://www.renderjs.org/documentation
  */
-(function (document, window, RSVP, DOMParser, Channel, undefined) {
+(function (document, window, RSVP, DOMParser, Channel, MutationObserver,
+           Node, undefined) {
   "use strict";
 
   var gadget_model_dict = {},
@@ -13,8 +14,12 @@
     stylesheet_registration_dict = {},
     gadget_loading_klass,
     loading_klass_promise,
-    renderJS;
+    renderJS,
+    Monitor;
 
+  /////////////////////////////////////////////////////////////////
+  // Helper functions
+  /////////////////////////////////////////////////////////////////
   function removeHash(url) {
     var index = url.indexOf('#');
     if (index > 0) {
@@ -22,6 +27,144 @@
     }
     return url;
   }
+
+  function letsCrash(e) {
+    if (e.constructor === XMLHttpRequest) {
+      e = {
+        readyState: e.readyState,
+        status: e.status,
+        statusText: e.statusText,
+        response_headers: e.getAllResponseHeaders()
+      };
+    }
+    if (e.constructor === Array ||
+        e.constructor === String ||
+        e.constructor === Object) {
+      try {
+        e = JSON.stringify(e);
+      } catch (ignore) {
+      }
+    }
+    document.getElementsByTagName('body')[0].textContent = e;
+    // XXX Do not crash the application if it fails
+    // Where to write the error?
+    /*global console*/
+    console.error(e.stack);
+    console.error(e);
+  }
+
+  /////////////////////////////////////////////////////////////////
+  // Service Monitor promise
+  /////////////////////////////////////////////////////////////////
+  function ResolvedMonitorError(message) {
+    this.name = "resolved";
+    if ((message !== undefined) && (typeof message !== "string")) {
+      throw new TypeError('You must pass a string.');
+    }
+    this.message = message || "Default Message";
+  }
+  ResolvedMonitorError.prototype = new Error();
+  ResolvedMonitorError.prototype.constructor = ResolvedMonitorError;
+
+  Monitor = function () {
+    var monitor = this,
+      promise_list = [],
+      promise,
+      reject,
+      notify,
+      resolved;
+
+    if (!(this instanceof Monitor)) {
+      return new Monitor();
+    }
+
+    function canceller() {
+      var len = promise_list.length,
+        i;
+      for (i = 0; i < len; i += 1) {
+        promise_list[i].cancel();
+      }
+      // Clean it to speed up other canceller run
+      promise_list = [];
+    }
+
+    promise = new RSVP.Promise(function (done, fail, progress) {
+      reject = function (rejectedReason) {
+        if (resolved) {
+          return;
+        }
+        monitor.isRejected = true;
+        monitor.rejectedReason = rejectedReason;
+        resolved = true;
+        canceller();
+        return fail(rejectedReason);
+      };
+      notify = progress;
+    }, canceller);
+
+    monitor.cancel = function () {
+      if (resolved) {
+        return;
+      }
+      resolved = true;
+      promise.cancel();
+      promise.fail(function (rejectedReason) {
+        monitor.isRejected = true;
+        monitor.rejectedReason = rejectedReason;
+      });
+    };
+    monitor.then = function () {
+      return promise.then.apply(promise, arguments);
+    };
+    monitor.fail = function () {
+      return promise.fail.apply(promise, arguments);
+    };
+
+    monitor.monitor = function (promise_to_monitor) {
+      if (resolved) {
+        throw new ResolvedMonitorError();
+      }
+      var queue = new RSVP.Queue()
+        .push(function () {
+          return promise_to_monitor;
+        })
+        .push(function (fulfillmentValue) {
+          // Promise to monitor is fullfilled, remove it from the list
+          var len = promise_list.length,
+            sub_promise_to_monitor,
+            new_promise_list = [],
+            i;
+          for (i = 0; i < len; i += 1) {
+            sub_promise_to_monitor = promise_list[i];
+            if (!(sub_promise_to_monitor.isFulfilled ||
+                sub_promise_to_monitor.isRejected)) {
+              new_promise_list.push(sub_promise_to_monitor);
+            }
+          }
+          promise_list = new_promise_list;
+        }, function (rejectedReason) {
+          if (rejectedReason instanceof RSVP.CancellationError) {
+            if (!(promise_to_monitor.isFulfilled &&
+                  promise_to_monitor.isRejected)) {
+              // The queue could be cancelled before the first push is run
+              promise_to_monitor.cancel();
+            }
+          }
+          reject(rejectedReason);
+          throw rejectedReason;
+        }, function (notificationValue) {
+          notify(notificationValue);
+          return notificationValue;
+        });
+
+      promise_list.push(queue);
+
+      return this;
+    };
+  };
+
+  Monitor.prototype = Object.create(Promise.prototype);
+  Monitor.prototype.constructor = Monitor;
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget
@@ -38,8 +181,24 @@
   RenderJSGadget.prototype.__required_css_list = [];
   RenderJSGadget.prototype.__required_js_list = [];
 
+  function createMonitor(g) {
+    if (g.__monitor !== undefined) {
+      g.__monitor.cancel();
+    }
+    g.__monitor = new Monitor();
+    g.__monitor.fail(function (error) {
+      if (!(error instanceof RSVP.CancellationError)) {
+        return g.aq_reportServiceError(error);
+      }
+    }).fail(function (error) {
+      // Crash the application if the acquisition generates an error.
+      return letsCrash(error);
+    });
+  }
+
   function clearGadgetInternalParameters(g) {
     g.__sub_gadget_dict = {};
+    createMonitor(g);
   }
 
   function loadSubGadgetDOMDeclaration(g) {
@@ -74,6 +233,24 @@
     this.__ready_list.push(callback);
     return this;
   };
+
+  RenderJSGadget.__service_list = [];
+  RenderJSGadget.declareService = function (callback) {
+    this.__service_list.push(callback);
+    return this;
+  };
+
+  function startService(gadget) {
+    gadget.__monitor.monitor(new RSVP.Queue()
+      .push(function () {
+        var i,
+          service_list = gadget.constructor.__service_list;
+        for (i = 0; i < service_list.length; i += 1) {
+          gadget.__monitor.monitor(service_list[i].apply(gadget));
+        }
+      })
+      );
+  }
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareMethod
@@ -170,6 +347,8 @@
       // Allow chain
       return this;
     };
+  RenderJSGadget.declareAcquiredMethod("aq_reportServiceError",
+                                       "reportServiceError");
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.allowPublicAcquisition
@@ -201,8 +380,12 @@
     RenderJSGadget.call(this);
   }
   RenderJSEmbeddedGadget.__ready_list = RenderJSGadget.__ready_list.slice();
+  RenderJSEmbeddedGadget.__service_list =
+    RenderJSGadget.__service_list.slice();
   RenderJSEmbeddedGadget.ready =
     RenderJSGadget.ready;
+  RenderJSEmbeddedGadget.declareService =
+    RenderJSGadget.declareService;
   RenderJSEmbeddedGadget.prototype = new RenderJSGadget();
   RenderJSEmbeddedGadget.prototype.constructor = RenderJSEmbeddedGadget;
 
@@ -275,6 +458,9 @@
   RenderJSIframeGadget.__ready_list = RenderJSGadget.__ready_list.slice();
   RenderJSIframeGadget.ready =
     RenderJSGadget.ready;
+  RenderJSIframeGadget.__service_list = RenderJSGadget.__service_list.slice();
+  RenderJSIframeGadget.declareService =
+    RenderJSGadget.declareService;
   RenderJSIframeGadget.prototype = new RenderJSGadget();
   RenderJSIframeGadget.prototype.constructor = RenderJSIframeGadget;
 
@@ -450,6 +636,14 @@
           gadget_instance.__element.setAttribute("data-gadget-url", url);
           gadget_instance.__element.setAttribute("data-gadget-sandbox",
                                                  options.sandbox);
+          gadget_instance.__element._gadget = gadget_instance;
+
+          if (document.contains(gadget_instance.__element)) {
+            // Put a timeout
+            queue.push(startService);
+          }
+          // Always return the gadget instance after ready function
+          queue.push(ready_wrapper);
 
           return gadget_instance;
         });
@@ -596,6 +790,7 @@
           RenderJSGadget.call(this);
         };
         tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
+        tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
         tmp_constructor.declareMethod =
           RenderJSGadget.declareMethod;
         tmp_constructor.declareAcquiredMethod =
@@ -604,6 +799,8 @@
           RenderJSGadget.allowPublicAcquisition;
         tmp_constructor.ready =
           RenderJSGadget.ready;
+        tmp_constructor.declareService =
+          RenderJSGadget.declareService;
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
         tmp_constructor.prototype.__path = url;
@@ -771,6 +968,9 @@
         last_acquisition_gadget.__acquired_method_dict = {
           getTopURL: function () {
             return url;
+          },
+          reportServiceError: function (param_list) {
+            letsCrash(param_list[0]);
           }
         };
         // Stop acquisition on the last acquisition gadget
@@ -792,6 +992,9 @@
           RenderJSGadget.allowPublicAcquisition;
         tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
         tmp_constructor.ready = RenderJSGadget.ready;
+        tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
+        tmp_constructor.declareService =
+          RenderJSGadget.declareService;
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
         tmp_constructor.prototype.__path = url;
@@ -812,6 +1015,7 @@
         // Create the root gadget instance and put it in the loading stack
         tmp_constructor = RenderJSEmbeddedGadget;
         tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
+        tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
         tmp_constructor.prototype.__path = url;
         root_gadget = new RenderJSEmbeddedGadget();
 
@@ -864,6 +1068,8 @@
           return result;
         };
 
+        tmp_constructor.declareService =
+          RenderJSGadget.declareService;
         tmp_constructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
         tmp_constructor.allowPublicAcquisition =
@@ -923,10 +1129,77 @@
               stylesheet_registration_dict[css_list[i]] = null;
             }
             gadget_loading_klass = undefined;
+          }).then(function () {
+
+            // select the target node
+            var target = document.querySelector('body'),
+              // create an observer instance
+              observer = new MutationObserver(function (mutations) {
+                var i, k, len, len2, node, added_list;
+                mutations.forEach(function (mutation) {
+                  if (mutation.type === 'childList') {
+
+                    len = mutation.removedNodes.length;
+                    for (i = 0; i < len; i += 1) {
+                      node = mutation.removedNodes[i];
+                      if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.hasAttribute("data-gadget-url") &&
+                            (node._gadget !== undefined)) {
+                          createMonitor(node._gadget);
+                        }
+                        added_list =
+                          node.querySelectorAll("[data-gadget-url]");
+                        len2 = added_list.length;
+                        for (k = 0; k < len2; k += 1) {
+                          node = added_list[k];
+                          if (node._gadget !== undefined) {
+                            createMonitor(node._gadget);
+                          }
+                        }
+                      }
+                    }
+
+                    len = mutation.addedNodes.length;
+                    for (i = 0; i < len; i += 1) {
+                      node = mutation.addedNodes[i];
+                      if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.hasAttribute("data-gadget-url") &&
+                            (node._gadget !== undefined)) {
+                          if (document.contains(node)) {
+                            startService(node._gadget);
+                          }
+                        }
+                        added_list =
+                          node.querySelectorAll("[data-gadget-url]");
+                        len2 = added_list.length;
+                        for (k = 0; k < len2; k += 1) {
+                          node = added_list[k];
+                          if (document.contains(node)) {
+                            if (node._gadget !== undefined) {
+                              startService(node._gadget);
+                            }
+                          }
+                        }
+                      }
+                    }
+
+                  }
+                });
+              }),
+              // configuration of the observer:
+              config = {
+                childList: true,
+                subtree: true,
+                attributes: false,
+                characterData: false
+              };
+
+            // pass in the target node, as well as the observer options
+            observer.observe(target, config);
+
             return root_gadget;
           }).then(resolve, function (e) {
             reject(e);
-            /*global console */
             console.error(e);
             throw e;
           });
@@ -957,6 +1230,10 @@
           });
         }
 
+        tmp_constructor.ready(function (g) {
+          return startService(g);
+        });
+
         loading_gadget_promise.push(ready_wrapper);
         for (i = 0; i < tmp_constructor.__ready_list.length; i += 1) {
           // Put a timeout?
@@ -966,7 +1243,13 @@
             .push(ready_wrapper);
         }
       });
-    if (window.self !== window.top) {
+    if (window.self === window.top) {
+      loading_gadget_promise
+        .fail(function (e) {
+          letsCrash(e);
+          throw e;
+        });
+    } else {
       // Inform parent window that gadget is correctly loaded
       loading_gadget_promise
         .then(function () {
@@ -982,4 +1265,4 @@
   }
   bootstrap();
 
-}(document, window, RSVP, DOMParser, Channel));
+}(document, window, RSVP, DOMParser, Channel, MutationObserver, Node));

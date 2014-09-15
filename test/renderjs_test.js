@@ -1600,6 +1600,529 @@
   });
 
   /////////////////////////////////////////////////////////////////
+  // RenderJSGadgetKlass.declareService
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadgetKlass.declareService", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
+    }
+  });
+  test('is chainable', function () {
+    // Check that declareService is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__service_list = [];
+    Klass.declareService = RenderJSGadget.declareService;
+
+    result = Klass.declareService(function () {
+      return;
+    });
+    // declareService is chainable
+    equal(result, Klass);
+  });
+
+  test('store callback in the service_list property', function () {
+    // Check that declareService is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    },
+      callback = function () {return; };
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__service_list = [];
+    Klass.declareService = RenderJSGadget.declareService;
+
+    Klass.declareService(callback);
+    // declareService is chainable
+    deepEqual(Klass.__service_list, [callback]);
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // Service status
+  /////////////////////////////////////////////////////////////////
+  function declareServiceToCheck(klass, service_status) {
+    service_status.start_count = 0;
+    service_status.stop_count = 0;
+    service_status.status = undefined;
+
+    klass.declareService(function () {
+      service_status.start_count += 1;
+      return new RSVP.Queue()
+        .push(function () {
+          service_status.status = "started";
+          return RSVP.defer().promise;
+        })
+        .push(undefined, function (error) {
+          service_status.stop_count += 1;
+          if (error instanceof RSVP.CancellationError) {
+            service_status.status = "stopped";
+          } else {
+            service_status.status = "error";
+          }
+          throw error;
+        });
+    });
+  }
+
+  test('service untouched when gadget never in DOM', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var service1 = {},
+      service2 = {},
+      gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test500.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareServiceToCheck(Klass, service1);
+        declareServiceToCheck(Klass, service2);
+        return gadget.declareGadget(
+          html_url
+        );
+      })
+      .then(function (g) {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 0);
+        equal(service1.stop_count, 0);
+        equal(service1.status, undefined);
+        equal(service2.start_count, 0);
+        equal(service2.stop_count, 0);
+        equal(service2.status, undefined);
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('service started when gadget created in DOM', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var service1 = {},
+      service2 = {},
+      gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test501.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareServiceToCheck(Klass, service1);
+        declareServiceToCheck(Klass, service2);
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function (g) {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 1);
+        equal(service1.stop_count, 0);
+        equal(service1.status, "started");
+        equal(service2.start_count, 1);
+        equal(service2.stop_count, 0);
+        equal(service2.status, "started");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('service started when gadget element added in DOM', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var service1 = {},
+      service2 = {},
+      gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test502.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareServiceToCheck(Klass, service1);
+        declareServiceToCheck(Klass, service2);
+        return gadget.declareGadget(
+          html_url
+        );
+      })
+      .then(function (g) {
+        document
+          .getElementById('qunit-fixture')
+          .querySelector("div")
+          .appendChild(g.__element);
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 1);
+        equal(service1.stop_count, 0);
+        equal(service1.status, "started");
+        equal(service2.start_count, 1);
+        equal(service2.stop_count, 0);
+        equal(service2.status, "started");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('service started when gadget parent element added in DOM', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var service1 = {},
+      service2 = {},
+      gadget = new RenderJSGadget(),
+      parent_element = document.createElement("div"),
+      html_url = 'https://example.org/files/qunittest/test503.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareServiceToCheck(Klass, service1);
+        declareServiceToCheck(Klass, service2);
+        return gadget.declareGadget(
+          html_url
+        );
+      })
+      .then(function (g) {
+        parent_element.appendChild(g.__element);
+        document
+          .getElementById('qunit-fixture')
+          .appendChild(parent_element);
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 1);
+        equal(service1.stop_count, 0);
+        equal(service1.status, "started");
+        equal(service2.start_count, 1);
+        equal(service2.stop_count, 0);
+        equal(service2.status, "started");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('service stopped when gadget element removed from DOM', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var service1 = {},
+      service2 = {},
+      gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test504.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareServiceToCheck(Klass, service1);
+        declareServiceToCheck(Klass, service2);
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function () {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        document
+          .getElementById('qunit-fixture')
+          .innerHTML = "";
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 1);
+        equal(service1.stop_count, 1);
+        equal(service1.status, "stopped");
+        equal(service2.start_count, 1);
+        equal(service2.stop_count, 1);
+        equal(service2.status, "stopped");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('service stopped when gadget parent element removed from DOM',
+      function () {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var service1 = {},
+        service2 = {},
+        gadget = new RenderJSGadget(),
+        parent_element = document.createElement("div"),
+        html_url = 'https://example.org/files/qunittest/test505.html';
+
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
+
+      document.getElementById('qunit-fixture').innerHTML = "";
+      stop();
+      renderJS.declareGadgetKlass(html_url)
+        .then(function (Klass) {
+          declareServiceToCheck(Klass, service1);
+          declareServiceToCheck(Klass, service2);
+          return gadget.declareGadget(
+            html_url
+          );
+        })
+        .then(function (g) {
+          parent_element.appendChild(g.__element);
+          document
+            .getElementById('qunit-fixture')
+            .appendChild(parent_element);
+          return RSVP.delay(50);
+        })
+        .then(function () {
+          document
+            .getElementById('qunit-fixture')
+            .innerHTML = "";
+          return RSVP.delay(50);
+        })
+        .then(function () {
+          equal(service1.start_count, 1);
+          equal(service1.stop_count, 1);
+          equal(service1.status, "stopped");
+          equal(service2.start_count, 1);
+          equal(service2.stop_count, 1);
+          equal(service2.status, "stopped");
+        })
+        .fail(function (e) {
+          ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
+
+  test('service can be restarted', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var service1 = {},
+      service2 = {},
+      gadget = new RenderJSGadget(),
+      created_gadget,
+      html_url = 'https://example.org/files/qunittest/test506.html';
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareServiceToCheck(Klass, service1);
+        declareServiceToCheck(Klass, service2);
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function (g) {
+        created_gadget = g;
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        document.getElementById('qunit-fixture').innerHTML = "";
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        document
+          .getElementById('qunit-fixture')
+          .appendChild(created_gadget.__element);
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 2);
+        equal(service1.stop_count, 1);
+        equal(service1.status, "started");
+        equal(service2.start_count, 2);
+        equal(service2.stop_count, 1);
+        equal(service2.status, "started");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // Service error handling
+  /////////////////////////////////////////////////////////////////
+  test('Service error are reported to parent gadget', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var ParentKlass = function () {
+      RenderJSGadget.call(this);
+    },
+      gadget,
+      catched_error,
+      html_url = 'https://example.org/files/qunittest/test508.html';
+    ParentKlass.prototype = new RenderJSGadget();
+    ParentKlass.prototype.constructor = ParentKlass;
+    ParentKlass.prototype.__acquired_method_dict = {};
+    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+
+    ParentKlass.allowPublicAcquisition('reportServiceError',
+                                       function (argument_list) {
+        catched_error = argument_list[0];
+        return;
+      });
+
+    gadget = new ParentKlass();
+
+    // Subclass RenderJSGadget to not pollute its namespace
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+
+        Klass.declareService(function () {
+          throw new Error("My service crashed!");
+        });
+
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function () {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        ok(catched_error instanceof Error);
+        equal(
+          catched_error.message,
+          "My service crashed!"
+        );
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('Service error stops the other services', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var ParentKlass = function () {
+      RenderJSGadget.call(this);
+    },
+      gadget,
+      service2 = {},
+      html_url = 'https://example.org/files/qunittest/test509.html';
+    ParentKlass.prototype = new RenderJSGadget();
+    ParentKlass.prototype.constructor = ParentKlass;
+    ParentKlass.prototype.__acquired_method_dict = {};
+    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+
+    ParentKlass.allowPublicAcquisition('reportServiceError',
+                                       function (argument_list) {
+        return;
+      });
+
+    gadget = new ParentKlass();
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+
+        declareServiceToCheck(Klass, service2);
+        Klass.declareService(function () {
+          throw new Error("My service crashed!");
+        });
+
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function () {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service2.start_count, 1);
+        equal(service2.stop_count, 1);
+        equal(service2.status, "stopped");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
   // RenderJSIframeGadget
   /////////////////////////////////////////////////////////////////
   module("RenderJSIframeGadget");
@@ -2731,6 +3254,14 @@
             equal(result, true);
           })
 
+          // Check that service are started
+          .push(function () {
+            return new_gadget.wasServiceStarted();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
           // Custom method accept parameter
           // and return value
           .push(function () {
@@ -2764,6 +3295,14 @@
           // acquired_method_dict is created on prototype
           .push(function () {
             return new_gadget.isAcquisitionDictInitialize();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // service_list is created on prototype
+          .push(function () {
+            return new_gadget.isServiceListInitialize();
           })
           .push(function (result) {
             equal(result, true);
@@ -3016,6 +3555,7 @@
         ok(root_gadget.__aq_parent !== undefined);
         ok(root_gadget.hasOwnProperty("__sub_gadget_dict"));
         deepEqual(root_gadget.__sub_gadget_dict, {});
+        deepEqual(root_gadget_klass.__service_list, []);
         return new RSVP.Queue()
           .push(function () {
             return root_gadget.getTopURL().then(function (topURL) {

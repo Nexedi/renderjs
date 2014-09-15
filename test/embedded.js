@@ -3,11 +3,15 @@
   "use strict";
 
   var gk = rJS(window),
-    ready_called = false;
+    ready_called = false,
+    service_started = false;
 
   gk.ready(function (g) {
     ready_called = true;
   })
+    .declareService(function () {
+      service_started = true;
+    })
     .declareMethod('getBaseHref', function () {
       return document.querySelector('base')
         .getAttribute('href');
@@ -19,12 +23,18 @@
     .declareMethod('wasReadyCalled', function () {
       return ready_called;
     })
+    .declareMethod('wasServiceStarted', function () {
+      return service_started;
+    })
     .declareMethod('isSubGadgetDictInitialize', function () {
       return ((this.hasOwnProperty("__sub_gadget_dict")) &&
               (JSON.stringify(this.__sub_gadget_dict) === "{}"));
     })
     .declareMethod('isAcquisitionDictInitialize', function () {
       return (this.__acquired_method_dict !== undefined);
+    })
+    .declareMethod('isServiceListInitialize', function () {
+      return (this.constructor.__service_list !== undefined);
     })
     .declareMethod('triggerError', function (value) {
       throw new Error("Manually triggered embedded error");
