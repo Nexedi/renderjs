@@ -26,6 +26,9 @@
     .declareMethod('wasServiceStarted', function () {
       return service_started;
     })
+    .declareMethod('canReportServiceError', function () {
+      return (this.aq_reportServiceError !== undefined);
+    })
     .declareMethod('isSubGadgetDictInitialize', function () {
       return ((this.hasOwnProperty("__sub_gadget_dict")) &&
               (JSON.stringify(this.__sub_gadget_dict) === "{}"));

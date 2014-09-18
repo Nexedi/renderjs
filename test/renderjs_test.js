@@ -3262,6 +3262,14 @@
             equal(result, true);
           })
 
+          // Check that service error can be reported
+          .push(function () {
+            return new_gadget.canReportServiceError();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
           // Custom method accept parameter
           // and return value
           .push(function () {
