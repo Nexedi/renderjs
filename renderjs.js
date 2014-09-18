@@ -163,7 +163,7 @@
     };
   };
 
-  Monitor.prototype = Object.create(Promise.prototype);
+  Monitor.prototype = Object.create(RSVP.Promise.prototype);
   Monitor.prototype.constructor = Monitor;
 
   /////////////////////////////////////////////////////////////////
