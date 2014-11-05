@@ -6,7 +6,7 @@
  * http://www.renderjs.org/documentation
  */
 (function (document, window, RSVP, DOMParser, Channel, MutationObserver,
-           Node, undefined) {
+           Node) {
   "use strict";
 
   var gadget_model_dict = {},
