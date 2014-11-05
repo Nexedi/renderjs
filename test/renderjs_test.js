@@ -3369,6 +3369,11 @@
     var gadget = new RenderJSGadget(),
       url = "./embedded_fail.html";
 
+    gadget.__acquired_method_dict = {
+      getTopURL: function () {
+        return "http://example.org/topGadget";
+      }
+    };
     stop();
     gadget.declareGadget(url, {
       sandbox: 'iframe',
@@ -3606,6 +3611,33 @@
       .fail(function (error) {
         ok(error instanceof renderJS.AcquisitionError);
         equal(error.message, "No gadget provides foo");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('check working of parent gadget in iframe', function () {
+    var fixture = document.getElementById("qunit-fixture");
+    fixture.innerHTML =
+      "<iframe id=renderjsIframe src='./not_declared_gadget.html'></iframe>";
+    stop();
+    return RSVP.delay(900)
+      .then(function () {
+        var iframe = document.getElementById('renderjsIframe'),
+          url_div = iframe.contentWindow.document.querySelector('.getTopUrl'),
+          acquisition_div = iframe.contentWindow.
+            document.querySelector('.acquisitionError'),
+          klass_div = iframe.contentWindow.document.querySelector('.klass');
+        equal(url_div.innerHTML,
+              "http://localhost:9000/test/not_declared_gadget.html");
+        equal(acquisition_div.innerHTML,
+              "AcquisitionError: No gadget provides willFail");
+        equal(klass_div.innerHTML,
+              "klass = embedded");
+      })
+      .fail(function (error) {
+        ok(false, error);
       })
       .always(function () {
         start();
