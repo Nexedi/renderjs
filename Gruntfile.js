@@ -99,6 +99,7 @@ module.exports = function (grunt) {
       dist: {
         src: ['<%= curl.jschannel.dest %>',
               '<%= curl.domparser.dest %>',
+              'lib/iefix/*.js',
               'renderjs.js'],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }
