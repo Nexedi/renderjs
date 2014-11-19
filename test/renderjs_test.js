@@ -3630,7 +3630,9 @@
             document.querySelector('.acquisitionError'),
           klass_div = iframe.contentWindow.document.querySelector('.klass');
         equal(url_div.innerHTML,
-              "http://localhost:9000/test/not_declared_gadget.html");
+              window.location.protocol + "//" + window.location.hostname +
+              (window.location.port ? ':' + window.location.port : '') +
+              "/test/not_declared_gadget.html");
         equal(acquisition_div.innerHTML,
               "AcquisitionError: No gadget provides willFail");
         equal(klass_div.innerHTML,
