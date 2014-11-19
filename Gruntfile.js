@@ -148,30 +148,6 @@ module.exports = function (grunt) {
       jschannel: {
         src: 'http://mozilla.github.io/jschannel/src/jschannel.js',
         dest: 'lib/jschannel/jschannel.js'
-      },
-      jquery: {
-        src: 'http://code.jquery.com/jquery-2.0.3.js',
-        dest: 'lib/jquery/jquery.js'
-      },
-      jio: {
-        src: 'http://git.erp5.org/gitweb/jio.git/blob_plain/refs/heads/master:/jio.js',
-        dest: 'lib/jio/jio.js'
-      },
-      md5: {
-        src: 'http://git.erp5.org/gitweb/jio.git/blob_plain/HEAD:/src/md5.amd.js',
-        dest: 'lib/jio/md5.js'
-      },
-      sha256: {
-        src: 'http://git.erp5.org/gitweb/jio.git/blob_plain/HEAD:/src/sha256.amd.js',
-        dest: 'lib/jio/sha256.js'
-      },
-      localstorage: {
-        src: 'http://git.erp5.org/gitweb/jio.git/blob_plain/HEAD:/src/jio.storage/localstorage.js',
-        dest: 'lib/jio/localstorage.js'
-      },
-      complex_queries: {
-        src: 'http://git.erp5.org/gitweb/jio.git/blob_plain/HEAD:/complex_queries.js',
-        dest: 'lib/jio/complex_queries.js'
       }
     },
 
