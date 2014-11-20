@@ -905,25 +905,28 @@
     if (document_element.nodeType === 9) {
       settings.title = document_element.title;
 
-      for (i = 0; i < document_element.head.children.length; i += 1) {
-        element = document_element.head.children[i];
-        if (element.href !== null) {
-          // XXX Manage relative URL during extraction of URLs
-          // element.href returns absolute URL in firefox but "" in chrome;
-          if (element.rel === "stylesheet") {
-            settings.required_css_list.push(
-              renderJS.getAbsoluteURL(element.getAttribute("href"), url)
-            );
-          } else if (element.nodeName === "SCRIPT" &&
-                     (element.type === "text/javascript" ||
-                      !element.type)) {
-            settings.required_js_list.push(
-              renderJS.getAbsoluteURL(element.getAttribute("src"), url)
-            );
-          } else if (element.rel === "http://www.renderjs.org/rel/interface") {
-            settings.interface_list.push(
-              renderJS.getAbsoluteURL(element.getAttribute("href"), url)
-            );
+      if (document_element.head !== null) {
+        for (i = 0; i < document_element.head.children.length; i += 1) {
+          element = document_element.head.children[i];
+          if (element.href !== null) {
+            // XXX Manage relative URL during extraction of URLs
+            // element.href returns absolute URL in firefox but "" in chrome;
+            if (element.rel === "stylesheet") {
+              settings.required_css_list.push(
+                renderJS.getAbsoluteURL(element.getAttribute("href"), url)
+              );
+            } else if (element.nodeName === "SCRIPT" &&
+                       (element.type === "text/javascript" ||
+                        !element.type)) {
+              settings.required_js_list.push(
+                renderJS.getAbsoluteURL(element.getAttribute("src"), url)
+              );
+            } else if (element.rel ===
+                       "http://www.renderjs.org/rel/interface") {
+              settings.interface_list.push(
+                renderJS.getAbsoluteURL(element.getAttribute("href"), url)
+              );
+            }
           }
         }
       }
