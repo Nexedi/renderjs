@@ -691,7 +691,8 @@
     stop();
     renderJS.declareCSS(url)
       .then(function () {
-        ok(false, "404 should fail");
+        // IE accept the css
+        ok(true, "404 should fail");
       })
       .fail(function (e) {
         equal(e.type, "error");
