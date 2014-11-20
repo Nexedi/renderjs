@@ -1327,7 +1327,8 @@
         ok((error.message ===
               "gadget.__aq_parent is not a function") ||
            (error.message ===
-              "undefined is not a function"), error);
+              "undefined is not a function") ||
+           (error.message.indexOf("__aq_parent") !== -1), error);
       })
       .always(function () {
         start();
