@@ -505,21 +505,25 @@
     gadget_instance.__chan.bind("declareMethod",
                                 function (trans, method_name) {
         gadget_instance[method_name] = function () {
-          var argument_list = arguments;
-          return new RSVP.Promise(function (resolve, reject) {
-            gadget_instance.__chan.call({
-              method: "methodCall",
-              params: [
-                method_name,
-                Array.prototype.slice.call(argument_list, 0)],
-              success: function (s) {
-                resolve(s);
-              },
-              error: function (e) {
-                reject(e);
-              }
+          var argument_list = arguments,
+            wait_promise = new RSVP.Promise(function (resolve, reject) {
+              gadget_instance.__chan.call({
+                method: "methodCall",
+                params: [
+                  method_name,
+                  Array.prototype.slice.call(argument_list, 0)],
+                success: function (s) {
+                  resolve(s);
+                },
+                error: function (e) {
+                  reject(e);
+                }
+              });
             });
-          });
+          return new RSVP.Queue()
+            .push(function () {
+              return wait_promise;
+            });
         };
         return "OK";
       });

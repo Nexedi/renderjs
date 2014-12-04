@@ -3248,6 +3248,15 @@
       .then(function (new_gadget) {
         return new RSVP.Queue()
 
+          // Method returns an RSVP.Queue
+          .push(function () {
+            var result = new_gadget.wasReadyCalled();
+            ok(
+              result instanceof RSVP.Queue,
+              "iframe method should return Queue"
+            );
+          })
+
           // Check that ready function are called
           .push(function () {
             return new_gadget.wasReadyCalled();
