@@ -6,8 +6,61 @@
  * http://www.renderjs.org/documentation
  */
 (function (document, window, RSVP, DOMParser, Channel, MutationObserver,
-           Node) {
+           Node, FileReader, Blob) {
   "use strict";
+
+  function readBlobAsDataURL(blob) {
+    var fr = new FileReader();
+    return new RSVP.Promise(function (resolve, reject) {
+      fr.addEventListener("load", function (evt) {
+        resolve(evt.target.result);
+      });
+      fr.addEventListener("error", reject);
+      fr.readAsDataURL(blob);
+    }, function () {
+      fr.abort();
+    });
+  }
+
+  function ajax(url) {
+    var xhr;
+    function resolver(resolve, reject) {
+      function handler() {
+        try {
+          if (xhr.readyState === 0) {
+            // UNSENT
+            reject(xhr);
+          } else if (xhr.readyState === 4) {
+            // DONE
+            if ((xhr.status < 200) || (xhr.status >= 300) ||
+                (!/^text\/html[;]?/.test(
+                  xhr.getResponseHeader("Content-Type") || ""
+                ))) {
+              reject(xhr);
+            } else {
+              resolve(xhr);
+            }
+          }
+        } catch (e) {
+          reject(e);
+        }
+      }
+
+      xhr = new XMLHttpRequest();
+      xhr.open("GET", url);
+      xhr.onreadystatechange = handler;
+      xhr.setRequestHeader('Accept', 'text/html');
+      xhr.withCredentials = true;
+      xhr.send();
+    }
+
+    function canceller() {
+      if ((xhr !== undefined) && (xhr.readyState !== xhr.DONE)) {
+        xhr.abort();
+      }
+    }
+    return new RSVP.Promise(resolver, canceller);
+  }
 
   var gadget_model_dict = {},
     javascript_registration_dict = {},
@@ -15,7 +68,8 @@
     gadget_loading_klass,
     loading_klass_promise,
     renderJS,
-    Monitor;
+    Monitor,
+    isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i');
 
   /////////////////////////////////////////////////////////////////
   // Helper functions
@@ -556,6 +610,33 @@
   }
 
   /////////////////////////////////////////////////////////////////
+  // privateDeclareDataUrlGadget
+  /////////////////////////////////////////////////////////////////
+  function privateDeclareDataUrlGadget(url, options, parent_gadget) {
+
+    return new RSVP.Queue()
+      .push(function () {
+        return ajax(url);
+      })
+      .push(function (xhr) {
+        // Insert a "base" element, in order to resolve all relative links
+        // which could get broken with a data url
+        var doc = (new DOMParser()).parseFromString(xhr.responseText,
+                                                    'text/html'),
+          base = doc.createElement('base'),
+          blob;
+        base.href = url;
+        doc.head.insertBefore(base, doc.head.firstChild);
+        blob = new Blob([doc.documentElement.outerHTML],
+                        {type: "text/html;charset=UTF-8"});
+        return readBlobAsDataURL(blob);
+      })
+      .push(function (data_url) {
+        return privateDeclareIframeGadget(data_url, options, parent_gadget);
+      });
+  }
+
+  /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget
   /////////////////////////////////////////////////////////////////
   RenderJSGadget
@@ -590,6 +671,8 @@
             method = privateDeclarePublicGadget;
           } else if (options.sandbox === "iframe") {
             method = privateDeclareIframeGadget;
+          } else if (options.sandbox === "dataurl") {
+            method = privateDeclareDataUrlGadget;
           } else {
             throw new Error("Unsupported sandbox options '" +
                             options.sandbox + "'");
@@ -702,8 +785,7 @@
   /////////////////////////////////////////////////////////////////
   renderJS.getAbsoluteURL = function (url, base_url) {
     var doc, base, link,
-      html = "<!doctype><html><head></head></html>",
-      isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i');
+      html = "<!doctype><html><head></head></html>";
 
     if (url && base_url && !isAbsoluteOrDataURL.test(url)) {
       doc = (new DOMParser()).parseFromString(html, 'text/html');
@@ -781,10 +863,9 @@
   // renderJS.declareGadgetKlass
   /////////////////////////////////////////////////////////////////
   renderJS.declareGadgetKlass = function (url) {
-    var result,
-      xhr;
+    var result;
 
-    function parse() {
+    function parse(xhr) {
       var tmp_constructor,
         key,
         parsed_html;
@@ -830,50 +911,18 @@
       return gadget_model_dict[url];
     }
 
-    function resolver(resolve, reject) {
-      function handler() {
-        var tmp_result;
-        try {
-          if (xhr.readyState === 0) {
-            // UNSENT
-            reject(xhr);
-          } else if (xhr.readyState === 4) {
-            // DONE
-            if ((xhr.status < 200) || (xhr.status >= 300) ||
-                (!/^text\/html[;]?/.test(
-                  xhr.getResponseHeader("Content-Type") || ""
-                ))) {
-              reject(xhr);
-            } else {
-              tmp_result = parse();
-              resolve(tmp_result);
-            }
-          }
-        } catch (e) {
-          reject(e);
-        }
-      }
-
-      xhr = new XMLHttpRequest();
-      xhr.open("GET", url);
-      xhr.onreadystatechange = handler;
-      xhr.setRequestHeader('Accept', 'text/html');
-      xhr.withCredentials = true;
-      xhr.send();
-    }
-
-    function canceller() {
-      if ((xhr !== undefined) && (xhr.readyState !== xhr.DONE)) {
-        xhr.abort();
-      }
-    }
-
     if (gadget_model_dict.hasOwnProperty(url)) {
       // Return klass object if it already exists
       result = RSVP.resolve(gadget_model_dict[url]);
     } else {
       // Fetch the HTML page and parse it
-      result = new RSVP.Promise(resolver, canceller);
+      result = new RSVP.Queue()
+        .push(function () {
+          return ajax(url);
+        })
+        .push(function (xhr) {
+          return parse(xhr);
+        });
     }
     return result;
   };
@@ -899,10 +948,9 @@
         required_js_list: []
       },
       i,
-      element,
-      isAbsoluteURL = new RegExp('^(?:[a-z]+:)?//', 'i');
+      element;
 
-    if (!url || !isAbsoluteURL.test(url)) {
+    if (!url || !isAbsoluteOrDataURL.test(url)) {
       throw new Error("The url should be absolute: " + url);
     }
 
@@ -1305,4 +1353,5 @@
   }
   bootstrap();
 
-}(document, window, RSVP, DOMParser, Channel, MutationObserver, Node));
+}(document, window, RSVP, DOMParser, Channel, MutationObserver, Node,
+  FileReader, Blob));

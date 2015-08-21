@@ -3402,6 +3402,69 @@
   });
 
   /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareGadget (dataurl)
+  /////////////////////////////////////////////////////////////////
+  test('dataurl provide an iframed gadget as callback parameter', function () {
+    // Check that declare gadget returns the gadget
+    var parent_gadget = new RenderJSGadget(),
+      topURL = "http://example.org/topGadget",
+      parsed = URI.parse(window.location.href),
+      parent_path = URI.build({protocol: parsed.protocol,
+                               hostname: parsed.hostname,
+                               port: parsed.port,
+                               path: parsed.path}).toString(),
+      absolute_path = parent_path + "mixed_embedded.html",
+      data_url = "data:text/html;charset=utf-8;base64,PGh0bWw+PGhlYWQ+PGJhc2" +
+        "UgaHJlZj0iaHR0cDovLzEyNy4wLjAuMTo5MDAwL3Rlc3QvbWl4ZWRfZW1iZWRkZWQua" +
+        "HRtbCI+PGJhc2UgaHJlZj0iaHR0cDovLzEyNy4wLjAuMTo5MDAwIj48c2NyaXB0IHNy" +
+        "Yz0iLi4vbm9kZV9tb2R1bGVzL3JzdnAvZGlzdC9yc3ZwLTIuMC40LmpzIiB0eXBlPSJ" +
+        "0ZXh0L2phdmFzY3JpcHQiPjwvc2NyaXB0PjxzY3JpcHQgc3JjPSIuLi9kaXN0L3Jlbm" +
+        "RlcmpzLWxhdGVzdC5qcyIgdHlwZT0idGV4dC9qYXZhc2NyaXB0Ij48L3NjcmlwdD48L" +
+        "2hlYWQ+PGJvZHk+PHA+bXkgbWl4ZWQgZm9vPC9wPjwvYm9keT48L2h0bWw+";
+
+
+    // data:text/html;charset=utf-8;base64,
+    // PGh0bWw+PGJvZHk+PHA+Zm9vPC9wPjwvYm9keT48L2h0bWw+"
+
+    this.server.respondWith("GET", "/test/mixed_embedded.html", [200, {
+      "Content-Type": "text/html"
+    }, '<html><head>' +
+       '<base href="http://127.0.0.1:9000"></base>' +
+       '<script src="../node_modules/rsvp/dist/rsvp-2.0.4.js" ' +
+       'type="text/javascript"></script>' +
+       '<script src="../dist/renderjs-latest.js" ' +
+       'type="text/javascript"></script>' +
+       '</head><body><p>my mixed foo</p></body></html>']);
+
+    document.getElementById("qunit-fixture").textContent = "";
+    parent_gadget.__path = parent_path;
+
+    parent_gadget.__acquired_method_dict = {
+      getTopURL: function () {return topURL; }
+    };
+
+    stop();
+    parent_gadget.declareGadget(absolute_path, {
+      sandbox: 'dataurl',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        equal(new_gadget.__path, data_url);
+        ok(new_gadget instanceof RenderJSIframeGadget);
+        equal(
+          new_gadget.__element.innerHTML,
+          '<iframe src="' + data_url + '"></iframe>'
+        );
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getDeclaredGadget
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getDeclaredGadget", {

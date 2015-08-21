@@ -63,6 +63,8 @@ module.exports = function (grunt) {
             'Channel',
             'XMLHttpRequest',
             'MutationObserver',
+            'Blob',
+            'FileReader',
             'Node'
           ]
         }
