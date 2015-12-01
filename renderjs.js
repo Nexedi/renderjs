@@ -806,8 +806,12 @@
   renderJS.declareJS = function (url) {
     // Prevent infinite recursion if loading render.js
     // more than once
+    // Prevent loading render.js and rsvp.js twice from different url
     var result;
-    if (javascript_registration_dict.hasOwnProperty(url)) {
+    if (javascript_registration_dict.hasOwnProperty(url) ||
+        url.endsWith('/rsvp.js') ||
+        url.endsWith('/renderjs.js')
+        ) {
       result = RSVP.resolve();
     } else {
       result = new RSVP.Promise(function (resolve, reject) {
