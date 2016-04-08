@@ -89,7 +89,9 @@ module.exports = function (grunt) {
             'URI',
             'URL',
             '__RenderJSIframeGadget',
-            '__RenderJSEmbeddedGadget'
+            '__RenderJSEmbeddedGadget',
+            'FileReader',
+            'Blob'
           ]
         }
       }
