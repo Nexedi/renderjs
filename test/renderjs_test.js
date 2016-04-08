@@ -1,5 +1,5 @@
 /*jslint nomen: true*/
-(function (document, renderJS, QUnit, sinon, URI) {
+(function (document, renderJS, QUnit, sinon, URI, URL) {
   "use strict";
   var test = QUnit.test,
     stop = QUnit.stop,
@@ -3704,9 +3704,7 @@
             document.querySelector('.acquisitionError'),
           klass_div = iframe.contentWindow.document.querySelector('.klass');
         equal(url_div.innerHTML,
-              window.location.protocol + "//" + window.location.hostname +
-              (window.location.port ? ':' + window.location.port : '') +
-              "/test/not_declared_gadget.html");
+              new URL('not_declared_gadget.html', window.location).href);
         equal(acquisition_div.innerHTML,
               "AcquisitionError: No gadget provides willFail");
         equal(klass_div.innerHTML,
@@ -3720,5 +3718,5 @@
       });
   });
 
-}(document, renderJS, QUnit, sinon, URI));
+}(document, renderJS, QUnit, sinon, URI, URL));
 

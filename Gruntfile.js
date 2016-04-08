@@ -87,6 +87,7 @@ module.exports = function (grunt) {
             'RSVP',
             'DOMParser',
             'URI',
+            'URL',
             '__RenderJSIframeGadget',
             '__RenderJSEmbeddedGadget'
           ]
