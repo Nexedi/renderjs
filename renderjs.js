@@ -69,7 +69,10 @@
     loading_klass_promise,
     renderJS,
     Monitor,
-    isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i');
+    isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
+    gadget_failed = false,
+    gadget_error,
+    acquired_method_list = [];
 
   /////////////////////////////////////////////////////////////////
   // Helper functions
@@ -83,6 +86,8 @@
   }
 
   function letsCrash(e) {
+    gadget_failed = true;
+    gadget_error = e.toString();
     if (e.constructor === XMLHttpRequest) {
       e = {
         readyState: e.readyState,
@@ -389,6 +394,7 @@
 
   RenderJSGadget.declareAcquiredMethod =
     function (name, method_name_to_acquire) {
+      acquired_method_list.push([name, method_name_to_acquire]);
       this.prototype[name] = function () {
         var argument_list = Array.prototype.slice.call(arguments, 0),
           gadget = this;
@@ -1011,7 +1017,9 @@
       notifyDeclareMethod,
       gadget_ready = false,
       iframe_top_gadget,
-      last_acquisition_gadget;
+      last_acquisition_gadget,
+      declare_method_list_waiting = [],
+      connection_ready = false;
 
     // Create the gadget class for the current url
     if (gadget_model_dict.hasOwnProperty(url)) {
@@ -1074,7 +1082,91 @@
         embedded_channel = Channel.build({
           window: window.parent,
           origin: "*",
-          scope: "renderJS"
+          scope: "renderJS",
+          onReady: function() {
+            var k, acquire_function_name;
+            iframe_top_gadget = false;
+            //Default: Define __aq_parent to inform parent window
+            tmp_constructor.prototype.__aq_parent = function (method_name,
+              argument_list, time_out) {
+              return new RSVP.Promise(function (resolve, reject) {
+                embedded_channel.call({
+                  method: "acquire",
+                  params: [
+                    method_name,
+                    argument_list
+                  ],
+                  success: function (s) {
+                    resolve(s);
+                  },
+                  error: function (e) {
+                    reject(e);
+                  },
+                  timeout: time_out
+                });
+              });
+            };
+            // Update acquired method
+            for (k = 0; k < acquired_method_list.length; k += 1) {
+              acquire_function_name = acquired_method_list[k][1];
+              tmp_constructor.prototype[acquired_method_list[k][0]] = function () {
+                var argument_list = Array.prototype.slice.call(arguments, 0),
+                  gadget = this;
+                return new RSVP.Queue()
+                  .push(function () {
+                    return tmp_constructor.prototype.__aq_parent(acquire_function_name, argument_list);
+                  });
+              };
+            }
+            // Channel is ready, so now declare Function
+            notifyDeclareMethod = function (name) {
+              declare_method_count += 1;
+              embedded_channel.call({
+                method: "declareMethod",
+                params: name,
+                success: function () {
+                  declare_method_count -= 1;
+                  notifyReady();
+                },
+                error: function () {
+                  declare_method_count -= 1;
+                }
+              });
+            };
+            for (k = 0; k < declare_method_list_waiting.length; k += 1) {
+              notifyDeclareMethod(declare_method_list_waiting[k]);
+            }
+            declare_method_list_waiting = [];
+            // If Gadget Failed Notify Parent
+            if (gadget_failed) {
+              embedded_channel.notify({method: "failed", params: gadget_error});
+              return;
+            }
+            // Get Top URL
+            return tmp_constructor.prototype.__aq_parent('getTopURL', [])
+              .then(function (topURL) {
+                var base = document.createElement('base');
+                base.href = topURL;
+                base.target = "_top";
+                document.head.appendChild(base);
+                connection_ready = true;
+                notifyReady();
+                //the channel is ok
+                //so bind calls to renderJS method on the instance
+                embedded_channel.bind("methodCall", function (trans, v) {
+                  root_gadget[v[0]].apply(root_gadget, v[1])
+                    .then(function (g) {
+                      trans.complete(g);
+                    }).fail(function (e) {
+                      trans.error(e.toString());
+                    });
+                  trans.delayReturn(true);
+                });
+              })
+              .fail(function (error) {
+                throw error;
+              });
+          }
         });
         // Create the root gadget instance and put it in the loading stack
         tmp_constructor = RenderJSEmbeddedGadget;
@@ -1093,18 +1185,7 @@
 
         // Inform parent gadget about declareMethod calls here.
         notifyDeclareMethod = function (name) {
-          declare_method_count += 1;
-          embedded_channel.call({
-            method: "declareMethod",
-            params: name,
-            success: function () {
-              declare_method_count -= 1;
-              notifyReady();
-            },
-            error: function () {
-              declare_method_count -= 1;
-            }
-          });
+          declare_method_list_waiting.push(name);
         };
 
         notifyDeclareMethod("getInterfaceList");
@@ -1130,26 +1211,8 @@
         tmp_constructor.allowPublicAcquisition =
           RenderJSGadget.allowPublicAcquisition;
 
-        //Default: Define __aq_parent to inform parent window
-        tmp_constructor.prototype.__aq_parent = function (method_name,
-          argument_list, time_out) {
-          return new RSVP.Promise(function (resolve, reject) {
-            embedded_channel.call({
-              method: "acquire",
-              params: [
-                method_name,
-                argument_list
-              ],
-              success: function (s) {
-                resolve(s);
-              },
-              error: function (e) {
-                reject(e);
-              },
-              timeout: time_out
-            });
-          });
-        };
+        iframe_top_gadget = true;
+        setAqParent(root_gadget, last_acquisition_gadget);
       }
 
       tmp_constructor.prototype.__acquired_method_dict = {};
@@ -1281,35 +1344,6 @@
           //1: loadSubGadgetDOMDeclaration
           //.....
           tmp_constructor.__ready_list.splice(1, 0, function () {
-            return root_gadget.__aq_parent('getTopURL', [], 100)
-              .then(function (topURL) {
-                var base = document.createElement('base');
-                base.href = topURL;
-                base.target = "_top";
-                document.head.appendChild(base);
-                //the channel is ok
-                //so bind calls to renderJS method on the instance
-                embedded_channel.bind("methodCall", function (trans, v) {
-                  root_gadget[v[0]].apply(root_gadget, v[1])
-                    .then(function (g) {
-                      trans.complete(g);
-                    }).fail(function (e) {
-                      trans.error(e.toString());
-                    });
-                  trans.delayReturn(true);
-                });
-              })
-              .fail(function (error) {
-                if (error === "timeout_error") {
-                  //the channel fail
-                  //we consider current gadget is parent gadget
-                  //redifine last acquisition gadget
-                  iframe_top_gadget = true;
-                  setAqParent(root_gadget, last_acquisition_gadget);
-                } else {
-                  throw error;
-                }
-              });
           });
         }
 
@@ -1337,7 +1371,9 @@
       loading_gadget_promise
         .then(function () {
           gadget_ready = true;
-          notifyReady();
+          if (connection_ready) {
+            notifyReady();
+          }
         })
         .fail(function (e) {
           //top gadget in iframe

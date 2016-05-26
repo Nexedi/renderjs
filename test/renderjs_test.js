@@ -21,7 +21,7 @@
   });
 
 
-  QUnit.config.testTimeout = 1000;
+  QUnit.config.testTimeout = 1500;
 //   QUnit.config.reorder = false;
 //   sinon.log = function (message) {
 //     console.log(message);
