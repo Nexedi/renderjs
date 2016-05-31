@@ -69,6 +69,7 @@
     loading_klass_promise,
     renderJS,
     Monitor,
+    scope_increment = 0,
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i');
 
   /////////////////////////////////////////////////////////////////
@@ -256,7 +257,7 @@
   }
 
   function loadSubGadgetDOMDeclaration(g) {
-    var element_list = g.__element.querySelectorAll('[data-gadget-scope]'),
+    var element_list = g.__element.querySelectorAll('[data-gadget-url]'),
       element,
       promise_list = [],
       scope,
@@ -269,7 +270,7 @@
       scope = element.getAttribute("data-gadget-scope");
       url = element.getAttribute("data-gadget-url");
       sandbox = element.getAttribute("data-gadget-sandbox");
-      if ((scope !== null) && (url !== null)) {
+      if (url !== null) {
         promise_list.push(g.declareGadget(url, {
           element: element,
           scope: scope || undefined,
@@ -699,7 +700,8 @@
         })
         // Set the HTML context
         .push(function (gadget_instance) {
-          var i;
+          var i,
+            scope;
           // Trigger calling of all ready callback
           function ready_wrapper() {
             return gadget_instance;
@@ -713,11 +715,18 @@
           }
 
           // Store local reference to the gadget instance
-          if (options.scope !== undefined) {
-            parent_gadget.__sub_gadget_dict[options.scope] = gadget_instance;
-            gadget_instance.__element.setAttribute("data-gadget-scope",
-                                                   options.scope);
+          scope = options.scope;
+          if (scope === undefined) {
+            scope = 'RJS_' + scope_increment;
+            scope_increment += 1;
+            while (parent_gadget.__sub_gadget_dict.hasOwnProperty(scope)) {
+              scope = 'RJS_' + scope_increment;
+              scope_increment += 1;
+            }
           }
+          parent_gadget.__sub_gadget_dict[scope] = gadget_instance;
+          gadget_instance.__element.setAttribute("data-gadget-scope",
+                                                 scope);
 
           // Put some attribute to ease page layout comprehension
           gadget_instance.__element.setAttribute("data-gadget-url", url);

@@ -9,6 +9,7 @@
     throws = QUnit.throws,
     deepEqual = QUnit.deepEqual,
     module = QUnit.module,
+    notEqual = QUnit.notEqual,
     root_gadget_klass = renderJS(window),
     root_gadget_defer = RSVP.defer(),
     RenderJSGadget = __RenderJSGadget,
@@ -1700,6 +1701,7 @@
       service2 = {},
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test500.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -1739,6 +1741,7 @@
       service2 = {},
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test501.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -1781,6 +1784,7 @@
       service2 = {},
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test502.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -1826,6 +1830,7 @@
       gadget = new RenderJSGadget(),
       parent_element = document.createElement("div"),
       html_url = 'https://example.org/files/qunittest/test503.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -1870,6 +1875,7 @@
       service2 = {},
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test504.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -1920,6 +1926,7 @@
         gadget = new RenderJSGadget(),
         parent_element = document.createElement("div"),
         html_url = 'https://example.org/files/qunittest/test505.html';
+      gadget.__sub_gadget_dict = {};
 
       this.server.respondWith("GET", html_url, [200, {
         "Content-Type": "text/html"
@@ -1971,6 +1978,7 @@
       gadget = new RenderJSGadget(),
       created_gadget,
       html_url = 'https://example.org/files/qunittest/test506.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2041,6 +2049,7 @@
       });
 
     gadget = new ParentKlass();
+    gadget.__sub_gadget_dict = {};
 
     // Subclass RenderJSGadget to not pollute its namespace
 
@@ -2100,6 +2109,7 @@
       });
 
     gadget = new ParentKlass();
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2246,6 +2256,7 @@
         "<script src='../lib/qunit/qunit.js' " +
         "type='text/javascript'></script>" +
         "</body></html>";
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", url, [200, {
       "Content-Type": "text/html"
@@ -2273,6 +2284,7 @@
         "<script src='../lib/qunit/qunit.js' " +
         "type='text/javascript'></script>" +
         "</body></html>";
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", url, [200, {
       "Content-Type": "text/html"
@@ -2299,6 +2311,7 @@
         "<script src='../lib/qunit/qunit.js' " +
         "type='text/javascript'></script>" +
         "</body></html>";
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", url, [200, {
       "Content-Type": "text/html"
@@ -2355,6 +2368,7 @@
         "</head><body><p>Bar content</p></body></html>",
       spy_js,
       spy_css;
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2385,7 +2399,7 @@
               html_url);
         equal(new_gadget.__element.getAttribute("data-gadget-sandbox"),
               "public");
-        equal(new_gadget.__element.getAttribute("data-gadget-scope"),
+        notEqual(new_gadget.__element.getAttribute("data-gadget-scope"),
               null);
         ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
         equal(spy_js.firstCall.args[0], js1_url, "First JS call");
@@ -2442,6 +2456,7 @@
         "<script src='" + js5_url + "' type='text/javascript'></script>" +
         "<script src='" + js6_url + "' type='text/javascript'></script>" +
         "</head><body><p>Bar content</p></body></html>";
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2525,6 +2540,7 @@
             "('div')[0].textContent += 'youhou';"
         ),
       mock;
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2566,6 +2582,7 @@
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test987.html',
       mock;
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2596,6 +2613,7 @@
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_url2 = 'https://example.org/files/qunittest/test12346.html',
       mock;
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [404, {
       "Content-Type": "text/html"
@@ -2632,6 +2650,7 @@
     var called = false,
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2666,6 +2685,7 @@
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98.html',
       html_url2 = 'https://example.org/files/qunittest/test989.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2699,6 +2719,7 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -2761,6 +2782,64 @@
       });
   });
 
+  test('Generate a random scope if none is provided', function () {
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test98.html',
+      scope1,
+      scope_index;
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><p>foo</p></body></html>"]);
+
+    document.getElementById('qunit-fixture').textContent = "";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        return gadget.declareGadget(
+          html_url
+        );
+      })
+      .then(function (child_gadget) {
+        scope1 = child_gadget.__element.getAttribute("data-gadget-scope");
+        equal(scope1.indexOf('RJS_'), 0, scope1);
+        ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
+        equal(gadget.__sub_gadget_dict[scope1], child_gadget);
+      })
+      .then(function () {
+        // Create a gadget with a fixed scope to ensure
+        // scope generation does not erase existing scope
+        scope_index = parseInt(scope1.substr('RJS_'.length), 10);
+        return gadget.declareGadget(
+          html_url,
+          {scope: 'RJS_' + (scope_index + 1)}
+        );
+      })
+      .then(function () {
+        return gadget.declareGadget(
+          html_url
+        );
+      })
+      .then(function (child_gadget) {
+        var scope2 = child_gadget.__element.getAttribute("data-gadget-scope");
+        equal(scope2.indexOf('RJS_'), 0);
+        ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
+        ok(gadget.__sub_gadget_dict.hasOwnProperty(scope2));
+        equal(gadget.__sub_gadget_dict[scope2], child_gadget);
+        notEqual(scope1, scope2);
+        equal(scope2, 'RJS_' + (scope_index + 2));
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('__aq_parent returns acquired_method result if available', function () {
     var gadget = new RenderJSGadget(),
       aq_dynamic_called = false,
@@ -2768,6 +2847,7 @@
       original_argument_list = ["foobar", "barfoo"],
       html_url = 'http://example.org/files/qunittest/test353.html';
 
+    gadget.__sub_gadget_dict = {};
     gadget.__acquired_method_dict = {};
     gadget.__acquired_method_dict[original_method_name] =
       function (argument_list, child_scope) {
@@ -2776,7 +2856,8 @@
         deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
-        equal(child_scope, undefined, "No child scope if unknown");
+        equal(child_scope.indexOf('RJS_'), 0,
+              "Random child scope is generated");
         return "FOO";
       };
 
@@ -2846,11 +2927,59 @@
       });
   });
 
+  test('__aq_parent doesnt propagate unknown gadget child_scope', function () {
+    var gadget = new RenderJSGadget(),
+      aq_dynamic_called = false,
+      original_method_name = "foo",
+      original_argument_list = ["foobar", "barfoo"],
+      html_url = 'http://example.org/files/qunittest/test353.html',
+      new_gadget;
+
+    gadget.__acquired_method_dict = {};
+    gadget.__sub_gadget_dict = {};
+    gadget.__acquired_method_dict[original_method_name] =
+      function (argument_list, child_scope) {
+        aq_dynamic_called = true;
+        equal(this, gadget, "Context should be kept");
+        deepEqual(argument_list, original_argument_list,
+              "Argument list should be kept"
+          );
+        equal(child_scope, undefined, "Child scope should be unknown");
+      };
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    stop();
+    gadget.declareGadget(html_url, {scope: "bar"})
+      .then(function (result) {
+        new_gadget = result;
+        return gadget.dropGadget("bar");
+      })
+      .then(function () {
+        return new_gadget.__aq_parent(
+          original_method_name,
+          original_argument_list
+        );
+      })
+      .then(function (result) {
+        equal(aq_dynamic_called, true);
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('__aq_parent fails if aquired_method throws an error', function () {
     var gadget = new RenderJSGadget(),
       original_error = new Error("Custom error for the test"),
       html_url = 'http://example.org/files/qunittest/test353.html';
 
+    gadget.__sub_gadget_dict = {};
     gadget.__acquired_method_dict = {};
     gadget.__acquired_method_dict.foo = function () {
       throw original_error;
@@ -2888,6 +3017,7 @@
         "Content-Type": "text/html"
       }, "<html><body></body></html>"]);
 
+      gadget.__sub_gadget_dict = {};
       gadget.__acquired_method_dict = {};
       gadget.__acquired_method_dict[original_method_name] =
         function () {
@@ -2930,6 +3060,7 @@
       parent_path = "http://something.org",
       absolute_path = "http://something.org/some/path/to/a/gadget";
 
+    parent_gadget.__sub_gadget_dict = {};
     parent_gadget.__path = parent_path;
     this.server.respondWith("GET", absolute_path, [200, {
       "Content-Type": "text/html"
@@ -2946,11 +3077,65 @@
       .always(start);
   });
 
+  test('can declareGadget without scope in HTML directly', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test12345.html',
+      html_url2 = 'https://example.org/files/qunittest/test12346.html',
+      spy,
+      scope;
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div data-foo='bar' " +
+       "data-gadget-url='" + html_url2 +
+       "'></div></body></html>"]);
+    this.server.respondWith("GET", html_url2, [200, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
+
+    stop();
+    gadget.declareGadget(html_url)
+      .then(function (g) {
+        equal(spy.callCount, 2);
+        equal(spy.firstCall.args[1], html_url);
+        equal(spy.secondCall.args[1], html_url2);
+
+        var key_list = Object.keys(g.__sub_gadget_dict);
+        equal(key_list.length, 1, "One child");
+        scope = key_list[0];
+        equal(scope.indexOf('RJS_'), 0, scope);
+
+        // Second gadget is a child
+        return g.getDeclaredGadget(scope);
+      })
+      .then(function (g2) {
+        equal(g2.__path, html_url2);
+        // The gadget element is the one defined in HTML
+        equal(g2.__element.getAttribute("data-foo"), "bar");
+        equal(g2.__element.getAttribute("data-gadget-scope"), scope);
+
+        // The gadget is public by default
+        equal(g2.__element.innerHTML, "raw html");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+        spy.restore();
+      });
+  });
+
+
   test('can declareGadget with scope in HTML directly', function () {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_url2 = 'https://example.org/files/qunittest/test12346.html',
       spy;
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -3002,6 +3187,7 @@
        "data-gadget-scope='bar' data-gadget-url='" + html_url2 +
        "'></div></body></html>"]);
 
+    gadget.__sub_gadget_dict = {};
     gadget.__aq_parent = function (method_name, argument_list) {
       throw new renderJS.AcquisitionError("Can not handle " + method_name);
     };
@@ -3039,6 +3225,7 @@
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_url2 = 'https://example.org/files/qunittest/test12346.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -3068,6 +3255,7 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -3174,6 +3362,7 @@
       topURL = "http://example.org/topGadget";
 
     document.getElementById("qunit-fixture").textContent = "";
+    parent_gadget.__sub_gadget_dict = {};
     parent_gadget.__path = parent_path;
 
     parent_gadget.__acquired_method_dict = {
@@ -3210,6 +3399,7 @@
 
     document.getElementById("qunit-fixture").textContent = "";
 
+    gadget.__sub_gadget_dict = {};
     gadget.__acquired_method_dict = {
       getTopURL: function () {return topURL; }
     };
@@ -3249,6 +3439,7 @@
       throw new renderJS.AcquisitionError("Can not handle " + method_name);
     };
 
+    gadget.__sub_gadget_dict = {};
     gadget.__acquired_method_dict = {
       getTopURL: function () {return topURL; }
     };
@@ -3453,6 +3644,7 @@
     );
 
     document.getElementById("qunit-fixture").textContent = "";
+    parent_gadget.__sub_gadget_dict = {};
     parent_gadget.__path = parent_path;
 
     parent_gadget.__acquired_method_dict = {
