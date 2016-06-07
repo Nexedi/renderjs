@@ -3388,6 +3388,184 @@
       });
   });
 
+  test('checking working delayed iframe gadget', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      acquire_called = false,
+      url = "./embedded.html",
+      topURL = "http://example.org/topGadget";
+
+    function readyMessageDelay(e) {
+      var now,
+        then,
+        i = 0;
+      if (e.data.indexOf('{"method":"renderJS::__ready"') === 0) {
+        console.log("waiting");
+        now = Date.now();
+        then = now + 150;
+        while (Date.now() < then) {
+          i += 1;
+        }
+      }
+    }
+
+    window.addEventListener('message',readyMessageDelay, false);
+
+    gadget.__aq_parent = function (method_name, argument_list) {
+      acquire_called = true;
+      equal(this, gadget, "Context should be kept");
+      if (method_name === "acquireMethodRequested") {
+        equal(method_name, "acquireMethodRequested",
+          "Method name should be kept");
+        deepEqual(argument_list, ["param1", "param2"],
+              "Argument list should be kept"
+          );
+        return "result correctly fetched from parent";
+      }
+      throw new renderJS.AcquisitionError("Can not handle " + method_name);
+    };
+
+    gadget.__sub_gadget_dict = {};
+    gadget.__acquired_method_dict = {
+      getTopURL: function () {return topURL; }
+    };
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        return new RSVP.Queue()
+
+          // Method returns an RSVP.Queue
+          .push(function () {
+            var result = new_gadget.wasReadyCalled();
+            ok(
+              result instanceof RSVP.Queue,
+              "iframe method should return Queue"
+            );
+          })
+
+          // Check that ready function are called
+          .push(function () {
+            return new_gadget.wasReadyCalled();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // Check that service are started
+          .push(function () {
+            return new_gadget.wasServiceStarted();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // Check that service error can be reported
+          .push(function () {
+            return new_gadget.canReportServiceError();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // Custom method accept parameter
+          // and return value
+          .push(function () {
+            return new_gadget.setContent("foobar");
+          })
+          .push(function (result) {
+            return new_gadget.getContent();
+          })
+          .push(function (result) {
+            equal(result, "foobar");
+          })
+
+          // Method are propagated
+          .push(function () {
+            return new_gadget.triggerError();
+          })
+          .push(function () {
+            ok(false, "triggerError should fail");
+          }, function (e) {
+            equal(e, "Error: Manually triggered embedded error");
+          })
+
+          // sub_gadget_dict private property is created
+          .push(function () {
+            return new_gadget.isSubGadgetDictInitialize();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // acquired_method_dict is created on prototype
+          .push(function () {
+            return new_gadget.isAcquisitionDictInitialize();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // service_list is created on prototype
+          .push(function () {
+            return new_gadget.isServiceListInitialize();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // acquire check correctly returns result
+          .push(function () {
+            return new_gadget.callOKAcquire("param1", "param2");
+          })
+          .push(function (result) {
+            ok(acquire_called);
+            equal(result, "result correctly fetched from parent");
+          })
+
+          // acquire correctly returns error
+          .push(function () {
+            return new_gadget.callErrorAcquire(
+              "acquireMethodRequestedWithAcquisitionError",
+              ["param1", "param2"]
+            );
+          })
+          .push(function (result) {
+            ok(false, result);
+          })
+          .push(undefined, function (error) {
+            equal(
+              error,
+              "AcquisitionError: Can not handle " +
+                "acquireMethodRequestedWithAcquisitionError",
+              error
+            );
+          })
+          .push(function () {
+            return new_gadget.getBaseHref();
+          })
+          .push(function (href) {
+            equal(href, topURL);
+          })
+          .push(function () {
+            return new_gadget.getBaseTarget();
+          })
+          .push(function (target) {
+            equal(target, "_top");
+          });
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+        window.removeEventListener("message", readyMessageDelay);
+      });
+  });
+
   test('checking failing iframe gadget', function () {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
