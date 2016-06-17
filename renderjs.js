@@ -1034,9 +1034,6 @@
 
       last_acquisition_gadget = new RenderJSGadget();
       last_acquisition_gadget.__acquired_method_dict = {
-        getTopURL: function () {
-          return url;
-        },
         reportServiceError: function (param_list) {
           letsCrash(param_list[0]);
         }
@@ -1148,30 +1145,19 @@
               });
               return;
             }
-            // Get Top URL
-            return tmp_constructor.prototype.__aq_parent('getTopURL', [])
-              .then(function (topURL) {
-                var base = document.createElement('base');
-                base.href = topURL;
-                base.target = "_top";
-                document.head.appendChild(base);
-                connection_ready = true;
-                notifyReady();
-                //the channel is ok
-                //so bind calls to renderJS method on the instance
-                embedded_channel.bind("methodCall", function (trans, v) {
-                  root_gadget[v[0]].apply(root_gadget, v[1])
-                    .then(function (g) {
-                      trans.complete(g);
-                    }).fail(function (e) {
-                      trans.error(e.toString());
-                    });
-                  trans.delayReturn(true);
+            connection_ready = true;
+            notifyReady();
+            //the channel is ok
+            //so bind calls to renderJS method on the instance
+            embedded_channel.bind("methodCall", function (trans, v) {
+              root_gadget[v[0]].apply(root_gadget, v[1])
+                .then(function (g) {
+                  trans.complete(g);
+                }).fail(function (e) {
+                  trans.error(e.toString());
                 });
-              })
-              .fail(function (error) {
-                throw error;
-              });
+              trans.delayReturn(true);
+            });
           }
         });
 

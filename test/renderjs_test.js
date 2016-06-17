@@ -3177,8 +3177,7 @@
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test123456.html',
       html_url2 = renderJS.getAbsoluteURL('./embedded.html',
-                                          window.location.href),
-      topURL = "http://example.org/topGadget";
+                                          window.location.href);
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -3190,10 +3189,6 @@
     gadget.__sub_gadget_dict = {};
     gadget.__aq_parent = function (method_name, argument_list) {
       throw new renderJS.AcquisitionError("Can not handle " + method_name);
-    };
-
-    gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
     };
 
     document.getElementById("qunit-fixture").textContent = "";
@@ -3316,16 +3311,11 @@
   test('Can take a scope options', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
-      url = "./embedded.html",
-      topURL = "http://example.org/topGadget";
+      url = "./embedded.html";
 
     gadget.__sub_gadget_dict = {};
 
     document.getElementById("qunit-fixture").textContent = "";
-
-    gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
-    };
 
     stop();
     gadget.declareGadget(url, {
@@ -3358,16 +3348,11 @@
                                port: parsed.port,
                                path: parsed.path}).toString(),
       gadget_path = "./embedded.html",
-      absolute_path = parent_path + "embedded.html",
-      topURL = "http://example.org/topGadget";
+      absolute_path = parent_path + "embedded.html";
 
     document.getElementById("qunit-fixture").textContent = "";
     parent_gadget.__sub_gadget_dict = {};
     parent_gadget.__path = parent_path;
-
-    parent_gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
-    };
 
     stop();
     parent_gadget.declareGadget(gadget_path, {
@@ -3377,8 +3362,6 @@
       .then(function (new_gadget) {
         equal(new_gadget.__path, absolute_path);
         equal(Object.keys(new_gadget.__acquired_method_dict).length, 1);
-        equal(typeof new_gadget.__acquired_method_dict.getTopURL,
-              'function');
         ok(new_gadget instanceof RenderJSIframeGadget);
         equal(
           new_gadget.__element.innerHTML,
@@ -3394,15 +3377,11 @@
   test('Initialize sub_gadget_dict private property', function () {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
-      url = "./embedded.html",
-      topURL = "http://example.org/topGadget";
+      url = "./embedded.html";
 
     document.getElementById("qunit-fixture").textContent = "";
 
     gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
-    };
 
     stop();
     gadget.declareGadget(url, {
@@ -3422,8 +3401,7 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       acquire_called = false,
-      url = "./embedded.html",
-      topURL = "http://example.org/topGadget";
+      url = "./embedded.html";
 
     gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
@@ -3440,9 +3418,6 @@
     };
 
     gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
-    };
 
     stop();
     gadget.declareGadget(url, {
@@ -3557,18 +3532,6 @@
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-          })
-          .push(function () {
-            return new_gadget.getBaseHref();
-          })
-          .push(function (href) {
-            equal(href, topURL);
-          })
-          .push(function () {
-            return new_gadget.getBaseTarget();
-          })
-          .push(function (target) {
-            equal(target, "_top");
           });
       })
       .fail(function (error) {
@@ -3583,8 +3546,7 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       acquire_called = false,
-      url = "./embedded.html",
-      topURL = "http://example.org/topGadget";
+      url = "./embedded.html";
 
     function readyMessageDelay(e) {
       var now,
@@ -3617,9 +3579,6 @@
     };
 
     gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
-    };
 
     stop();
     gadget.declareGadget(url, {
@@ -3734,18 +3693,6 @@
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-          })
-          .push(function () {
-            return new_gadget.getBaseHref();
-          })
-          .push(function (href) {
-            equal(href, topURL);
-          })
-          .push(function () {
-            return new_gadget.getBaseTarget();
-          })
-          .push(function (target) {
-            equal(target, "_top");
           });
       })
       .fail(function (error) {
@@ -3761,8 +3708,7 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       acquire_called = false,
-      url = "./embedded_heavy.html",
-      topURL = "http://example.org/topGadget";
+      url = "./embedded_heavy.html";
 
     gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
@@ -3779,9 +3725,6 @@
     };
 
     gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
-    };
 
     stop();
     gadget.declareGadget(url, {
@@ -3896,18 +3839,6 @@
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-          })
-          .push(function () {
-            return new_gadget.getBaseHref();
-          })
-          .push(function (href) {
-            equal(href, topURL);
-          })
-          .push(function () {
-            return new_gadget.getBaseTarget();
-          })
-          .push(function (target) {
-            equal(target, "_top");
           });
       })
       .fail(function (error) {
@@ -3923,11 +3854,6 @@
     var gadget = new RenderJSGadget(),
       url = "./embedded_fail.html";
 
-    gadget.__acquired_method_dict = {
-      getTopURL: function () {
-        return "http://example.org/topGadget";
-      }
-    };
     stop();
     gadget.declareGadget(url, {
       sandbox: 'iframe',
@@ -3950,7 +3876,6 @@
   test('dataurl provide an iframed gadget as callback parameter', function () {
     // Check that declare gadget returns the gadget
     var parent_gadget = new RenderJSGadget(),
-      topURL = "https://example.org/topGadget",
       parsed = URI.parse(window.location.href),
       parent_path = URI.build({protocol: parsed.protocol,
                                hostname: parsed.hostname,
@@ -3985,10 +3910,6 @@
     document.getElementById("qunit-fixture").textContent = "";
     parent_gadget.__sub_gadget_dict = {};
     parent_gadget.__path = parent_path;
-
-    parent_gadget.__acquired_method_dict = {
-      getTopURL: function () {return topURL; }
-    };
 
     stop();
     return new RSVP.Queue()
@@ -4113,7 +4034,6 @@
 
   test('Check that the root gadget is cleanly implemented', function () {
     var parsed = URI.parse(window.location.href),
-      getTopURLCalled = false,
       parent_path = URI.build({protocol: parsed.protocol,
                                hostname: parsed.hostname,
                                port: parsed.port,
@@ -4130,16 +4050,6 @@
       root_gadget_path_without_hash = window.location.href;
     }
 
-    root_gadget_klass
-      .declareAcquiredMethod('getTopURL', 'getTopURL')
-      .allowPublicAcquisition('getTopURL', function () {
-        getTopURLCalled = true;
-        this.getTopURL().then(function (topURL) {
-          equal(topURL, this.__path);
-        });
-        return this.getTopURL();
-      });
-
     stop();
     root_gadget_defer.promise
       .then(function (root_gadget) {
@@ -4147,7 +4057,6 @@
         equal(root_gadget.__path,
               root_gadget_path_without_hash);
         equal(typeof root_gadget.__acquired_method_dict, 'object');
-        equal(Object.keys(root_gadget.__acquired_method_dict).length, 1);
         equal(root_gadget.__title, document.title);
         deepEqual(root_gadget.__interface_list, []);
         deepEqual(root_gadget.__required_css_list,
@@ -4200,24 +4109,10 @@
         deepEqual(root_gadget_klass.__service_list, []);
         return new RSVP.Queue()
           .push(function () {
-            return root_gadget.getTopURL().then(function (topURL) {
-              equal(topURL, root_gadget.__path);
-            });
-          })
-          .push(function () {
             return root_gadget.declareGadget("./embedded.html", {
               sandbox: 'iframe',
               element: document.querySelector('#qunit-fixture')
             })
-              .then(function (new_gadget) {
-                return new_gadget.__aq_parent('getTopURL', []);
-              })
-              .then(function (topURL) {
-                equal(topURL, root_gadget.__path);
-              })
-              .then(function () {
-                ok(getTopURLCalled);
-              })
               .fail(function (e) {
                 ok(false, e);
               });
@@ -4254,12 +4149,9 @@
     return RSVP.delay(900)
       .then(function () {
         var iframe = document.getElementById('renderjsIframe'),
-          url_div = iframe.contentWindow.document.querySelector('.getTopUrl'),
           acquisition_div = iframe.contentWindow.
             document.querySelector('.acquisitionError'),
           klass_div = iframe.contentWindow.document.querySelector('.klass');
-        equal(url_div.innerHTML,
-              new URL('not_declared_gadget.html', window.location).href);
         equal(acquisition_div.innerHTML,
               "AcquisitionError: No gadget provides willFail");
         equal(klass_div.innerHTML,

@@ -9,23 +9,13 @@
         g.props.element = element;
       });
   })
-    .declareAcquiredMethod('getTopURL', 'getTopURL')
     .declareAcquiredMethod('willFail', 'willFail')
     .declareService(function () {
       var context = this;
       return RSVP.all([
-        context.checkTopUrl(),
         context.checkAcquisitionError(),
         context.checkKlass()
       ]);
-    })
-    .declareMethod('checkTopUrl', function () {
-      var g = this;
-      return g.getTopURL()
-        .push(function (top_url) {
-          g.props.element.querySelector('.getTopUrl')
-            .innerHTML = top_url; 
-        });
     })
     .declareMethod('checkAcquisitionError', function () {
       var g = this;
