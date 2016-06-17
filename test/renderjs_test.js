@@ -3557,18 +3557,6 @@
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-          })
-          .push(function () {
-            return new_gadget.getBaseHref();
-          })
-          .push(function (href) {
-            equal(href, topURL);
-          })
-          .push(function () {
-            return new_gadget.getBaseTarget();
-          })
-          .push(function (target) {
-            equal(target, "_top");
           });
       })
       .fail(function (error) {
@@ -3734,18 +3722,6 @@
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-          })
-          .push(function () {
-            return new_gadget.getBaseHref();
-          })
-          .push(function (href) {
-            equal(href, topURL);
-          })
-          .push(function () {
-            return new_gadget.getBaseTarget();
-          })
-          .push(function (target) {
-            equal(target, "_top");
           });
       })
       .fail(function (error) {
@@ -3896,18 +3872,6 @@
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-          })
-          .push(function () {
-            return new_gadget.getBaseHref();
-          })
-          .push(function (href) {
-            equal(href, topURL);
-          })
-          .push(function () {
-            return new_gadget.getBaseTarget();
-          })
-          .push(function (target) {
-            equal(target, "_top");
           });
       })
       .fail(function (error) {

@@ -1151,10 +1151,6 @@
             // Get Top URL
             return tmp_constructor.prototype.__aq_parent('getTopURL', [])
               .then(function (topURL) {
-                var base = document.createElement('base');
-                base.href = topURL;
-                base.target = "_top";
-                document.head.appendChild(base);
                 connection_ready = true;
                 notifyReady();
                 //the channel is ok
