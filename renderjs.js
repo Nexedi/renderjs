@@ -70,7 +70,14 @@
     renderJS,
     Monitor,
     scope_increment = 0,
-    isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i');
+    isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
+    is_page_unloaded = false;
+
+  window.addEventListener('beforeunload', function () {
+    // XXX If another listener cancel the page unload,
+    // it will not restore renderJS crash report
+    is_page_unloaded = true;
+  });
 
   /////////////////////////////////////////////////////////////////
   // Helper functions
@@ -84,6 +91,12 @@
   }
 
   function letsCrash(e) {
+    if (is_page_unloaded) {
+      /*global console*/
+      console.info('-- Error dropped, as page is unloaded');
+      console.info(e);
+      return;
+    }
     if (e.constructor === XMLHttpRequest) {
       e = {
         readyState: e.readyState,

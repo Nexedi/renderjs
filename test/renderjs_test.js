@@ -4165,5 +4165,69 @@
       });
   });
 
+  test('check page unload', function () {
+    var fixture = document.getElementById("qunit-fixture"),
+      iframe,
+      loop_queue;
+
+    fixture.innerHTML =
+      "<iframe id=renderjsIframe src='./unload_gadget.html'></iframe>";
+    iframe = document.getElementById('renderjsIframe');
+    stop();
+
+    function waitForPageChanged() {
+      var iframe_body = iframe.contentWindow.document.body,
+        iframe_text;
+
+      if (iframe_body === null) {
+        loop_queue
+          .push(function () {
+            return RSVP.delay();
+          })
+          .push(function () {
+            waitForPageChanged();
+          });
+        return;
+      }
+      iframe_text = iframe_body.textContent;
+      /*global console*/
+      // console.log(iframe_text);
+      if (iframe_text.indexOf('Page changed') !== -1) {
+        // Final page
+        ok(true, iframe_text);
+      } else if (iframe_text.indexOf('Next page') === -1) {
+        // Not the original text content. Probably the error message.
+        ok(false, iframe_text);
+      } else {
+        loop_queue
+          .push(function () {
+            return RSVP.delay();
+          })
+          .push(function () {
+            waitForPageChanged();
+          });
+      }
+    }
+    return new RSVP.Promise(function (resolve, reject) {
+      iframe.addEventListener("load", function (evt) {
+        resolve(evt.target.result);
+      });
+      iframe.addEventListener("error", reject);
+    })
+      .then(function () {
+        iframe.contentWindow.document.querySelector('a').click();
+
+        loop_queue = new RSVP.Queue();
+        waitForPageChanged();
+        return loop_queue;
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
 }(document, renderJS, QUnit, sinon, URI, URL));
 
