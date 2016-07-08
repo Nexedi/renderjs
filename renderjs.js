@@ -71,7 +71,12 @@
     Monitor,
     scope_increment = 0,
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
-    is_page_unloaded = false;
+    is_page_unloaded = false,
+    error_list = [];
+
+  window.addEventListener('error', function (error) {
+    error_list.push(error);
+  });
 
   window.addEventListener('beforeunload', function () {
     // XXX If another listener cancel the page unload,
@@ -91,6 +96,10 @@
   }
 
   function letsCrash(e) {
+    var i,
+      body,
+      container,
+      paragraph;
     if (is_page_unloaded) {
       /*global console*/
       console.info('-- Error dropped, as page is unloaded');
@@ -113,7 +122,34 @@
       } catch (ignore) {
       }
     }
-    document.getElementsByTagName('body')[0].textContent = e;
+    error_list.push(e);
+    body = document.getElementsByTagName('body')[0];
+    while (body.firstChild) {
+      body.removeChild(body.firstChild);
+    }
+    for (i = 0; i < error_list.length; i += 1) {
+      container = document.createElement("section");
+
+      paragraph = document.createElement("h2");
+      paragraph.textContent = error_list[i].message;
+      container.appendChild(paragraph);
+
+      if (error_list[i].fileName !== undefined) {
+        paragraph = document.createElement("p");
+        paragraph.textContent = 'File: ' +
+          error_list[i].fileName +
+          ': ' + error_list[i].lineNumber;
+        container.appendChild(paragraph);
+      }
+
+      if (error_list[i].stack !== undefined) {
+        paragraph = document.createElement("pre");
+        paragraph.textContent = 'Stack: ' + error_list[i].stack;
+        container.appendChild(paragraph);
+      }
+
+      body.appendChild(container);
+    }
     // XXX Do not crash the application if it fails
     // Where to write the error?
     /*global console*/
