@@ -655,7 +655,13 @@
       iframe_loading_deferred.promise,
       // Timeout to prevent non renderJS embeddable gadget
       // XXX Maybe using iframe.onload/onerror would be safer?
-      RSVP.timeout(5000)
+      new RSVP.Queue()
+        .push(function () {
+          return RSVP.timeout(5000);
+        })
+        .push(undefined, function () {
+          throw new Error('Timeout while loading: ' + url);
+        })
     ]);
   }
 
