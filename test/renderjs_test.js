@@ -4246,9 +4246,9 @@
       .then(function () {
         var iframe_body = iframe.contentWindow.document.body,
           iframe_text = iframe_body.textContent;
-        ok(true, iframe_text.indexOf('SyntaxError') !== -1, iframe_text);
-        ok(true, iframe_text.indexOf('getFoo') !== -1, iframe_text);
-        ok(true, iframe_text.indexOf('error_gadget.html') !== -1, iframe_text);
+        ok(iframe_text.indexOf('SyntaxError') !== -1, iframe_text);
+        ok(iframe_text.indexOf('getFoo') !== -1, iframe_text);
+        ok(iframe_text.indexOf('error_gadget.html') !== -1, iframe_text);
       })
       .fail(function (error) {
         ok(false, error);
