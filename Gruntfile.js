@@ -65,7 +65,9 @@ module.exports = function (grunt) {
             'MutationObserver',
             'Blob',
             'FileReader',
-            'Node'
+            'Node',
+            'navigator',
+            'Event'
           ]
         }
       },

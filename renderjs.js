@@ -6,7 +6,7 @@
  * http://www.renderjs.org/documentation
  */
 (function (document, window, RSVP, DOMParser, Channel, MutationObserver,
-           Node, FileReader, Blob) {
+           Node, FileReader, Blob, navigator, Event) {
   "use strict";
 
   function readBlobAsDataURL(blob) {
@@ -99,52 +99,99 @@
     var i,
       body,
       container,
-      paragraph;
+      paragraph,
+      link,
+      error;
     if (is_page_unloaded) {
       /*global console*/
       console.info('-- Error dropped, as page is unloaded');
       console.info(e);
       return;
     }
-    if (e.constructor === XMLHttpRequest) {
-      e = {
-        readyState: e.readyState,
-        status: e.status,
-        statusText: e.statusText,
-        response_headers: e.getAllResponseHeaders()
-      };
-    }
-    if (e.constructor === Array ||
-        e.constructor === String ||
-        e.constructor === Object) {
-      try {
-        e = JSON.stringify(e);
-      } catch (ignore) {
-      }
-    }
+
     error_list.push(e);
+    // Add error handling stack
+    error_list.push(new Error('stopping renderJS'));
+
     body = document.getElementsByTagName('body')[0];
     while (body.firstChild) {
       body.removeChild(body.firstChild);
     }
+
+    container = document.createElement("section");
+    paragraph = document.createElement("h1");
+    paragraph.textContent = 'Unhandled Error';
+    container.appendChild(paragraph);
+
+    paragraph = document.createElement("p");
+    paragraph.textContent = 'Please report this error to the support team';
+    container.appendChild(paragraph);
+
+    paragraph = document.createElement("p");
+    paragraph.textContent = 'Location: ';
+    link = document.createElement("a");
+    link.href = link.textContent = window.location.toString();
+    paragraph.appendChild(link);
+    container.appendChild(paragraph);
+
+    paragraph = document.createElement("p");
+    paragraph.textContent = 'User-agent: ' + navigator.userAgent;
+    container.appendChild(paragraph);
+
+    body.appendChild(container);
+
     for (i = 0; i < error_list.length; i += 1) {
+      error = error_list[i];
+
+      if (error instanceof Event) {
+        error = {
+          string: error.toString(),
+          message: error.message,
+          type: error.type,
+          target: error.target
+        };
+        if (error.target !== undefined) {
+          error_list.splice(i + 1, 0, error.target);
+        }
+      }
+
+      if (error instanceof XMLHttpRequest) {
+        error = {
+          message: error.toString(),
+          readyState: error.readyState,
+          status: error.status,
+          statusText: error.statusText,
+          response: error.response,
+          responseUrl: error.responseUrl,
+          response_headers: error.getAllResponseHeaders()
+        };
+      }
+      if (error.constructor === Array ||
+          error.constructor === String ||
+          error.constructor === Object) {
+        try {
+          error = JSON.stringify(error);
+        } catch (ignore) {
+        }
+      }
+
       container = document.createElement("section");
 
       paragraph = document.createElement("h2");
-      paragraph.textContent = error_list[i].message;
+      paragraph.textContent = error.message || error;
       container.appendChild(paragraph);
 
-      if (error_list[i].fileName !== undefined) {
+      if (error.fileName !== undefined) {
         paragraph = document.createElement("p");
         paragraph.textContent = 'File: ' +
-          error_list[i].fileName +
-          ': ' + error_list[i].lineNumber;
+          error.fileName +
+          ': ' + error.lineNumber;
         container.appendChild(paragraph);
       }
 
-      if (error_list[i].stack !== undefined) {
+      if (error.stack !== undefined) {
         paragraph = document.createElement("pre");
-        paragraph.textContent = 'Stack: ' + error_list[i].stack;
+        paragraph.textContent = 'Stack: ' + error.stack;
         container.appendChild(paragraph);
       }
 
@@ -1421,4 +1468,4 @@
   bootstrap();
 
 }(document, window, RSVP, DOMParser, Channel, MutationObserver, Node,
-  FileReader, Blob));
+  FileReader, Blob, navigator, Event));
