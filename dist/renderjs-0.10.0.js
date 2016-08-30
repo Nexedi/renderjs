@@ -676,6 +676,16 @@ if (typeof document.contains !== 'function') {
            Node, FileReader, Blob, navigator, Event) {
   "use strict";
 
+
+  // Necessary in the following scenario:
+  //   > renderjs / rsvp are loaded from js (e.g. with $.getScript)
+  //     without a <script> tag in the parent-html
+  //   > the gadget(s) contain a <script> tag with renderjs which would
+  //     lead to repeated bootstrap and so on
+  if (window.hasOwnProperty("renderJS")) {
+    return;
+  }
+
   function readBlobAsDataURL(blob) {
     var fr = new FileReader();
     return new RSVP.Promise(function (resolve, reject) {
@@ -739,7 +749,8 @@ if (typeof document.contains !== 'function') {
     scope_increment = 0,
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
-    error_list = [];
+    error_list = [],
+    bootstrap_deferred_object = new RSVP.defer();
 
   window.addEventListener('error', function (error) {
     error_list.push(error);
@@ -1778,6 +1789,14 @@ if (typeof document.contains !== 'function') {
   // Bootstrap process. Register the self gadget.
   ///////////////////////////////////////////////////
 
+  // Manually initializes the self gadget if the DOMContentLoaded event
+  // is triggered before everything was ready.
+  // (For instance, the HTML-tag for the self gadget gets inserted after
+  //  page load)
+  renderJS.manualBootstrap = function () {
+    bootstrap_deferred_object.resolve();
+  };
+
   function bootstrap() {
     var url = removeHash(window.location.href),
       tmp_constructor,
@@ -2076,7 +2095,15 @@ if (typeof document.contains !== 'function') {
             throw e;
           });
       }
-      document.addEventListener('DOMContentLoaded', init, false);
+      document.addEventListener('DOMContentLoaded',
+                                bootstrap_deferred_object.resolve, false);
+      return new RSVP.Queue()
+        .push(function () {
+          return bootstrap_deferred_object.promise;
+        })
+        .push(function () {
+          return init();
+        });
     });
 
     loading_gadget_promise
