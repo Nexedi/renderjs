@@ -808,10 +808,17 @@
           function ready_wrapper() {
             return gadget_instance;
           }
+          function ready_executable_wrapper(fct) {
+            return function (g) {
+              return fct.call(g, g);
+            };
+          }
           for (i = 0; i < gadget_instance.constructor.__ready_list.length;
                i += 1) {
             // Put a timeout?
-            queue.push(gadget_instance.constructor.__ready_list[i]);
+            queue.push(ready_executable_wrapper(
+              gadget_instance.constructor.__ready_list[i]
+            ));
             // Always return the gadget instance after ready function
             queue.push(ready_wrapper);
           }
@@ -1422,7 +1429,11 @@
         function ready_wrapper() {
           return root_gadget;
         }
-
+        function ready_executable_wrapper(fct) {
+          return function (g) {
+            return fct.call(g, g);
+          };
+        }
         tmp_constructor.ready(function (g) {
           return startService(g);
         });
@@ -1431,7 +1442,7 @@
         for (i = 0; i < tmp_constructor.__ready_list.length; i += 1) {
           // Put a timeout?
           loading_gadget_promise
-            .push(tmp_constructor.__ready_list[i])
+            .push(ready_executable_wrapper(tmp_constructor.__ready_list[i]))
             // Always return the gadget instance after ready function
             .push(ready_wrapper);
         }

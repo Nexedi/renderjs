@@ -18,11 +18,11 @@
 
   // Keep track of the root gadget
   renderJS(window).ready(function (g) {
-    root_gadget_defer.resolve(g);
+    root_gadget_defer.resolve([g, this]);
   });
 
 
-  QUnit.config.testTimeout = 1000;
+  QUnit.config.testTimeout = 10000;
 //   QUnit.config.reorder = false;
 //   sinon.log = function (message) {
 //     console.log(message);
@@ -2649,6 +2649,7 @@
     // Subclass RenderJSGadget to not pollute its namespace
     var called = false,
       gadget = new RenderJSGadget(),
+      ready_gadget,
       html_url = 'https://example.org/files/qunittest/test98.html';
     gadget.__sub_gadget_dict = {};
 
@@ -2660,7 +2661,9 @@
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
-        Klass.ready(function () {
+        Klass.ready(function (g) {
+          equal(g, this, "Context should be the gadget instance");
+          ready_gadget = g;
           return RSVP.delay(50).then(function () {
             // Modify the value after 50ms
             called = true;
@@ -2668,7 +2671,8 @@
         });
         return gadget.declareGadget(html_url);
       })
-      .then(function () {
+      .then(function (result) {
+        equal(result, ready_gadget, "Context should be the gadget instance");
         ok(called);
       })
       .fail(function (e) {
@@ -4052,8 +4056,12 @@
 
     stop();
     root_gadget_defer.promise
-      .then(function (root_gadget) {
+      .then(function (root_gadget_list) {
+        var root_gadget = root_gadget_list[0],
+          html;
         // Check instance
+        equal(root_gadget_list[0], root_gadget_list[1],
+              "Context should be the gadget instance");
         equal(root_gadget.__path,
               root_gadget_path_without_hash);
         equal(typeof root_gadget.__acquired_method_dict, 'object');
@@ -4099,7 +4107,7 @@
           URI("renderjs_test.js")
             .absoluteTo(parent_path).toString()
         ]);
-        var html = root_gadget.constructor.__template_element.outerHTML;
+        html = root_gadget.constructor.__template_element.outerHTML;
         ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
         ok(root_gadget instanceof RenderJSGadget);
         ok(root_gadget_klass, root_gadget.constructor);
@@ -4129,8 +4137,8 @@
   test('__aq_parent fails on the root gadget', function () {
     stop();
     root_gadget_defer.promise
-      .then(function (root_gadget) {
-        return root_gadget.__aq_parent("foo", "bar");
+      .then(function (root_gadget_list) {
+        return root_gadget_list[0].__aq_parent("foo", "bar");
       })
       .fail(function (error) {
         ok(error instanceof renderJS.AcquisitionError);
