@@ -138,6 +138,10 @@
     paragraph.textContent = 'User-agent: ' + navigator.userAgent;
     container.appendChild(paragraph);
 
+    paragraph = document.createElement("p");
+    paragraph.textContent = 'Date: ' + new Date(Date.now()).toISOString();
+    container.appendChild(paragraph);
+
     body.appendChild(container);
 
     for (i = 0; i < error_list.length; i += 1) {
