@@ -1,5 +1,5 @@
 /*jslint nomen: true*/
-(function (document, renderJS, QUnit, sinon, URI, URL) {
+(function (document, renderJS, QUnit, sinon, URI, URL, Event) {
   "use strict";
   var test = QUnit.test,
     stop = QUnit.stop,
@@ -2147,6 +2147,138 @@
       });
   });
 
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadgetKlass.onEvent
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadgetKlass.onEvent", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
+    }
+  });
+  test('is chainable', function () {
+    // Check that declareService is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__service_list = [];
+    Klass.onEvent = RenderJSGadget.onEvent;
+
+    result = Klass.onEvent(function () {
+      return;
+    });
+    // onEvent is chainable
+    equal(result, Klass);
+  });
+
+  test('create callback in the service_list property', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    },
+      callback = function () {return; };
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__service_list = [];
+    Klass.onEvent = RenderJSGadget.onEvent;
+
+    Klass.onEvent('foo', callback);
+    equal(Klass.__service_list.length, 1);
+  });
+
+  function declareEventToCheck(klass, service_status) {
+    service_status.start_count = 0;
+    service_status.stop_count = 0;
+    service_status.status = undefined;
+
+    klass.onEvent('bar', function (evt) {
+      service_status.start_count += 1;
+      return new RSVP.Queue()
+        .push(function () {
+          service_status.status = "started";
+          return RSVP.defer().promise;
+        })
+        .push(undefined, function (error) {
+          service_status.stop_count += 1;
+          if (error instanceof RSVP.CancellationError) {
+            service_status.status = "stopped";
+          } else {
+            service_status.status = "error";
+          }
+          throw error;
+        });
+    });
+  }
+
+  test('callback is triggered on event', function () {
+    var service1 = {},
+      gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test599.html';
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareEventToCheck(Klass, service1);
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function (g) {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 0);
+        equal(service1.stop_count, 0);
+        equal(service1.status, undefined);
+
+        var event = new Event("bar");
+        document.getElementById('qunit-fixture').querySelector("div")
+                                                .dispatchEvent(event);
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 1);
+        equal(service1.stop_count, 0);
+        equal(service1.status, "started");
+
+        var event = new Event("bar");
+        document.getElementById('qunit-fixture').querySelector("div")
+                                                .dispatchEvent(event);
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 2);
+        equal(service1.stop_count, 1);
+        equal(service1.status, "started");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSIframeGadget
   /////////////////////////////////////////////////////////////////
@@ -3456,6 +3588,14 @@
             equal(result, true);
           })
 
+          // Check that event are started
+          .push(function () {
+            return new_gadget.wasEventStarted();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
           // Check that service error can be reported
           .push(function () {
             return new_gadget.canReportServiceError();
@@ -4266,5 +4406,5 @@
       });
   });
 
-}(document, renderJS, QUnit, sinon, URI, URL));
+}(document, renderJS, QUnit, sinon, URI, URL, Event));
 
