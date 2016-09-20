@@ -4,19 +4,28 @@
 
   var gk = rJS(window),
     ready_called = false,
-    service_started = false;
+    service_started = false,
+    event_started = false;
 
   gk.ready(function (g) {
     ready_called = true;
   })
+    .onEvent('bar', function () {
+      event_started = true;
+    })
     .declareService(function () {
       service_started = true;
+      var event = new Event("bar");
+      this.__element.dispatchEvent(event);
     })
     .declareMethod('wasReadyCalled', function () {
       return ready_called;
     })
     .declareMethod('wasServiceStarted', function () {
       return service_started;
+    })
+    .declareMethod('wasEventStarted', function () {
+      return event_started;
     })
     .declareMethod('canReportServiceError', function () {
       return (this.aq_reportServiceError !== undefined);

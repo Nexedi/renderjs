@@ -22,6 +22,66 @@
     });
   }
 
+  function loopEventListener(target, type, useCapture, callback,
+                             prevent_default) {
+    //////////////////////////
+    // Infinite event listener (promise is never resolved)
+    // eventListener is removed when promise is cancelled/rejected
+    //////////////////////////
+    var handle_event_callback,
+      callback_promise;
+
+    if (prevent_default === undefined) {
+      prevent_default = true;
+    }
+
+    function cancelResolver() {
+      if ((callback_promise !== undefined) &&
+          (typeof callback_promise.cancel === "function")) {
+        callback_promise.cancel();
+      }
+    }
+
+    function canceller() {
+      if (handle_event_callback !== undefined) {
+        target.removeEventListener(type, handle_event_callback, useCapture);
+      }
+      cancelResolver();
+    }
+    function itsANonResolvableTrap(resolve, reject) {
+      var result;
+      handle_event_callback = function (evt) {
+        if (prevent_default) {
+          evt.stopPropagation();
+          evt.preventDefault();
+        }
+
+        cancelResolver();
+
+        try {
+          result = callback(evt);
+        } catch (e) {
+          result = RSVP.reject(e);
+        }
+
+        callback_promise = result;
+        new RSVP.Queue()
+          .push(function () {
+            return result;
+          })
+          .push(undefined, function (error) {
+            if (!(error instanceof RSVP.CancellationError)) {
+              canceller();
+              reject(error);
+            }
+          });
+      };
+
+      target.addEventListener(type, handle_event_callback, useCapture);
+    }
+    return new RSVP.Promise(itsANonResolvableTrap, canceller);
+  }
+
   function ajax(url) {
     var xhr;
     function resolver(resolve, reject) {
@@ -394,6 +454,14 @@
     this.__service_list.push(callback);
     return this;
   };
+  RenderJSGadget.onEvent = function (type, callback, use_capture,
+                                     prevent_default) {
+    this.__service_list.push(function () {
+      return loopEventListener(this.__element, type, use_capture,
+                               callback.bind(this), prevent_default);
+    });
+    return this;
+  };
 
   function startService(gadget) {
     gadget.__monitor.monitor(new RSVP.Queue()
@@ -541,6 +609,8 @@
     RenderJSGadget.ready;
   RenderJSEmbeddedGadget.declareService =
     RenderJSGadget.declareService;
+  RenderJSEmbeddedGadget.onEvent =
+    RenderJSGadget.onEvent;
   RenderJSEmbeddedGadget.prototype = new RenderJSGadget();
   RenderJSEmbeddedGadget.prototype.constructor = RenderJSEmbeddedGadget;
 
@@ -616,6 +686,8 @@
   RenderJSIframeGadget.__service_list = RenderJSGadget.__service_list.slice();
   RenderJSIframeGadget.declareService =
     RenderJSGadget.declareService;
+  RenderJSIframeGadget.onEvent =
+    RenderJSGadget.onEvent;
   RenderJSIframeGadget.prototype = new RenderJSGadget();
   RenderJSIframeGadget.prototype.constructor = RenderJSIframeGadget;
 
@@ -1008,6 +1080,8 @@
           RenderJSGadget.ready;
         tmp_constructor.declareService =
           RenderJSGadget.declareService;
+        tmp_constructor.onEvent =
+          RenderJSGadget.onEvent;
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
         tmp_constructor.prototype.__path = url;
@@ -1182,6 +1256,8 @@
         tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
         tmp_constructor.declareService =
           RenderJSGadget.declareService;
+        tmp_constructor.onEvent =
+          RenderJSGadget.onEvent;
         tmp_constructor.prototype = new RenderJSGadget();
         tmp_constructor.prototype.constructor = tmp_constructor;
         tmp_constructor.prototype.__path = url;
@@ -1304,6 +1380,8 @@
 
         tmp_constructor.declareService =
           RenderJSGadget.declareService;
+        tmp_constructor.onEvent =
+          RenderJSGadget.onEvent;
         tmp_constructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
         tmp_constructor.allowPublicAcquisition =
