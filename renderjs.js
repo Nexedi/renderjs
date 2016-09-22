@@ -9,7 +9,6 @@
            Node, FileReader, Blob, navigator, Event) {
   "use strict";
 
-
   // Necessary in the following scenario:
   //   > renderjs / rsvp are loaded from js (e.g. with $.getScript)
   //     without a <script> tag in the parent-html
