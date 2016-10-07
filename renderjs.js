@@ -401,6 +401,9 @@
       g.__monitor.cancel();
     }
     g.__monitor = new Monitor();
+    g.__job_dict = {};
+    g.__job_list = [];
+    g.__job_triggered = false;
     g.__monitor.fail(function (error) {
       if (!(error instanceof RSVP.CancellationError)) {
         return g.aq_reportServiceError(error);
@@ -463,17 +466,63 @@
     return this;
   };
 
+  function runJob(gadget, name, callback, argument_list) {
+    var job_promise = new RSVP.Queue()
+      .push(function () {
+        return callback.apply(gadget, argument_list);
+      });
+    if (gadget.__job_dict.hasOwnProperty(name)) {
+      gadget.__job_dict[name].cancel();
+    }
+    gadget.__job_dict[name] = job_promise;
+    gadget.__monitor.monitor(new RSVP.Queue()
+      .push(function () {
+        return job_promise;
+      })
+      .push(undefined, function (error) {
+        if (!(error instanceof RSVP.CancellationError)) {
+          throw error;
+        }
+      }));
+  }
+
   function startService(gadget) {
     gadget.__monitor.monitor(new RSVP.Queue()
       .push(function () {
         var i,
-          service_list = gadget.constructor.__service_list;
+          service_list = gadget.constructor.__service_list,
+          job_list = gadget.__job_list;
         for (i = 0; i < service_list.length; i += 1) {
           gadget.__monitor.monitor(service_list[i].apply(gadget));
         }
+        for (i = 0; i < job_list.length; i += 1) {
+          runJob(gadget, job_list[i][0], job_list[i][1], job_list[i][2]);
+        }
+        gadget.__job_list = [];
+        gadget.__job_triggered = true;
       })
       );
   }
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.declareJob
+  // gadget internal method, which trigger execution
+  // of a function inside a service
+  /////////////////////////////////////////////////////////////////
+  RenderJSGadget.declareJob = function (name, callback) {
+    this.prototype[name] = function () {
+      var context = this,
+        argument_list = arguments;
+
+      if (context.__job_triggered) {
+        runJob(context, name, callback, argument_list);
+      } else {
+        context.__job_list.push([name, callback, argument_list]);
+      }
+    };
+    // Allow chain
+    return this;
+  };
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareMethod
@@ -1072,6 +1121,8 @@
         tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
         tmp_constructor.declareMethod =
           RenderJSGadget.declareMethod;
+        tmp_constructor.declareJob =
+          RenderJSGadget.declareJob;
         tmp_constructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
         tmp_constructor.allowPublicAcquisition =
@@ -1247,6 +1298,7 @@
           RenderJSGadget.call(this);
         };
         tmp_constructor.declareMethod = RenderJSGadget.declareMethod;
+        tmp_constructor.declareJob = RenderJSGadget.declareJob;
         tmp_constructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
         tmp_constructor.allowPublicAcquisition =
@@ -1380,6 +1432,8 @@
 
         tmp_constructor.declareService =
           RenderJSGadget.declareService;
+        tmp_constructor.declareJob =
+          RenderJSGadget.declareJob;
         tmp_constructor.onEvent =
           RenderJSGadget.onEvent;
         tmp_constructor.declareAcquiredMethod =

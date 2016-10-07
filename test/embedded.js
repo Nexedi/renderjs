@@ -5,6 +5,7 @@
   var gk = rJS(window),
     ready_called = false,
     service_started = false,
+    job_started = false,
     event_started = false;
 
   gk.ready(function (g) {
@@ -24,8 +25,17 @@
     .declareMethod('wasServiceStarted', function () {
       return service_started;
     })
+    .declareMethod('triggerJob', function () {
+      return this.runJob();
+    })
     .declareMethod('wasEventStarted', function () {
       return event_started;
+    })
+    .declareMethod('wasJobStarted', function () {
+      return job_started;
+    })
+    .declareJob('runJob', function () {
+      job_started = true;
     })
     .declareMethod('canReportServiceError', function () {
       return (this.aq_reportServiceError !== undefined);
