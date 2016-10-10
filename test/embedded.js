@@ -17,7 +17,7 @@
     .declareService(function () {
       service_started = true;
       var event = new Event("bar");
-      this.__element.dispatchEvent(event);
+      this.element.dispatchEvent(event);
     })
     .declareMethod('wasReadyCalled', function () {
       return ready_called;
