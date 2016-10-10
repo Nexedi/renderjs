@@ -420,7 +420,7 @@
   }
 
   function loadSubGadgetDOMDeclaration(g) {
-    var element_list = g.__element.querySelectorAll('[data-gadget-url]'),
+    var element_list = g.element.querySelectorAll('[data-gadget-url]'),
       element,
       promise_list = [],
       scope,
@@ -460,7 +460,7 @@
   RenderJSGadget.onEvent = function (type, callback, use_capture,
                                      prevent_default) {
     this.__service_list.push(function () {
-      return loopEventListener(this.__element, type, use_capture,
+      return loopEventListener(this.element, type, use_capture,
                                callback.bind(this), prevent_default);
     });
     return this;
@@ -564,10 +564,11 @@
     })
     .declareMethod('getElement', function () {
       // Returns the DOM Element of a gadget
-      if (this.__element === undefined) {
+      // XXX Kept for compatibility. Use element property directly
+      if (this.element === undefined) {
         throw new Error("No element defined");
       }
-      return this.__element;
+      return this.element;
     });
 
   /////////////////////////////////////////////////////////////////
@@ -688,9 +689,9 @@
           template_node_list = Klass.__template_element.body.childNodes;
         gadget_loading_klass = Klass;
         gadget_instance = new Klass();
-        gadget_instance.__element = options.element;
+        gadget_instance.element = options.element;
         for (i = 0; i < template_node_list.length; i += 1) {
-          gadget_instance.__element.appendChild(
+          gadget_instance.element.appendChild(
             template_node_list[i].cloneNode(true)
           );
         }
@@ -764,7 +765,7 @@
 //    gadget_instance.element.setAttribute("seamless", "seamless");
     iframe.setAttribute("src", url);
     gadget_instance.__path = url;
-    gadget_instance.__element = options.element;
+    gadget_instance.element = options.element;
     // Attach it to the DOM
     options.element.appendChild(iframe);
 
@@ -959,16 +960,16 @@
             }
           }
           parent_gadget.__sub_gadget_dict[scope] = gadget_instance;
-          gadget_instance.__element.setAttribute("data-gadget-scope",
-                                                 scope);
+          gadget_instance.element.setAttribute("data-gadget-scope",
+                                               scope);
 
           // Put some attribute to ease page layout comprehension
-          gadget_instance.__element.setAttribute("data-gadget-url", url);
-          gadget_instance.__element.setAttribute("data-gadget-sandbox",
-                                                 options.sandbox);
-          gadget_instance.__element._gadget = gadget_instance;
+          gadget_instance.element.setAttribute("data-gadget-url", url);
+          gadget_instance.element.setAttribute("data-gadget-sandbox",
+                                               options.sandbox);
+          gadget_instance.element._gadget = gadget_instance;
 
-          if (document.contains(gadget_instance.__element)) {
+          if (document.contains(gadget_instance.element)) {
             // Put a timeout
             queue.push(startService);
           }
@@ -1458,10 +1459,10 @@
           }
         }
         tmp_constructor.__template_element = document.createElement("div");
-        root_gadget.__element = document.body;
-        for (j = 0; j < root_gadget.__element.childNodes.length; j += 1) {
+        root_gadget.element = document.body;
+        for (j = 0; j < root_gadget.element.childNodes.length; j += 1) {
           tmp_constructor.__template_element.appendChild(
-            root_gadget.__element.childNodes[j].cloneNode(true)
+            root_gadget.element.childNodes[j].cloneNode(true)
           );
         }
         RSVP.all([root_gadget.getRequiredJSList(),

@@ -1173,7 +1173,7 @@
   test('returns element property', function () {
     // Check that getElement return a Promise
     var gadget = new RenderJSGadget();
-    gadget.__element = "foo";
+    gadget.element = "foo";
     stop();
     gadget.getElement()
       .then(function (result) {
@@ -1804,7 +1804,7 @@
         document
           .getElementById('qunit-fixture')
           .querySelector("div")
-          .appendChild(g.__element);
+          .appendChild(g.element);
         return RSVP.delay(50);
       })
       .then(function () {
@@ -1847,7 +1847,7 @@
         );
       })
       .then(function (g) {
-        parent_element.appendChild(g.__element);
+        parent_element.appendChild(g.element);
         document
           .getElementById('qunit-fixture')
           .appendChild(parent_element);
@@ -1943,7 +1943,7 @@
           );
         })
         .then(function (g) {
-          parent_element.appendChild(g.__element);
+          parent_element.appendChild(g.element);
           document
             .getElementById('qunit-fixture')
             .appendChild(parent_element);
@@ -2007,7 +2007,7 @@
       .then(function () {
         document
           .getElementById('qunit-fixture')
-          .appendChild(created_gadget.__element);
+          .appendChild(created_gadget.element);
         return RSVP.delay(50);
       })
       .then(function () {
@@ -2504,7 +2504,7 @@
         document
           .getElementById('qunit-fixture')
           .querySelector("div")
-          .appendChild(g.__element);
+          .appendChild(g.element);
         return RSVP.delay(50);
       })
       .then(function () {
@@ -2626,7 +2626,7 @@
       .then(function () {
         document
           .getElementById('qunit-fixture')
-          .appendChild(created_gadget.__element);
+          .appendChild(created_gadget.element);
         return RSVP.delay(50);
       })
       .then(function () {
@@ -2880,7 +2880,7 @@
         document
           .getElementById('qunit-fixture')
           .querySelector("div")
-          .appendChild(g.__element);
+          .appendChild(g.element);
         return RSVP.delay(50);
       })
       .then(function () {
@@ -3142,15 +3142,15 @@
       .then(function (new_gadget) {
         equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou2</div><div>bar</div>");
-        equal(new_gadget.__element.innerHTML,
+        equal(new_gadget.element.innerHTML,
               "<p>Bar content</p>");
-        equal(new_gadget.__element.tagName,
+        equal(new_gadget.element.tagName,
               "DIV");
-        equal(new_gadget.__element.getAttribute("data-gadget-url"),
+        equal(new_gadget.element.getAttribute("data-gadget-url"),
               html_url);
-        equal(new_gadget.__element.getAttribute("data-gadget-sandbox"),
+        equal(new_gadget.element.getAttribute("data-gadget-sandbox"),
               "public");
-        notEqual(new_gadget.__element.getAttribute("data-gadget-scope"),
+        notEqual(new_gadget.element.getAttribute("data-gadget-scope"),
               null);
         ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
         equal(spy_js.firstCall.args[0], js1_url, "First JS call");
@@ -3526,7 +3526,7 @@
       .then(function (child_gadget) {
         ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
         equal(gadget.__sub_gadget_dict.foo, child_gadget);
-        equal(child_gadget.__element.getAttribute("data-gadget-scope"),
+        equal(child_gadget.element.getAttribute("data-gadget-scope"),
               "foo");
       })
       .fail(function (e) {
@@ -3559,7 +3559,7 @@
         );
       })
       .then(function (child_gadget) {
-        scope1 = child_gadget.__element.getAttribute("data-gadget-scope");
+        scope1 = child_gadget.element.getAttribute("data-gadget-scope");
         equal(scope1.indexOf('RJS_'), 0, scope1);
         ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
         equal(gadget.__sub_gadget_dict[scope1], child_gadget);
@@ -3579,7 +3579,7 @@
         );
       })
       .then(function (child_gadget) {
-        var scope2 = child_gadget.__element.getAttribute("data-gadget-scope");
+        var scope2 = child_gadget.element.getAttribute("data-gadget-scope");
         equal(scope2.indexOf('RJS_'), 0);
         ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
         ok(gadget.__sub_gadget_dict.hasOwnProperty(scope2));
@@ -3869,11 +3869,11 @@
       .then(function (g2) {
         equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.__element.getAttribute("data-foo"), "bar");
-        equal(g2.__element.getAttribute("data-gadget-scope"), scope);
+        equal(g2.element.getAttribute("data-foo"), "bar");
+        equal(g2.element.getAttribute("data-gadget-scope"), scope);
 
         // The gadget is public by default
-        equal(g2.__element.innerHTML, "raw html");
+        equal(g2.element.innerHTML, "raw html");
       })
       .fail(function (e) {
         ok(false, e);
@@ -3915,9 +3915,9 @@
       .then(function (g2) {
         equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.__element.getAttribute("data-foo"), "bar");
+        equal(g2.element.getAttribute("data-foo"), "bar");
         // The gadget is public by default
-        equal(g2.__element.innerHTML, "raw html");
+        equal(g2.element.innerHTML, "raw html");
       })
       .fail(function (e) {
         ok(false, e);
@@ -3958,9 +3958,9 @@
       .then(function (g2) {
         equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.__element.getAttribute("data-foo"), "bar");
+        equal(g2.element.getAttribute("data-foo"), "bar");
         // The gadget is inside an iframe
-        equal(g2.__element.innerHTML,
+        equal(g2.element.innerHTML,
               '<iframe src="' + html_url2 + '"></iframe>');
       })
       .fail(function (e) {
@@ -4081,9 +4081,9 @@
       .then(function (child_gadget) {
         ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
         equal(gadget.__sub_gadget_dict.foo, child_gadget);
-        equal(child_gadget.__element.getAttribute("data-gadget-scope"),
+        equal(child_gadget.element.getAttribute("data-gadget-scope"),
               "foo");
-        equal(child_gadget.__element.getAttribute("data-gadget-sandbox"),
+        equal(child_gadget.element.getAttribute("data-gadget-sandbox"),
               "iframe");
       })
       .fail(function (e) {
@@ -4119,7 +4119,7 @@
         equal(Object.keys(new_gadget.__acquired_method_dict).length, 1);
         ok(new_gadget instanceof RenderJSIframeGadget);
         equal(
-          new_gadget.__element.innerHTML,
+          new_gadget.element.innerHTML,
           '<iframe src="' + absolute_path + '"></iframe>'
         );
         ok(new_gadget.__chan !== undefined);
@@ -4710,7 +4710,7 @@
         equal(new_gadget.__path, data_url);
         ok(new_gadget instanceof RenderJSIframeGadget);
         equal(
-          new_gadget.__element.innerHTML,
+          new_gadget.element.innerHTML,
           '<iframe src="' + data_url + '"></iframe>'
         );
       })
@@ -4862,7 +4862,7 @@
           URI("renderjs_test.js")
             .absoluteTo(parent_path).toString()
         ]);
-        equal(root_gadget.__element.outerHTML, document.body.outerHTML);
+        equal(root_gadget.element.outerHTML, document.body.outerHTML);
         // Check klass
         equal(root_gadget.constructor.prototype.__path,
               root_gadget_path_without_hash);
