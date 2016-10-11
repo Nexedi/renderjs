@@ -451,6 +451,16 @@
     this.__ready_list.push(callback);
     return this;
   };
+  RenderJSGadget.setState = function (state_dict) {
+    var json_state = JSON.stringify(state_dict);
+    return this.ready(function () {
+      this.state = JSON.parse(json_state);
+    });
+  };
+  RenderJSGadget.onStateChange = function (callback) {
+    this.prototype.__state_change_callback = callback;
+    return this;
+  };
 
   RenderJSGadget.__service_list = [];
   RenderJSGadget.declareService = function (callback) {
@@ -569,6 +579,21 @@
         throw new Error("No element defined");
       }
       return this.element;
+    })
+    .declareMethod('changeState', function (state_dict) {
+      var key,
+        modified = false,
+        modification_dict = {};
+      for (key in state_dict) {
+        if (state_dict[key] !== this.state[key]) {
+          this.state[key] = state_dict[key];
+          modification_dict[key] = state_dict[key];
+          modified = true;
+        }
+      }
+      if (modified && this.__state_change_callback !== undefined) {
+        return this.__state_change_callback(modification_dict);
+      }
     });
 
   /////////////////////////////////////////////////////////////////
@@ -657,6 +682,10 @@
     RenderJSGadget.__service_list.slice();
   RenderJSEmbeddedGadget.ready =
     RenderJSGadget.ready;
+  RenderJSEmbeddedGadget.setState =
+    RenderJSGadget.setState;
+  RenderJSEmbeddedGadget.onStateChange =
+    RenderJSGadget.onStateChange;
   RenderJSEmbeddedGadget.declareService =
     RenderJSGadget.declareService;
   RenderJSEmbeddedGadget.onEvent =
@@ -690,6 +719,7 @@
         gadget_loading_klass = Klass;
         gadget_instance = new Klass();
         gadget_instance.element = options.element;
+        gadget_instance.state = {};
         for (i = 0; i < template_node_list.length; i += 1) {
           gadget_instance.element.appendChild(
             template_node_list[i].cloneNode(true)
@@ -733,6 +763,10 @@
   RenderJSIframeGadget.__ready_list = RenderJSGadget.__ready_list.slice();
   RenderJSIframeGadget.ready =
     RenderJSGadget.ready;
+  RenderJSIframeGadget.setState =
+    RenderJSGadget.setState;
+  RenderJSIframeGadget.onStateChange =
+    RenderJSGadget.onStateChange;
   RenderJSIframeGadget.__service_list = RenderJSGadget.__service_list.slice();
   RenderJSIframeGadget.declareService =
     RenderJSGadget.declareService;
@@ -766,6 +800,7 @@
     iframe.setAttribute("src", url);
     gadget_instance.__path = url;
     gadget_instance.element = options.element;
+    gadget_instance.state = {};
     // Attach it to the DOM
     options.element.appendChild(iframe);
 
@@ -1130,6 +1165,10 @@
           RenderJSGadget.allowPublicAcquisition;
         tmp_constructor.ready =
           RenderJSGadget.ready;
+        tmp_constructor.setState =
+          RenderJSGadget.setState;
+        tmp_constructor.onStateChange =
+          RenderJSGadget.onStateChange;
         tmp_constructor.declareService =
           RenderJSGadget.declareService;
         tmp_constructor.onEvent =
@@ -1306,6 +1345,8 @@
           RenderJSGadget.allowPublicAcquisition;
         tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
         tmp_constructor.ready = RenderJSGadget.ready;
+        tmp_constructor.setState = RenderJSGadget.setState;
+        tmp_constructor.onStateChange = RenderJSGadget.onStateChange;
         tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
         tmp_constructor.declareService =
           RenderJSGadget.declareService;
@@ -1460,6 +1501,7 @@
         }
         tmp_constructor.__template_element = document.createElement("div");
         root_gadget.element = document.body;
+        root_gadget.state = {};
         for (j = 0; j < root_gadget.element.childNodes.length; j += 1) {
           tmp_constructor.__template_element.appendChild(
             root_gadget.element.childNodes[j].cloneNode(true)

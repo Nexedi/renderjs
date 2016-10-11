@@ -6,11 +6,21 @@
     ready_called = false,
     service_started = false,
     job_started = false,
-    event_started = false;
+    event_started = false,
+    state_change_callback_called = false,
+    state_change_count = 0,
+    init_state = {bar: 'foo'},
+    state_change_callback = function (modification_dict) {
+      state_change_callback_called = (state_change_count === 0) &&
+                                     (modification_dict.foo === 'bar');
+      state_change_count += 1;
+    };
 
   gk.ready(function (g) {
     ready_called = true;
   })
+    .setState(init_state)
+    .onStateChange(state_change_callback)
     .onEvent('bar', function () {
       event_started = true;
     })
@@ -18,6 +28,15 @@
       service_started = true;
       var event = new Event("bar");
       this.element.dispatchEvent(event);
+    })
+    .declareMethod('wasStateInitialized', function () {
+      return ((this.hasOwnProperty("state")) &&
+              (JSON.stringify(this.state) === '{"bar":"foo"}')) &&
+              (this.state !== init_state);
+    })
+    .declareMethod('wasStateHandlerDeclared', function () {
+      return ((!this.hasOwnProperty("__state_change_callback")) &&
+              (this.__state_change_callback === state_change_callback));
     })
     .declareMethod('wasReadyCalled', function () {
       return ready_called;
@@ -33,6 +52,12 @@
     })
     .declareMethod('wasJobStarted', function () {
       return job_started;
+    })
+    .declareMethod('triggerStateChange', function () {
+      return this.changeState({foo: 'bar'});
+    })
+    .declareMethod('wasStateChangeHandled', function () {
+      return state_change_callback_called;
     })
     .declareJob('runJob', function () {
       job_started = true;

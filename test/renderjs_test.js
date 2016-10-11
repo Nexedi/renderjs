@@ -1202,6 +1202,76 @@
   });
 
   /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.changeState
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadget.changeState", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+  test('update state with changed keys', function () {
+    var gadget = new RenderJSGadget();
+    gadget.state = {foo: 'bar', bar: 'foo'};
+    stop();
+    gadget.changeState({bar: 'barbar'})
+      .then(function () {
+        deepEqual(gadget.state, {foo: 'bar', bar: 'barbar'});
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('trigger onStateChange if changed keys', function () {
+    var gadget = new RenderJSGadget(),
+      callback_called = false;
+    gadget.state = {foo: 'bar', bar: 'foo'};
+    gadget.__state_change_callback = function (modification_dict) {
+      deepEqual(gadget.state, {foo: 'bar', bar: 'barbar'});
+      deepEqual(modification_dict, {bar: 'barbar'});
+      equal(this, gadget);
+      return RSVP.Queue()
+        .push(function () {
+          callback_called = true;
+        });
+    };
+    stop();
+    gadget.changeState({bar: 'barbar'})
+      .then(function () {
+        ok(callback_called);
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('do not trigger onStateChange if no changed keys', function () {
+    var gadget = new RenderJSGadget(),
+      callback_called = false;
+    gadget.state = {foo: 'bar', bar: 'foo'};
+    gadget.__state_change_callback = function () {
+      callback_called = true;
+    };
+    stop();
+    gadget.changeState({bar: 'foo'})
+      .then(function () {
+        ok(!callback_called);
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.declareAcquiredMethod
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareAcquiredMethod", {
@@ -1613,6 +1683,101 @@
     Klass.ready(callback);
     // ready is chainable
     deepEqual(Klass.__ready_list, [callback]);
+  });
+
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadgetKlass.setState
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadgetKlass.setState", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
+    }
+  });
+  test('is chainable', function () {
+    // Check that setState is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__ready_list = [];
+    Klass.ready = RenderJSGadget.ready;
+    Klass.setState = RenderJSGadget.setState;
+
+    result = Klass.setState({});
+    equal(result, Klass);
+  });
+
+  test('create callback in the ready_list property', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    };
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__ready_list = [];
+    Klass.ready = RenderJSGadget.ready;
+    Klass.setState = RenderJSGadget.setState;
+
+    Klass.setState({});
+    equal(Klass.__ready_list.length, 1);
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadgetKlass.onStateChange
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadgetKlass.onStateChange", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
+    }
+  });
+  test('is chainable', function () {
+    // Check that onStateChange is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__ready_list = [];
+    Klass.onStateChange = RenderJSGadget.onStateChange;
+
+    result = Klass.onStateChange();
+    equal(result, Klass);
+  });
+
+  test('create callback in the __state_change_callback property', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    },
+      callback = {};
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.onStateChange = RenderJSGadget.onStateChange;
+
+    Klass.onStateChange(callback);
+    equal(Klass.prototype.__state_change_callback, callback);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -3469,6 +3634,76 @@
       });
   });
 
+  test('Set a default state', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      gadget1,
+      gadget2,
+      html_url = 'https://example.org/files/qunittest/test98.html';
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        return gadget.declareGadget(html_url);
+      })
+      .then(function (result) {
+        gadget1 = result;
+        return gadget.declareGadget(html_url);
+      })
+      .then(function (result) {
+        gadget2 = result;
+        ok(gadget1.hasOwnProperty('state'));
+        deepEqual(gadget1.state, {});
+        ok(gadget2.hasOwnProperty('state'));
+        deepEqual(gadget2.state, {});
+        // Instance should have a copy of the init state
+        ok(gadget1.state !== gadget2.state);
+      })
+      .fail(function (e) {
+        ok(false);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('Set the gadget state defined by setState', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      init_state = {foo: 'bar'},
+      html_url = 'https://example.org/files/qunittest/test98.html';
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        // Create a ready function
+        Klass.setState(init_state);
+        return gadget.declareGadget(html_url);
+      })
+      .then(function (result) {
+        ok(result.hasOwnProperty('state'));
+        deepEqual(result.state, {foo: 'bar'});
+        // Instance should have a copy of the init state
+        ok(result.state !== init_state);
+      })
+      .fail(function (e) {
+        ok(false);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('Can take a DOM element options', function () {
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -4194,6 +4429,41 @@
           // Check that ready function are called
           .push(function () {
             return new_gadget.wasReadyCalled();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // Check that state is initialized
+          .push(function () {
+            return new_gadget.wasStateInitialized();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // Check that state handler is initialized
+          .push(function () {
+            return new_gadget.wasStateHandlerDeclared();
+          })
+          .push(function (result) {
+            equal(result, true);
+          })
+
+          // Check that state change was not triggered
+          .push(function () {
+            return new_gadget.wasStateChangeHandled();
+          })
+          .push(function (result) {
+            equal(result, false);
+          })
+
+          // Check that change state
+          .push(function () {
+            return new_gadget.triggerStateChange();
+          })
+          .push(function () {
+            return new_gadget.wasStateChangeHandled();
           })
           .push(function (result) {
             equal(result, true);
