@@ -955,7 +955,14 @@
           gadget_loading_klass = undefined;
           throw e;
         });
-      local_loading_klass_promise = loading_klass_promise;
+      //gadget loading should not be interrupted
+      //if not, gadget's definition will not be complete
+      //.then will return another promise
+      //so loading_klass_promise can't be cancel
+      local_loading_klass_promise = loading_klass_promise
+        .then(function (gadget_instance) {
+          return gadget_instance;
+        });
 
       queue = new RSVP.Queue()
         .push(function () {

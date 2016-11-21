@@ -94,7 +94,8 @@ module.exports = function (grunt) {
             '__RenderJSEmbeddedGadget',
             'FileReader',
             'Blob',
-            'Event'
+            'Event',
+            'MutationObserver'
           ]
         }
       }

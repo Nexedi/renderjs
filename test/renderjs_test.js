@@ -1,5 +1,6 @@
 /*jslint nomen: true*/
-(function (document, renderJS, QUnit, sinon, URI, URL, Event) {
+(function (document, renderJS, QUnit, sinon, URI, URL, Event,
+           MutationObserver) {
   "use strict";
   var test = QUnit.test,
     stop = QUnit.stop,
@@ -336,6 +337,61 @@
     deepEqual(settings.required_js_list,
               ["http://example.org/lib/qunit/qunit.js"]);
   });
+
+  /////////////////////////////////////////////////////////////////
+  //cancel when declare gadget
+  /////////////////////////////////////////////////////////////////
+
+  module("cancel when declare gadget", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+  test('cancel gadget initialization', function () {
+    var gadget = new RenderJSGadget(),
+      url = renderJS.getAbsoluteURL('./cancel_gadget.html',
+                                    window.location.href),
+
+      cancel_queue,
+      observer = new MutationObserver(function (mutations) {
+        if (mutations[0].addedNodes[0].src.indexOf('cancel_gadget.js')
+            !== -1) {
+          //cancel when load cancel_gadget.js
+          cancel_queue.cancel();
+          observer.disconnect();
+        }
+      });
+    observer.observe(document.head, {
+      attributes: true,
+      childList: true,
+      characterData: true
+    });
+
+    stop();
+    gadget.__sub_gadget_dict = {};
+    cancel_queue = gadget.declareGadget(url);
+    return new RSVP.Queue()
+      .push(function () {
+        return cancel_queue;
+      })
+      .push(undefined, function (err) {
+        ok(err instanceof RSVP.CancellationError);
+        //let cancel_gadget.js load
+        return RSVP.delay(100);
+      })
+      .push(function () {
+        return gadget.declareGadget(url);
+      })
+      .push(function (instance) {
+        ok(instance.render !== undefined);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+
+
 
   /////////////////////////////////////////////////////////////////
   // declareGadgetKlass
@@ -5315,5 +5371,6 @@
       });
   });
 
-}(document, renderJS, QUnit, sinon, URI, URL, Event));
+}(document, renderJS, QUnit, sinon, URI, URL, Event,
+  MutationObserver));
 
