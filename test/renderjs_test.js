@@ -1327,6 +1327,54 @@
       });
   });
 
+  test('reset state on onStateChange error', function () {
+    var gadget = new RenderJSGadget();
+    gadget.state = {foo: 'bar', bar: 'foo'};
+    gadget.__state_change_callback = function () {
+      throw new Error('failure in onStateChange');
+    };
+    stop();
+    gadget.changeState({bar: 'barbar'})
+      .then(function () {
+        ok(false, 'Expecting an error');
+      })
+      .fail(function (error) {
+        equal(error.message, 'failure in onStateChange');
+        deepEqual(gadget.state, {});
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('reset to default state on onStateChange error', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.prototype.__json_state = JSON.stringify({a: 'b'});
+
+    gadget = new Klass();
+    gadget.state = {foo: 'bar', bar: 'foo'};
+    gadget.__state_change_callback = function () {
+      throw new Error('failure in onStateChange');
+    };
+    stop();
+    gadget.changeState({bar: 'barbar'})
+      .then(function () {
+        ok(false, 'Expecting an error');
+      })
+      .fail(function (error) {
+        equal(error.message, 'failure in onStateChange');
+        deepEqual(gadget.state, {a: 'b'});
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.declareAcquiredMethod
   /////////////////////////////////////////////////////////////////
@@ -1786,8 +1834,9 @@
     Klass.ready = RenderJSGadget.ready;
     Klass.setState = RenderJSGadget.setState;
 
-    Klass.setState({});
+    Klass.setState({foo: 'bar'});
     equal(Klass.__ready_list.length, 1);
+    equal(Klass.prototype.__json_state, JSON.stringify({foo: 'bar'}));
   });
 
   /////////////////////////////////////////////////////////////////
