@@ -6,7 +6,7 @@
  * http://www.renderjs.org/documentation
  */
 (function (document, window, RSVP, DOMParser, Channel, MutationObserver,
-           Node, FileReader, Blob, navigator, Event) {
+           Node, FileReader, Blob, navigator, Event, URL) {
   "use strict";
 
   function readBlobAsDataURL(blob) {
@@ -1087,18 +1087,8 @@
   // renderJS.getAbsoluteURL
   /////////////////////////////////////////////////////////////////
   renderJS.getAbsoluteURL = function (url, base_url) {
-    var doc, base, link,
-      html = "<!doctype><html><head></head></html>";
-
-    if (url && base_url && !isAbsoluteOrDataURL.test(url)) {
-      doc = (new DOMParser()).parseFromString(html, 'text/html');
-      base = doc.createElement('base');
-      link = doc.createElement('link');
-      doc.head.appendChild(base);
-      doc.head.appendChild(link);
-      base.href = base_url;
-      link.href = url;
-      return link.href;
+    if (base_url && url) {
+      return new URL(url, base_url).href;
     }
     return url;
   };
@@ -1682,4 +1672,4 @@
   bootstrap();
 
 }(document, window, RSVP, DOMParser, Channel, MutationObserver, Node,
-  FileReader, Blob, navigator, Event));
+  FileReader, Blob, navigator, Event, URL));

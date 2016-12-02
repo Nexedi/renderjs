@@ -67,7 +67,8 @@ module.exports = function (grunt) {
             'FileReader',
             'Node',
             'navigator',
-            'Event'
+            'Event',
+            'URL'
           ]
         }
       },
