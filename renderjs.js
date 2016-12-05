@@ -719,12 +719,6 @@
       options.element = document.createElement("div");
     }
 
-    function loadDependency(method, url) {
-      return function () {
-        return method(url);
-      };
-    }
-
     return new RSVP.Queue()
       .push(function () {
         return renderJS.declareGadgetKlass(url);
@@ -751,17 +745,19 @@
       })
       // Load all JS/CSS
       .push(function (all_list) {
-        var q = new RSVP.Queue(),
+        var fragment = document.createDocumentFragment(),
+          promise_list = [],
           i;
         // Load JS
         for (i = 0; i < all_list[0].length; i += 1) {
-          q.push(loadDependency(renderJS.declareJS, all_list[0][i]));
+          promise_list.push(renderJS.declareJS(all_list[0][i], fragment));
         }
         // Load CSS
         for (i = 0; i < all_list[1].length; i += 1) {
-          q.push(loadDependency(renderJS.declareCSS, all_list[1][i]));
+          promise_list.push(renderJS.declareCSS(all_list[1][i], fragment));
         }
-        return q;
+        document.head.appendChild(fragment);
+        return RSVP.all(promise_list);
       })
       .push(function () {
         return gadget_instance;
@@ -1096,7 +1092,8 @@
   /////////////////////////////////////////////////////////////////
   // renderJS.declareJS
   /////////////////////////////////////////////////////////////////
-  renderJS.declareJS = function (url) {
+  renderJS.declareJS = function (url, container) {
+    // https://www.html5rocks.com/en/tutorials/speed/script-loading/
     // Prevent infinite recursion if loading render.js
     // more than once
     var result;
@@ -1106,8 +1103,8 @@
       result = new RSVP.Promise(function (resolve, reject) {
         var newScript;
         newScript = document.createElement('script');
+        newScript.async = false;
         newScript.type = 'text/javascript';
-        newScript.src = url;
         newScript.onload = function () {
           javascript_registration_dict[url] = null;
           resolve();
@@ -1115,7 +1112,8 @@
         newScript.onerror = function (e) {
           reject(e);
         };
-        document.head.appendChild(newScript);
+        newScript.src = url;
+        container.appendChild(newScript);
       });
     }
     return result;
@@ -1124,7 +1122,7 @@
   /////////////////////////////////////////////////////////////////
   // renderJS.declareCSS
   /////////////////////////////////////////////////////////////////
-  renderJS.declareCSS = function (url) {
+  renderJS.declareCSS = function (url, container) {
     // https://github.com/furf/jquery-getCSS/blob/master/jquery.getCSS.js
     // No way to cleanly check if a css has been loaded
     // So, always resolve the promise...
@@ -1146,7 +1144,7 @@
         link.onerror = function (e) {
           reject(e);
         };
-        document.head.appendChild(link);
+        container.appendChild(link);
       });
     }
     return result;

@@ -621,7 +621,7 @@
     var url = 'http://0.0.0.0/bar';
 
     stop();
-    renderJS.declareJS(url)
+    renderJS.declareJS(url, document.head)
       .then(function () {
         ok(false, "404 should fail");
       })
@@ -639,7 +639,7 @@
     var url = 'http://0.0.0.0/bar2';
 
     stop();
-    renderJS.declareJS(url)
+    renderJS.declareJS(url, document.head)
       .then(function () {
         return renderJS.declareJS(url);
       })
@@ -663,7 +663,7 @@
 
     stop();
     window.onerror = undefined;
-    renderJS.declareJS(url)
+    renderJS.declareJS(url, document.head)
       .then(function (value, textStatus, jqXHR) {
         ok(ok, "Non JS mime type should load");
       })
@@ -683,7 +683,7 @@
                      "= 'JS fetched and loaded';");
 
     stop();
-    renderJS.declareJS(url)
+    renderJS.declareJS(url, document.head)
       .then(function () {
         equal(
           document.getElementById("qunit-fixture").textContent,
@@ -706,7 +706,7 @@
 
     stop();
     window.onerror = undefined;
-    renderJS.declareJS(url)
+    renderJS.declareJS(url, document.head)
       .then(function (aaa) {
         ok(true, "JS with error cleanly loaded");
       })
@@ -726,14 +726,14 @@
                      "= 'JS not fetched twice';");
 
     stop();
-    renderJS.declareJS(url)
+    renderJS.declareJS(url, document.head)
       .then(function () {
         equal(
           document.getElementById("qunit-fixture").textContent,
           "JS not fetched twice"
         );
         document.getElementById("qunit-fixture").textContent = "";
-        return renderJS.declareJS(url);
+        return renderJS.declareJS(url, document.head);
       })
       .then(function () {
         equal(document.getElementById("qunit-fixture").textContent, "");
@@ -760,7 +760,7 @@
     var url = 'foo//://bar';
 
     stop();
-    renderJS.declareCSS(url)
+    renderJS.declareCSS(url, document.head)
       .then(function () {
         // IE accept the css
         ok(true, "404 should fail");
@@ -780,7 +780,7 @@
          window.btoa("= = =");
 
     stop();
-    renderJS.declareCSS(url)
+    renderJS.declareCSS(url, document.head)
       .then(function (value, textStatus, jqXHR) {
         // Chrome accept the css
         ok(true, "Non CSS mime type should load");
@@ -800,7 +800,7 @@
          window.btoa("#qunit-fixture {background-color: red;}");
 
     stop();
-    renderJS.declareCSS(url)
+    renderJS.declareCSS(url, document.head)
       .then(function () {
         var result = document.querySelectorAll("link[href='" + url + "']");
         ok(result.length > 0, "CSS in the head");
@@ -827,7 +827,7 @@
          window.btoa("throw new Error('foo');");
 
     stop();
-    renderJS.declareCSS(url)
+    renderJS.declareCSS(url, document.head)
       .then(function () {
         // Chrome does not consider this as error
         ok(true, "CSS with error cleanly loaded");
@@ -846,7 +846,7 @@
          window.btoa("#qunit-fixture {background-color: blue;}");
 
     stop();
-    renderJS.declareCSS(url)
+    renderJS.declareCSS(url, document.head)
       .then(function () {
         equal(
           window.getComputedStyle(
@@ -864,7 +864,7 @@
           ).backgroundColor !== "rgb(0, 0, 255)"
         );
 
-        return renderJS.declareCSS(url);
+        return renderJS.declareCSS(url, document.head);
       })
       .then(function () {
         var element_list =
@@ -948,7 +948,7 @@
                      "= 'JS not fetched twice';");
 
     stop();
-    renderJS.declareJS(url)
+    renderJS.declareJS(url, document.head)
       .then(function () {
         renderJS.clearGadgetKlassList();
         equal(
@@ -956,7 +956,7 @@
           "JS not fetched twice"
         );
         document.getElementById("qunit-fixture").textContent = "";
-        return renderJS.declareJS(url);
+        return renderJS.declareJS(url, document.head);
       })
       .then(function () {
         equal(
@@ -980,14 +980,14 @@
       count = document.querySelectorAll("link[rel=stylesheet]").length;
 
     stop();
-    renderJS.declareCSS(url)
+    renderJS.declareCSS(url, document.head)
       .then(function () {
         renderJS.clearGadgetKlassList();
         equal(
           document.querySelectorAll("link[rel=stylesheet]").length,
           count + 1
         );
-        return renderJS.declareCSS(url);
+        return renderJS.declareCSS(url, document.head);
       })
       .then(function () {
         equal(
