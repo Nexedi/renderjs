@@ -125,7 +125,7 @@
   var gadget_model_defer_dict = {},
     javascript_registration_dict = {},
     stylesheet_registration_dict = {},
-    gadget_loading_klass,
+    gadget_loading_klass_list = [],
     loading_klass_promise,
     renderJS,
     Monitor,
@@ -1006,7 +1006,7 @@
     if (selector === window) {
       // window is the 'this' value when loading a javascript file
       // In this case, use the current loading gadget constructor
-      result = gadget_loading_klass;
+      result = gadget_loading_klass_list[0];
     }
     if (result === undefined) {
       throw new Error("Unknown selector '" + selector + "'");
@@ -1041,7 +1041,7 @@
   /////////////////////////////////////////////////////////////////
   // renderJS.declareJS
   /////////////////////////////////////////////////////////////////
-  renderJS.declareJS = function (url, container) {
+  renderJS.declareJS = function (url, container, pop) {
     // https://www.html5rocks.com/en/tutorials/speed/script-loading/
     // Prevent infinite recursion if loading render.js
     // more than once
@@ -1049,16 +1049,24 @@
     if (javascript_registration_dict.hasOwnProperty(url)) {
       result = RSVP.resolve();
     } else {
+      javascript_registration_dict[url] = null;
       result = new RSVP.Promise(function (resolve, reject) {
         var newScript;
         newScript = document.createElement('script');
         newScript.async = false;
         newScript.type = 'text/javascript';
         newScript.onload = function () {
-          javascript_registration_dict[url] = null;
+          if (pop === true) {
+            // Drop the current loading klass info used by selector
+            gadget_loading_klass_list.shift();
+          }
           resolve();
         };
         newScript.onerror = function (e) {
+          if (pop === true) {
+            // Drop the current loading klass info used by selector
+            gadget_loading_klass_list.shift();
+          }
           reject(e);
         };
         newScript.src = url;
@@ -1159,8 +1167,7 @@
     }
 
     var tmp_constructor,
-      defer = RSVP.defer(),
-      previous_loading_klass_promise = loading_klass_promise;
+      defer = RSVP.defer();
 
     gadget_model_defer_dict[url] = defer;
 
@@ -1170,30 +1177,22 @@
     // Fetch the HTML page and parse it
     return new RSVP.Queue()
       .push(function () {
-        return RSVP.all([
-          ajax(url),
-          // Wait for previous gadget loading to finish first
-          new RSVP.Queue()
-            .push(function () {
-              return previous_loading_klass_promise;
-            })
-            .push(undefined, function () {
-              // Forget previous declareGadget error
-              return;
-            })
-        ]);
+        return ajax(url);
       })
-      .push(function (result_list) {
-        tmp_constructor = parse(result_list[0], url);
-        gadget_loading_klass = tmp_constructor;
+      .push(function (result) {
+        tmp_constructor = parse(result, url);
         var fragment = document.createDocumentFragment(),
           promise_list = [],
           i,
           js_list = tmp_constructor.prototype.__required_js_list,
           css_list = tmp_constructor.prototype.__required_css_list;
         // Load JS
-        for (i = 0; i < js_list.length; i += 1) {
-          promise_list.push(renderJS.declareJS(js_list[i], fragment));
+        if (js_list.length) {
+          gadget_loading_klass_list.push(tmp_constructor);
+          for (i = 0; i < js_list.length - 1; i += 1) {
+            promise_list.push(renderJS.declareJS(js_list[i], fragment));
+          }
+          promise_list.push(renderJS.declareJS(js_list[i], fragment, true));
         }
         // Load CSS
         for (i = 0; i < css_list.length; i += 1) {
@@ -1204,15 +1203,12 @@
       })
       .push(function () {
         defer.resolve(tmp_constructor);
-        // Drop the current loading klass info used by selector
-        gadget_loading_klass = undefined;
         return tmp_constructor;
       })
       .push(undefined, function (e) {
         // Drop the current loading klass info used by selector
         // even in case of error
         defer.reject(e);
-        gadget_loading_klass = undefined;
         throw e;
       });
   };
@@ -1492,7 +1488,7 @@
       }
 
       TmpConstructor.prototype.__acquired_method_dict = {};
-      gadget_loading_klass = TmpConstructor;
+      gadget_loading_klass_list.push(TmpConstructor);
 
       function init() {
         // XXX HTML properties can only be set when the DOM is fully loaded
@@ -1526,7 +1522,7 @@
             for (i = 0; i < css_list.length; i += 1) {
               stylesheet_registration_dict[css_list[i]] = null;
             }
-            gadget_loading_klass = undefined;
+            gadget_loading_klass_list.shift();
           }).then(function () {
 
             // select the target node
