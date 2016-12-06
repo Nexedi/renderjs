@@ -122,7 +122,7 @@
     return new RSVP.Promise(resolver, canceller);
   }
 
-  var gadget_model_dict = {},
+  var gadget_model_defer_dict = {},
     javascript_registration_dict = {},
     stylesheet_registration_dict = {},
     gadget_loading_klass,
@@ -714,20 +714,26 @@
   // privateDeclarePublicGadget
   /////////////////////////////////////////////////////////////////
   function privateDeclarePublicGadget(url, options, parent_gadget) {
-    var gadget_instance;
-    if (options.element === undefined) {
-      options.element = document.createElement("div");
-    }
 
     return new RSVP.Queue()
       .push(function () {
-        return renderJS.declareGadgetKlass(url);
+        return renderJS.declareGadgetKlass(url)
+          // gadget loading should not be interrupted
+          // if not, gadget's definition will not be complete
+          //.then will return another promise
+          //so loading_klass_promise can't be cancel
+          .then(function (result) {
+            return result;
+          });
       })
       // Get the gadget class and instanciate it
       .push(function (Klass) {
+        if (options.element === undefined) {
+          options.element = document.createElement("div");
+        }
         var i,
+          gadget_instance,
           template_node_list = Klass.__template_element.body.childNodes;
-        gadget_loading_klass = Klass;
         gadget_instance = new Klass();
         gadget_instance.element = options.element;
         gadget_instance.state = {};
@@ -737,29 +743,6 @@
           );
         }
         setAqParent(gadget_instance, parent_gadget);
-        // Load dependencies if needed
-        return RSVP.all([
-          gadget_instance.getRequiredJSList(),
-          gadget_instance.getRequiredCSSList()
-        ]);
-      })
-      // Load all JS/CSS
-      .push(function (all_list) {
-        var fragment = document.createDocumentFragment(),
-          promise_list = [],
-          i;
-        // Load JS
-        for (i = 0; i < all_list[0].length; i += 1) {
-          promise_list.push(renderJS.declareJS(all_list[0][i], fragment));
-        }
-        // Load CSS
-        for (i = 0; i < all_list[1].length; i += 1) {
-          promise_list.push(renderJS.declareCSS(all_list[1][i], fragment));
-        }
-        document.head.appendChild(fragment);
-        return RSVP.all(promise_list);
-      })
-      .push(function () {
         return gadget_instance;
       });
   }
@@ -918,10 +901,7 @@
   /////////////////////////////////////////////////////////////////
   RenderJSGadget
     .declareMethod('declareGadget', function (url, options) {
-      var queue,
-        parent_gadget = this,
-        local_loading_klass_promise,
-        previous_loading_klass_promise = loading_klass_promise;
+      var parent_gadget = this;
 
       if (options === undefined) {
         options = {};
@@ -932,16 +912,8 @@
 
       // transform url to absolute url if it is relative
       url = renderJS.getAbsoluteURL(url, this.__path);
-      // Change the global variable to update the loading queue
-      loading_klass_promise = new RSVP.Queue()
-        // Wait for previous gadget loading to finish first
-        .push(function () {
-          return previous_loading_klass_promise;
-        })
-        .push(undefined, function () {
-          // Forget previous declareGadget error
-          return;
-        })
+
+      return new RSVP.Queue()
         .push(function () {
           var method;
           if (options.sandbox === "public") {
@@ -958,40 +930,16 @@
         })
         // Set the HTML context
         .push(function (gadget_instance) {
-          // Drop the current loading klass info used by selector
-          gadget_loading_klass = undefined;
-          return gadget_instance;
-        })
-        .push(undefined, function (e) {
-          // Drop the current loading klass info used by selector
-          // even in case of error
-          gadget_loading_klass = undefined;
-          throw e;
-        });
-      //gadget loading should not be interrupted
-      //if not, gadget's definition will not be complete
-      //.then will return another promise
-      //so loading_klass_promise can't be cancel
-      local_loading_klass_promise = loading_klass_promise
-        .then(function (gadget_instance) {
-          return gadget_instance;
-        });
-
-      queue = new RSVP.Queue()
-        .push(function () {
-          return local_loading_klass_promise;
-        })
-        // Set the HTML context
-        .push(function (gadget_instance) {
           var i,
-            scope;
+            scope,
+            queue = new RSVP.Queue();
           // Trigger calling of all ready callback
           function ready_wrapper() {
             return gadget_instance;
           }
           function ready_executable_wrapper(fct) {
-            return function (g) {
-              return fct.call(g, g);
+            return function () {
+              return fct.call(gadget_instance, gadget_instance);
             };
           }
           for (i = 0; i < gadget_instance.constructor.__ready_list.length;
@@ -1031,9 +979,8 @@
           // Always return the gadget instance after ready function
           queue.push(ready_wrapper);
 
-          return gadget_instance;
+          return queue;
         });
-      return queue;
     })
     .declareMethod('getDeclaredGadget', function (gadget_scope) {
       if (!this.__sub_gadget_dict.hasOwnProperty(gadget_scope)) {
@@ -1153,77 +1100,119 @@
   /////////////////////////////////////////////////////////////////
   // renderJS.declareGadgetKlass
   /////////////////////////////////////////////////////////////////
-  renderJS.declareGadgetKlass = function (url) {
-    var result;
 
-    function parse(xhr) {
-      var tmp_constructor,
-        key,
-        parsed_html;
-      if (!gadget_model_dict.hasOwnProperty(url)) {
-        // Class inheritance
-        tmp_constructor = function () {
-          RenderJSGadget.call(this);
-        };
-        tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
-        tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
-        tmp_constructor.declareMethod =
-          RenderJSGadget.declareMethod;
-        tmp_constructor.declareJob =
-          RenderJSGadget.declareJob;
-        tmp_constructor.declareAcquiredMethod =
-          RenderJSGadget.declareAcquiredMethod;
-        tmp_constructor.allowPublicAcquisition =
-          RenderJSGadget.allowPublicAcquisition;
-        tmp_constructor.ready =
-          RenderJSGadget.ready;
-        tmp_constructor.setState =
-          RenderJSGadget.setState;
-        tmp_constructor.onStateChange =
-          RenderJSGadget.onStateChange;
-        tmp_constructor.declareService =
-          RenderJSGadget.declareService;
-        tmp_constructor.onEvent =
-          RenderJSGadget.onEvent;
-        tmp_constructor.prototype = new RenderJSGadget();
-        tmp_constructor.prototype.constructor = tmp_constructor;
-        tmp_constructor.prototype.__path = url;
-        tmp_constructor.prototype.__acquired_method_dict = {};
-        // https://developer.mozilla.org/en-US/docs/HTML_in_XMLHttpRequest
-        // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
-        // https://developer.mozilla.org/en-US/docs/Code_snippets/HTML_to_DOM
-        tmp_constructor.__template_element =
-          (new DOMParser()).parseFromString(xhr.responseText, "text/html");
-        parsed_html = renderJS.parseGadgetHTMLDocument(
-          tmp_constructor.__template_element,
-          url
-        );
-        for (key in parsed_html) {
-          if (parsed_html.hasOwnProperty(key)) {
-            tmp_constructor.prototype['__' + key] = parsed_html[key];
-          }
-        }
-
-        gadget_model_dict[url] = tmp_constructor;
+  function parse(xhr, url) {
+    var tmp_constructor,
+      key,
+      parsed_html;
+    // Class inheritance
+    tmp_constructor = function () {
+      RenderJSGadget.call(this);
+    };
+    tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
+    tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
+    tmp_constructor.declareMethod =
+      RenderJSGadget.declareMethod;
+    tmp_constructor.declareJob =
+      RenderJSGadget.declareJob;
+    tmp_constructor.declareAcquiredMethod =
+      RenderJSGadget.declareAcquiredMethod;
+    tmp_constructor.allowPublicAcquisition =
+      RenderJSGadget.allowPublicAcquisition;
+    tmp_constructor.ready =
+      RenderJSGadget.ready;
+    tmp_constructor.setState =
+      RenderJSGadget.setState;
+    tmp_constructor.onStateChange =
+      RenderJSGadget.onStateChange;
+    tmp_constructor.declareService =
+      RenderJSGadget.declareService;
+    tmp_constructor.onEvent =
+      RenderJSGadget.onEvent;
+    tmp_constructor.prototype = new RenderJSGadget();
+    tmp_constructor.prototype.constructor = tmp_constructor;
+    tmp_constructor.prototype.__path = url;
+    tmp_constructor.prototype.__acquired_method_dict = {};
+    // https://developer.mozilla.org/en-US/docs/HTML_in_XMLHttpRequest
+    // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
+    // https://developer.mozilla.org/en-US/docs/Code_snippets/HTML_to_DOM
+    tmp_constructor.__template_element =
+      (new DOMParser()).parseFromString(xhr.responseText, "text/html");
+    parsed_html = renderJS.parseGadgetHTMLDocument(
+      tmp_constructor.__template_element,
+      url
+    );
+    for (key in parsed_html) {
+      if (parsed_html.hasOwnProperty(key)) {
+        tmp_constructor.prototype['__' + key] = parsed_html[key];
       }
-
-      return gadget_model_dict[url];
     }
+    return tmp_constructor;
+  }
 
-    if (gadget_model_dict.hasOwnProperty(url)) {
+  renderJS.declareGadgetKlass = function (url) {
+    if (gadget_model_defer_dict.hasOwnProperty(url)) {
       // Return klass object if it already exists
-      result = RSVP.resolve(gadget_model_dict[url]);
-    } else {
-      // Fetch the HTML page and parse it
-      result = new RSVP.Queue()
-        .push(function () {
-          return ajax(url);
-        })
-        .push(function (xhr) {
-          return parse(xhr);
-        });
+      return gadget_model_defer_dict[url].promise;
     }
-    return result;
+
+    var tmp_constructor,
+      defer = RSVP.defer(),
+      previous_loading_klass_promise = loading_klass_promise;
+
+    gadget_model_defer_dict[url] = defer;
+
+    // Change the global variable to update the loading queue
+    loading_klass_promise = defer.promise;
+
+    // Fetch the HTML page and parse it
+    return new RSVP.Queue()
+      .push(function () {
+        return RSVP.all([
+          ajax(url),
+          // Wait for previous gadget loading to finish first
+          new RSVP.Queue()
+            .push(function () {
+              return previous_loading_klass_promise;
+            })
+            .push(undefined, function () {
+              // Forget previous declareGadget error
+              return;
+            })
+        ]);
+      })
+      .push(function (result_list) {
+        tmp_constructor = parse(result_list[0], url);
+        gadget_loading_klass = tmp_constructor;
+        var fragment = document.createDocumentFragment(),
+          promise_list = [],
+          i,
+          js_list = tmp_constructor.prototype.__required_js_list,
+          css_list = tmp_constructor.prototype.__required_css_list;
+        // Load JS
+        for (i = 0; i < js_list.length; i += 1) {
+          promise_list.push(renderJS.declareJS(js_list[i], fragment));
+        }
+        // Load CSS
+        for (i = 0; i < css_list.length; i += 1) {
+          promise_list.push(renderJS.declareCSS(css_list[i], fragment));
+        }
+        document.head.appendChild(fragment);
+        return RSVP.all(promise_list);
+      })
+      .push(function () {
+        defer.resolve(tmp_constructor);
+        // Drop the current loading klass info used by selector
+        gadget_loading_klass = undefined;
+        return tmp_constructor;
+      })
+      .push(undefined, function (e) {
+        // Drop the current loading klass info used by selector
+        // even in case of error
+        defer.reject(e);
+        gadget_loading_klass = undefined;
+        throw e;
+      });
   };
 
   /////////////////////////////////////////////////////////////////
@@ -1231,7 +1220,7 @@
   /////////////////////////////////////////////////////////////////
   // For test purpose only
   renderJS.clearGadgetKlassList = function () {
-    gadget_model_dict = {};
+    gadget_model_defer_dict = {};
     javascript_registration_dict = {};
     stylesheet_registration_dict = {};
   };
@@ -1301,7 +1290,7 @@
 
   function bootstrap() {
     var url = removeHash(window.location.href),
-      tmp_constructor,
+      TmpConstructor,
       root_gadget,
       loading_gadget_promise = new RSVP.Queue(),
       declare_method_count = 0,
@@ -1317,7 +1306,7 @@
       connection_ready = false;
 
     // Create the gadget class for the current url
-    if (gadget_model_dict.hasOwnProperty(url)) {
+    if (gadget_model_defer_dict.hasOwnProperty(url)) {
       throw new Error("bootstrap should not be called twice");
     }
     loading_klass_promise = new RSVP.Promise(function (resolve, reject) {
@@ -1346,40 +1335,42 @@
       //    tmp_constructor = RenderJSEmbeddedGadget
       if (window.self === window.top) {
         // XXX Copy/Paste from declareGadgetKlass
-        tmp_constructor = function () {
+        TmpConstructor = function () {
           RenderJSGadget.call(this);
         };
-        tmp_constructor.declareMethod = RenderJSGadget.declareMethod;
-        tmp_constructor.declareJob = RenderJSGadget.declareJob;
-        tmp_constructor.declareAcquiredMethod =
+        TmpConstructor.declareMethod = RenderJSGadget.declareMethod;
+        TmpConstructor.declareJob = RenderJSGadget.declareJob;
+        TmpConstructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
-        tmp_constructor.allowPublicAcquisition =
+        TmpConstructor.allowPublicAcquisition =
           RenderJSGadget.allowPublicAcquisition;
-        tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
-        tmp_constructor.ready = RenderJSGadget.ready;
-        tmp_constructor.setState = RenderJSGadget.setState;
-        tmp_constructor.onStateChange = RenderJSGadget.onStateChange;
-        tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
-        tmp_constructor.declareService =
+        TmpConstructor.__ready_list = RenderJSGadget.__ready_list.slice();
+        TmpConstructor.ready = RenderJSGadget.ready;
+        TmpConstructor.setState = RenderJSGadget.setState;
+        TmpConstructor.onStateChange = RenderJSGadget.onStateChange;
+        TmpConstructor.__service_list = RenderJSGadget.__service_list.slice();
+        TmpConstructor.declareService =
           RenderJSGadget.declareService;
-        tmp_constructor.onEvent =
+        TmpConstructor.onEvent =
           RenderJSGadget.onEvent;
-        tmp_constructor.prototype = new RenderJSGadget();
-        tmp_constructor.prototype.constructor = tmp_constructor;
-        tmp_constructor.prototype.__path = url;
-        gadget_model_dict[url] = tmp_constructor;
+        TmpConstructor.prototype = new RenderJSGadget();
+        TmpConstructor.prototype.constructor = TmpConstructor;
+        TmpConstructor.prototype.__path = url;
+        gadget_model_defer_dict[url] = {
+          promise: RSVP.resolve(TmpConstructor)
+        };
 
         // Create the root gadget instance and put it in the loading stack
-        root_gadget = new gadget_model_dict[url]();
+        root_gadget = new TmpConstructor();
 
         setAqParent(root_gadget, last_acquisition_gadget);
 
       } else {
         // Create the root gadget instance and put it in the loading stack
-        tmp_constructor = RenderJSEmbeddedGadget;
-        tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
-        tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
-        tmp_constructor.prototype.__path = url;
+        TmpConstructor = RenderJSEmbeddedGadget;
+        TmpConstructor.__ready_list = RenderJSGadget.__ready_list.slice();
+        TmpConstructor.__service_list = RenderJSGadget.__service_list.slice();
+        TmpConstructor.prototype.__path = url;
         root_gadget = new RenderJSEmbeddedGadget();
         setAqParent(root_gadget, last_acquisition_gadget);
 
@@ -1393,7 +1384,7 @@
             iframe_top_gadget = false;
             //Default: Define __aq_parent to inform parent window
             root_gadget.__aq_parent =
-              tmp_constructor.prototype.__aq_parent = function (method_name,
+              TmpConstructor.prototype.__aq_parent = function (method_name,
                 argument_list, time_out) {
                 return new RSVP.Promise(function (resolve, reject) {
                   embedded_channel.call({
@@ -1475,7 +1466,7 @@
         notifyDeclareMethod("getTitle");
 
         // Surcharge declareMethod to inform parent window
-        tmp_constructor.declareMethod = function (name, callback) {
+        TmpConstructor.declareMethod = function (name, callback) {
           var result = RenderJSGadget.declareMethod.apply(
               this,
               [name, callback]
@@ -1484,22 +1475,22 @@
           return result;
         };
 
-        tmp_constructor.declareService =
+        TmpConstructor.declareService =
           RenderJSGadget.declareService;
-        tmp_constructor.declareJob =
+        TmpConstructor.declareJob =
           RenderJSGadget.declareJob;
-        tmp_constructor.onEvent =
+        TmpConstructor.onEvent =
           RenderJSGadget.onEvent;
-        tmp_constructor.declareAcquiredMethod =
+        TmpConstructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
-        tmp_constructor.allowPublicAcquisition =
+        TmpConstructor.allowPublicAcquisition =
           RenderJSGadget.allowPublicAcquisition;
 
         iframe_top_gadget = true;
       }
 
-      tmp_constructor.prototype.__acquired_method_dict = {};
-      gadget_loading_klass = tmp_constructor;
+      TmpConstructor.prototype.__acquired_method_dict = {};
+      gadget_loading_klass = TmpConstructor;
 
       function init() {
         // XXX HTML properties can only be set when the DOM is fully loaded
@@ -1508,14 +1499,14 @@
           key;
         for (key in settings) {
           if (settings.hasOwnProperty(key)) {
-            tmp_constructor.prototype['__' + key] = settings[key];
+            TmpConstructor.prototype['__' + key] = settings[key];
           }
         }
-        tmp_constructor.__template_element = document.createElement("div");
+        TmpConstructor.__template_element = document.createElement("div");
         root_gadget.element = document.body;
         root_gadget.state = {};
         for (j = 0; j < root_gadget.element.childNodes.length; j += 1) {
-          tmp_constructor.__template_element.appendChild(
+          TmpConstructor.__template_element.appendChild(
             root_gadget.element.childNodes[j].cloneNode(true)
           );
         }
@@ -1625,15 +1616,15 @@
             return fct.call(g, g);
           };
         }
-        tmp_constructor.ready(function (g) {
+        TmpConstructor.ready(function (g) {
           return startService(g);
         });
 
         loading_gadget_promise.push(ready_wrapper);
-        for (i = 0; i < tmp_constructor.__ready_list.length; i += 1) {
+        for (i = 0; i < TmpConstructor.__ready_list.length; i += 1) {
           // Put a timeout?
           loading_gadget_promise
-            .push(ready_executable_wrapper(tmp_constructor.__ready_list[i]))
+            .push(ready_executable_wrapper(TmpConstructor.__ready_list[i]))
             // Always return the gadget instance after ready function
             .push(ready_wrapper);
         }
