@@ -733,15 +733,17 @@
         }
         var i,
           gadget_instance,
-          template_node_list = Klass.__template_element.body.childNodes;
+          template_node_list = Klass.__template_element.body.childNodes,
+          fragment = document.createDocumentFragment();
         gadget_instance = new Klass();
         gadget_instance.element = options.element;
         gadget_instance.state = {};
         for (i = 0; i < template_node_list.length; i += 1) {
-          gadget_instance.element.appendChild(
+          fragment.appendChild(
             template_node_list[i].cloneNode(true)
           );
         }
+        gadget_instance.element.appendChild(fragment);
         setAqParent(gadget_instance, parent_gadget);
         return gadget_instance;
       });
@@ -1496,7 +1498,8 @@
         // XXX HTML properties can only be set when the DOM is fully loaded
         var settings = renderJS.parseGadgetHTMLDocument(document, url),
           j,
-          key;
+          key,
+          fragment = document.createDocumentFragment();
         for (key in settings) {
           if (settings.hasOwnProperty(key)) {
             TmpConstructor.prototype['__' + key] = settings[key];
@@ -1506,10 +1509,11 @@
         root_gadget.element = document.body;
         root_gadget.state = {};
         for (j = 0; j < root_gadget.element.childNodes.length; j += 1) {
-          TmpConstructor.__template_element.appendChild(
+          fragment.appendChild(
             root_gadget.element.childNodes[j].cloneNode(true)
           );
         }
+        TmpConstructor.__template_element.appendChild(fragment);
         RSVP.all([root_gadget.getRequiredJSList(),
                   root_gadget.getRequiredCSSList()])
           .then(function (all_list) {
