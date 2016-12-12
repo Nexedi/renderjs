@@ -5445,7 +5445,10 @@
       });
     })
       .then(function () {
-        iframe.contentWindow.test_iframe_append();
+        ok(
+          !iframe.contentWindow.hasOwnProperty("renderJS"),
+          "RJS NOT available before inject"
+        );
         return new RSVP.Promise(function (resolve, reject) {
           iframe.contentWindow.test_inject_lib(
             "../node_modules/rsvp/dist/rsvp-2.0.4.js",
@@ -5463,7 +5466,10 @@
       })
       .then(function () {
         var rjsLoaded = iframe.contentWindow.rJS !== undefined;
-        ok(rjsLoaded, "injected RJS available in iframe");
+        ok(
+          iframe.contentWindow.hasOwnProperty("renderJS"),
+          "RJS available after inject"
+        );
       })
       .then(function () {
         iframe.contentWindow.rJS.manualBootstrap();
