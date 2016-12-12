@@ -5431,6 +5431,51 @@
       });
   });
 
+  test('check manual bootstrap', function () {
+    var fixture = document.getElementById("qunit-fixture"),
+      iframe;
+    fixture.innerHTML = "<iframe id=renderjsIsolatedIframe " +
+      "src='./inject_renderjs.html'></iframe>";
+    iframe = document.getElementById("renderjsIsolatedIframe");
+    stop();
+
+    return new RSVP.Promise(function (resolve, reject) {
+      iframe.addEventListener("load", function (e) {
+        resolve(e.target.result);
+      });
+    })
+      .then(function () {
+        iframe.contentWindow.test_iframe_append();
+        return new RSVP.Promise(function (resolve, reject) {
+          iframe.contentWindow.test_inject_lib(
+            "../node_modules/rsvp/dist/rsvp-2.0.4.js",
+            resolve
+          );
+        });
+      })
+      .then(function () {
+        return new RSVP.Promise(function (resolve, reject) {
+          iframe.contentWindow.test_inject_lib(
+            "../dist/renderjs-latest.js",
+            resolve
+          );
+        });
+      })
+      .then(function () {
+        var rjsLoaded = iframe.contentWindow.rJS !== undefined;
+        ok(rjsLoaded, "injected RJS available in iframe");
+      })
+      .then(function () {
+        iframe.contentWindow.rJS.manualBootstrap();
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
 }(document, renderJS, QUnit, sinon, URI, URL, Event,
   MutationObserver));
 
