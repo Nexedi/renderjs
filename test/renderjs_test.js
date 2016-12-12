@@ -5768,6 +5768,79 @@
       });
   });
 
+  test('check manual bootstrap', function () {
+    var fixture = document.getElementById("qunit-fixture"),
+      iframe;
+    // The iframe for an isolated renderjs-free environment
+    // to test the manual inject
+    fixture.innerHTML = "<iframe id=renderjsIsolatedIframe " +
+      "src='./inject_script.html'></iframe>";
+    iframe = document.getElementById("renderjsIsolatedIframe");
+    stop();
+
+    return new RSVP.Promise(function (resolve, reject) {
+      iframe.addEventListener("load", function (e) {
+        resolve(e.target.result);
+      });
+    })
+      .then(function () {
+        ok(
+          !iframe.contentWindow.hasOwnProperty("renderJS"),
+          "RJS NOT available before inject"
+        );
+        return new RSVP.Promise(function (resolve, reject) {
+          iframe.contentWindow.inject_script(
+            "../node_modules/rsvp/dist/rsvp-2.0.4.js",
+            resolve
+          );
+        });
+      })
+      .then(function () {
+        return new RSVP.Promise(function (resolve, reject) {
+          iframe.contentWindow.inject_script(
+            "../dist/renderjs-latest.js",
+            resolve
+          );
+        });
+      })
+      .then(function () {
+        ok(
+          iframe.contentWindow.hasOwnProperty("renderJS"),
+          "RJS available after inject"
+        );
+      })
+      .then(function () {
+        // create parentGadget in iframe, then initialize RJS
+        var parentDiv = iframe.contentDocument.createElement("div");
+        parentDiv.setAttribute(
+          "data-gadget-url",
+          "./trigger_rjsready_event_on_ready_gadget.html"
+        );
+        iframe.contentDocument.body.appendChild(parentDiv);
+        return new RSVP.Promise(function (resolve, reject) {
+          // listen for an event fired in the ready function of the parent
+          // gadget
+          parentDiv.addEventListener("rjsready", function (e) {
+            resolve();
+          });
+          // if no event is fired within 500ms, just resolve and fail later
+          window.setTimeout(function () {
+            reject("Timeout, RenderJS is not Ready");
+          }, 500);
+          iframe.contentWindow.rJS.manualBootstrap();
+        });
+      })
+      .then(function () {
+        ok(true, "RJS correctly bootstrapped and parent is ready");
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
 }(document, renderJS, QUnit, sinon, URI, URL, Event,
   MutationObserver));
 

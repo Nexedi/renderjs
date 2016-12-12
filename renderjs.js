@@ -132,7 +132,8 @@
     scope_increment = 0,
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
-    error_list = [];
+    error_list = [],
+    bootstrap_deferred_object = new RSVP.defer();
 
   window.addEventListener('error', function (error) {
     error_list.push(error);
@@ -1322,6 +1323,16 @@
   // Bootstrap process. Register the self gadget.
   ///////////////////////////////////////////////////
 
+
+  // Manually initializes the self gadget if the DOMContentLoaded event
+  // is triggered before everything was ready.
+  // (For instance, the HTML-tag for the self gadget gets inserted after
+  //  page load)
+  renderJS.manualBootstrap = function () {
+    bootstrap_deferred_object.resolve();
+  };
+
+
   function bootstrap() {
     var url = removeHash(window.location.href),
       TmpConstructor,
@@ -1634,7 +1645,16 @@
             throw e;
           });
       }
-      document.addEventListener('DOMContentLoaded', init, false);
+      document.addEventListener('DOMContentLoaded',
+                                bootstrap_deferred_object.resolve, false);
+      // Return Promies/Queue here instead of directly calling init()
+      return new RSVP.Queue()
+        .push(function () {
+          return bootstrap_deferred_object.promise;
+        })
+        .push(function () {
+          return init();
+        });
     });
 
     loading_gadget_promise
