@@ -5473,8 +5473,7 @@
       })
       .then(function () {
         // create parentGadget in iframe, then initialize RJS
-        var parentDiv = iframe.contentDocument.createElement("div"),
-          tEle;
+        var parentDiv = iframe.contentDocument.createElement("div");
         parentDiv.setAttribute(
           "data-gadget-url",
           "./inject_parentgadget.html"
@@ -5488,7 +5487,7 @@
             resolve();
           });
           // if no event is fired within 500ms, just resolve and fail later
-          setTimeout(function () {
+          window.setTimeout(function () {
             resolve();
           }, 500);
           iframe.contentWindow.rJS.manualBootstrap();
