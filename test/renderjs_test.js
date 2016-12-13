@@ -5433,6 +5433,7 @@
 
   test('check manual bootstrap', function () {
     var fixture = document.getElementById("qunit-fixture"),
+      rjsReadyCalled = false,
       iframe;
     fixture.innerHTML = "<iframe id=renderjsIsolatedIframe " +
       "src='./inject_renderjs.html'></iframe>";
@@ -5465,14 +5466,36 @@
         });
       })
       .then(function () {
-        var rjsLoaded = iframe.contentWindow.rJS !== undefined;
         ok(
           iframe.contentWindow.hasOwnProperty("renderJS"),
           "RJS available after inject"
         );
       })
       .then(function () {
-        iframe.contentWindow.rJS.manualBootstrap();
+        // create parentGadget in iframe, then initialize RJS
+        var parentDiv = iframe.contentDocument.createElement("div"),
+          tEle;
+        parentDiv.setAttribute(
+          "data-gadget-url",
+          "./inject_parentgadget.html"
+        );
+        iframe.contentDocument.body.appendChild(parentDiv);
+        return new RSVP.Promise(function (resolve, reject) {
+          // listen for an event fired in the ready function of the parent
+          // gadget
+          parentDiv.addEventListener("rjsready", function (e) {
+            rjsReadyCalled = true;
+            resolve();
+          });
+          // if no event is fired within 500ms, just resolve and fail later
+          setTimeout(function () {
+            resolve();
+          }, 500);
+          iframe.contentWindow.rJS.manualBootstrap();
+        });
+      })
+      .then(function () {
+        ok(rjsReadyCalled, "RJS correctly bootstrapped and parent is ready");
       })
       .fail(function (error) {
         ok(false, error);
@@ -5484,4 +5507,3 @@
 
 }(document, renderJS, QUnit, sinon, URI, URL, Event,
   MutationObserver));
-
