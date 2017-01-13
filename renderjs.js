@@ -414,13 +414,13 @@
     });
   }
 
-  function clearGadgetInternalParameters(g) {
-    g.__sub_gadget_dict = {};
-    createMonitor(g);
+  function clearGadgetInternalParameters() {
+    this.__sub_gadget_dict = {};
+    createMonitor(this);
   }
 
-  function loadSubGadgetDOMDeclaration(g) {
-    var element_list = g.element.querySelectorAll('[data-gadget-url]'),
+  function loadSubGadgetDOMDeclaration() {
+    var element_list = this.element.querySelectorAll('[data-gadget-url]'),
       element,
       promise_list = [],
       scope,
@@ -434,7 +434,7 @@
       url = element.getAttribute("data-gadget-url");
       sandbox = element.getAttribute("data-gadget-sandbox");
       if (url !== null) {
-        promise_list.push(g.declareGadget(url, {
+        promise_list.push(this.declareGadget(url, {
           element: element,
           scope: scope || undefined,
           sandbox: sandbox || undefined
@@ -1616,8 +1616,8 @@
             return fct.call(g, g);
           };
         }
-        TmpConstructor.ready(function (g) {
-          return startService(g);
+        TmpConstructor.ready(function () {
+          return startService(this);
         });
 
         loading_gadget_promise.push(ready_wrapper);
