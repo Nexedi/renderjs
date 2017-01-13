@@ -5038,6 +5038,102 @@
       });
   });
 
+  test('checking wrong HTML iframe gadget', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded_empty.html";
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        ok(false);
+      })
+      .fail(function (error) {
+        ok(error instanceof Error);
+        equal(error.message, "Timeout while loading: ./embedded_empty.html");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('checking 404 html iframe gadget', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded_404.html";
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        ok(false);
+      })
+      .fail(function (error) {
+        ok(error instanceof Error);
+        equal(
+          error.message,
+          "Timeout while loading: ./embedded_404.html"
+        );
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /*
+  test('checking 404 js iframe gadget', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded_404_js.html";
+    gadget.__sub_gadget_dict = {};
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        ok(false);
+      })
+      .fail(function (error) {
+        deepEqual(error, {});
+      })
+      .always(function () {
+        start();
+      });
+  });
+  */
+
+  test('checking non renderjs iframe gadget', function () {
+    // Check that declare gadget returns the gadget
+    var gadget = new RenderJSGadget(),
+      url = "./embedded_non_renderjs.html";
+
+    stop();
+    gadget.declareGadget(url, {
+      sandbox: 'iframe',
+      element: document.getElementById('qunit-fixture')
+    })
+      .then(function (new_gadget) {
+        ok(false);
+      })
+      .fail(function (error) {
+        ok(error instanceof Error);
+        equal(
+          error.message,
+          "Timeout while loading: ./embedded_non_renderjs.html"
+        );
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget (dataurl)
   /////////////////////////////////////////////////////////////////

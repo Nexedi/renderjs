@@ -794,6 +794,17 @@
     gadget_instance = new RenderJSIframeGadget();
     setAqParent(gadget_instance, parent_gadget);
     iframe = document.createElement("iframe");
+    iframe.addEventListener('error', function (error) {
+      iframe_loading_deferred.reject(error);
+    });
+    iframe.addEventListener('load', function () {
+      return RSVP.timeout(5000)
+        .fail(function () {
+          iframe_loading_deferred.reject(
+            new Error('Timeout while loading: ' + url)
+          );
+        });
+    });
 //    gadget_instance.element.setAttribute("seamless", "seamless");
     iframe.setAttribute("src", url);
     gadget_instance.__path = url;
@@ -857,18 +868,7 @@
       trans.delayReturn(true);
     });
 
-    return RSVP.any([
-      iframe_loading_deferred.promise,
-      // Timeout to prevent non renderJS embeddable gadget
-      // XXX Maybe using iframe.onload/onerror would be safer?
-      new RSVP.Queue()
-        .push(function () {
-          return RSVP.timeout(5000);
-        })
-        .push(undefined, function () {
-          throw new Error('Timeout while loading: ' + url);
-        })
-    ]);
+    return iframe_loading_deferred.promise;
   }
 
   /////////////////////////////////////////////////////////////////
