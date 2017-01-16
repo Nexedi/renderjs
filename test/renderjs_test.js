@@ -4327,6 +4327,9 @@
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_url2 = 'https://example.org/files/qunittest/test12346.html';
     gadget.__sub_gadget_dict = {};
+    gadget.__aq_parent = function (method_name, argument_list) {
+      throw new renderJS.AcquisitionError("Can not handle " + method_name);
+    };
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -4345,6 +4348,108 @@
       .fail(function (e) {
         equal(e.status, 403);
         equal(e.url, html_url2);
+      })
+      .always(start);
+  });
+
+  test('can catch if declareGadget with scope in HTML fail', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var ParentKlass = function () {
+      RenderJSGadget.call(this);
+    },
+      gadget,
+      error_context,
+      // catched_error,
+      html_url = 'https://example.org/files/qunittest/test12345.html',
+      html_url2 = 'https://example.org/files/qunittest/test12346.html';
+    ParentKlass.prototype = new RenderJSGadget();
+    ParentKlass.prototype.constructor = ParentKlass;
+    ParentKlass.prototype.__acquired_method_dict = {};
+    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+
+    gadget = new ParentKlass();
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div data-foo='bar' " +
+       "data-gadget-scope='foo' data-gadget-url='" + html_url2 +
+       "'></div></body></html>"]);
+    this.server.respondWith("GET", html_url2, [403, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    stop();
+    expect(5);
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        Klass.allowPublicAcquisition('reportGadgetDeclarationError',
+                                     function (argument_list, scope) {
+            var catched_error = argument_list[0];
+            error_context = this;
+            equal(catched_error.status, 403);
+            equal(catched_error.url, html_url2);
+            equal(scope, 'foo');
+          });
+        return gadget.declareGadget(html_url);
+      })
+      .then(function (result) {
+        deepEqual(result, error_context);
+        ok(true, 'Error correctly catched');
+      })
+      .fail(function (e) {
+        ok(false, "Error should have been catched");
+      })
+      .always(start);
+  });
+
+  test('can catch if declareGadget without scope in HTML fail', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var ParentKlass = function () {
+      RenderJSGadget.call(this);
+    },
+      gadget,
+      error_context,
+      // catched_error,
+      html_url = 'https://example.org/files/qunittest/test1234598.html',
+      html_url2 = 'https://example.org/files/qunittest/test1234698.html';
+    ParentKlass.prototype = new RenderJSGadget();
+    ParentKlass.prototype.constructor = ParentKlass;
+    ParentKlass.prototype.__acquired_method_dict = {};
+    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+
+    gadget = new ParentKlass();
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div data-foo='bar' " +
+       "data-gadget-url='" + html_url2 +
+       "'></div></body></html>"]);
+    this.server.respondWith("GET", html_url2, [403, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    stop();
+    expect(5);
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        Klass.allowPublicAcquisition('reportGadgetDeclarationError',
+                                     function (argument_list, scope) {
+            var catched_error = argument_list[0];
+            error_context = this;
+            equal(catched_error.status, 403);
+            equal(catched_error.url, html_url2);
+            equal(scope, null);
+          });
+        return gadget.declareGadget(html_url);
+      })
+      .then(function (result) {
+        deepEqual(result, error_context);
+        ok(true, 'Error correctly catched');
+      })
+      .fail(function (e) {
+        ok(false, "Error should have been catched");
       })
       .always(start);
   });

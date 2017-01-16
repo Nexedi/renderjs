@@ -426,7 +426,20 @@
       scope,
       url,
       sandbox,
-      i;
+      i,
+      context = this;
+
+    function prepareReportGadgetDeclarationError(scope) {
+      return function (error) {
+        var aq_dict = context.__acquired_method_dict || {},
+          method_name = 'reportGadgetDeclarationError';
+        if (aq_dict.hasOwnProperty(method_name)) {
+          return aq_dict[method_name].apply(context,
+                                            [arguments, scope]);
+        }
+        throw error;
+      };
+    }
 
     for (i = 0; i < element_list.length; i += 1) {
       element = element_list[i];
@@ -434,11 +447,14 @@
       url = element.getAttribute("data-gadget-url");
       sandbox = element.getAttribute("data-gadget-sandbox");
       if (url !== null) {
-        promise_list.push(this.declareGadget(url, {
-          element: element,
-          scope: scope || undefined,
-          sandbox: sandbox || undefined
-        }));
+        promise_list.push(
+          context.declareGadget(url, {
+            element: element,
+            scope: scope || undefined,
+            sandbox: sandbox || undefined
+          })
+            .push(undefined, prepareReportGadgetDeclarationError(scope))
+        );
       }
     }
 
@@ -664,6 +680,8 @@
     };
   RenderJSGadget.declareAcquiredMethod("aq_reportServiceError",
                                        "reportServiceError");
+  RenderJSGadget.declareAcquiredMethod("aq_reportGadgetDeclarationError",
+                                       "reportGadgetDeclarationError");
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.allowPublicAcquisition
