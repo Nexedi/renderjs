@@ -1850,6 +1850,28 @@
     equal(Klass.__ready_list.length, 1);
   });
 
+  test('is called before other ready callbacks', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    },
+      ready_callback;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__ready_list = [];
+    Klass.ready = RenderJSGadget.ready;
+    Klass.setState = RenderJSGadget.setState;
+
+    Klass.ready(function () {
+      return;
+    });
+    ready_callback = Klass.__ready_list[0];
+
+    Klass.setState({foo: 'bar'});
+    equal(Klass.__ready_list.length, 2);
+    deepEqual(Klass.__ready_list[1], ready_callback);
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.onStateChange
   /////////////////////////////////////////////////////////////////

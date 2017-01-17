@@ -469,9 +469,10 @@
   };
   RenderJSGadget.setState = function (state_dict) {
     var json_state = JSON.stringify(state_dict);
-    return this.ready(function () {
+    this.__ready_list.unshift(function () {
       this.state = JSON.parse(json_state);
     });
+    return this;
   };
   RenderJSGadget.onStateChange = function (callback) {
     this.prototype.__state_change_callback = callback;
