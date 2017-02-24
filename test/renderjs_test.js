@@ -1328,6 +1328,30 @@
       });
   });
 
+  test('do not trigger onStateChange if no changed keys twice', function () {
+    var gadget = new RenderJSGadget(),
+      callback_called = false;
+    gadget.state = {};
+    gadget.__state_change_callback = function () {
+      callback_called = true;
+    };
+    stop();
+    gadget.changeState({})
+      .then(function () {
+        ok(!callback_called);
+        return gadget.changeState({});
+      })
+      .then(function () {
+        ok(!callback_called);
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('accumulate modification_dict on onStateChange error', function () {
     var gadget = new RenderJSGadget();
     expect(13);

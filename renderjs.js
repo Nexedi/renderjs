@@ -608,7 +608,6 @@
         modified = true;
       } else {
         modification_dict = {};
-        this.__modification_dict = modification_dict;
       }
       for (key in state_dict) {
         if (state_dict.hasOwnProperty(key) &&
@@ -619,6 +618,7 @@
         }
       }
       if (modified && this.__state_change_callback !== undefined) {
+        this.__modification_dict = modification_dict;
         return new RSVP.Queue()
           .push(function () {
             return context.__state_change_callback(modification_dict);
