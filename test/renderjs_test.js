@@ -1352,6 +1352,96 @@
       });
   });
 
+  test('trigger onStateChange when previous is resolved', function () {
+    var gadget = new RenderJSGadget(),
+      callback_count = 0;
+    gadget.state = {};
+    expect(6);
+    gadget.__state_change_callback = function (modification_dict) {
+      if (callback_count === 0) {
+        callback_count += 1;
+        deepEqual(modification_dict, {first: true});
+        return new RSVP.Queue()
+          .push(function () {
+            return RSVP.delay();
+          })
+          .push(function () {
+            deepEqual(gadget.state, {first: true});
+            callback_count += 1;
+          });
+      }
+      if (callback_count === 2) {
+        deepEqual(modification_dict, {second: true});
+        deepEqual(gadget.state, {first: true, second: true});
+        callback_count += 1;
+      } else {
+        throw new Error('Unexpected callback_count ' + callback_count);
+      }
+    };
+    stop();
+    return new RSVP.all([
+      gadget.changeState({first: true}),
+      gadget.changeState({second: true})
+    ])
+      .then(function () {
+        equal(callback_count, 3);
+        deepEqual(gadget.state, {first: true, second: true});
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('trigger onStateChange when previous is rejected', function () {
+    var gadget = new RenderJSGadget(),
+      callback_count = 0;
+    gadget.state = {};
+    expect(7);
+    gadget.__state_change_callback = function (modification_dict) {
+      if (callback_count === 0) {
+        callback_count += 1;
+        deepEqual(modification_dict, {first: true});
+        return new RSVP.Queue()
+          .push(function () {
+            return RSVP.delay();
+          })
+          .push(function () {
+            deepEqual(gadget.state, {first: true});
+            callback_count += 1;
+            throw new Error('manually reject first callback');
+          });
+      }
+      if (callback_count === 2) {
+        deepEqual(modification_dict, {first: true, second: true});
+        deepEqual(gadget.state, {first: true, second: true});
+        callback_count += 1;
+      } else {
+        throw new Error('Unexpected callback_count ' + callback_count);
+      }
+    };
+    stop();
+    return new RSVP.all([
+      gadget.changeState({first: true})
+        .fail(function (error) {
+          equal(error.message, 'manually reject first callback');
+        }),
+      gadget.changeState({second: true})
+    ])
+      .then(function () {
+        equal(callback_count, 3);
+        deepEqual(gadget.state, {first: true, second: true});
+      })
+      .fail(function (error) {
+        ok(false, error);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('accumulate modification_dict on onStateChange error', function () {
     var gadget = new RenderJSGadget();
     expect(13);
