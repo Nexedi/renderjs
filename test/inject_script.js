@@ -2,12 +2,12 @@
 
 
 // can't use RSVP here because its not loaded (neccessarily)
-function test_inject_lib(libsrc, resolve) {
+function inject_script(src, resolve) {
   // inject RSVP
   var script = document.createElement("script");
   script.onload = function() {
     resolve();
   };
-  script.src = libsrc;
+  script.src = src;
   document.body.appendChild(script);
 }

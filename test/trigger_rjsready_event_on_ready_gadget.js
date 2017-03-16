@@ -7,8 +7,8 @@
   rJS(window)
     .ready(function (gadget) {
       return gadget.getElement()
-        .push(function (ele) {
-          ele.dispatchEvent(new Event("rjsready"));
+        .push(function (element) {
+          element.dispatchEvent(new Event("rjsready"));
         });
     });
 }(window, rJS));

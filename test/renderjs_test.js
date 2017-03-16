@@ -5433,10 +5433,11 @@
 
   test('check manual bootstrap', function () {
     var fixture = document.getElementById("qunit-fixture"),
-      rjsReadyCalled = false,
       iframe;
+    // The iframe for an isolated renderjs-free environment
+    // to test the manual inject
     fixture.innerHTML = "<iframe id=renderjsIsolatedIframe " +
-      "src='./inject_renderjs.html'></iframe>";
+      "src='./inject_script.html'></iframe>";
     iframe = document.getElementById("renderjsIsolatedIframe");
     stop();
 
@@ -5451,7 +5452,7 @@
           "RJS NOT available before inject"
         );
         return new RSVP.Promise(function (resolve, reject) {
-          iframe.contentWindow.test_inject_lib(
+          iframe.contentWindow.inject_script(
             "../node_modules/rsvp/dist/rsvp-2.0.4.js",
             resolve
           );
@@ -5459,7 +5460,7 @@
       })
       .then(function () {
         return new RSVP.Promise(function (resolve, reject) {
-          iframe.contentWindow.test_inject_lib(
+          iframe.contentWindow.inject_script(
             "../dist/renderjs-latest.js",
             resolve
           );
@@ -5476,25 +5477,24 @@
         var parentDiv = iframe.contentDocument.createElement("div");
         parentDiv.setAttribute(
           "data-gadget-url",
-          "./inject_parentgadget.html"
+          "./trigger_rjsready_event_on_ready_gadget.html"
         );
         iframe.contentDocument.body.appendChild(parentDiv);
         return new RSVP.Promise(function (resolve, reject) {
           // listen for an event fired in the ready function of the parent
           // gadget
           parentDiv.addEventListener("rjsready", function (e) {
-            rjsReadyCalled = true;
             resolve();
           });
           // if no event is fired within 500ms, just resolve and fail later
           window.setTimeout(function () {
-            resolve();
+            reject("Timeout, RenderJS is not Ready");
           }, 500);
           iframe.contentWindow.rJS.manualBootstrap();
         });
       })
       .then(function () {
-        ok(rjsReadyCalled, "RJS correctly bootstrapped and parent is ready");
+        ok(true, "RJS correctly bootstrapped and parent is ready");
       })
       .fail(function (error) {
         ok(false, error);
@@ -5506,3 +5506,4 @@
 
 }(document, renderJS, QUnit, sinon, URI, URL, Event,
   MutationObserver));
+
