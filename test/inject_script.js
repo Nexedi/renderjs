@@ -9,5 +9,5 @@ function inject_script(src, resolve) {
     resolve();
   };
   script.src = src;
-  document.body.appendChild(script);
+  document.head.appendChild(script);
 }

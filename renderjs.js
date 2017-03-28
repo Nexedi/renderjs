@@ -9,10 +9,6 @@
            Node, FileReader, Blob, navigator, Event, URL) {
   "use strict";
 
-  if (window.hasOwnProperty("renderJS")) {
-    return;
-  }
-
   function readBlobAsDataURL(blob) {
     var fr = new FileReader();
     return new RSVP.Promise(function (resolve, reject) {
