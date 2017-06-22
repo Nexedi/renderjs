@@ -2697,6 +2697,126 @@
   });
 
   /////////////////////////////////////////////////////////////////
+  // RenderJSGadgetKlass.onLoop
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadgetKlass.onLoop", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+      this.server = sinon.fakeServer.create();
+
+      this.server.autoRespond = true;
+      this.server.autoRespondAfter = 5;
+    },
+    teardown: function () {
+      this.server.restore();
+      delete this.server;
+    }
+  });
+  test('is chainable', function () {
+    // Check that onLoop is chainable
+
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, result;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__service_list = [];
+    Klass.onLoop = RenderJSGadget.onLoop;
+
+    result = Klass.onLoop(function () {
+      return;
+    });
+    // onLoop is chainable
+    equal(result, Klass);
+  });
+
+  test('create callback in the service_list property', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    },
+      callback = function () {return; };
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.__service_list = [];
+    Klass.onLoop = RenderJSGadget.onLoop;
+
+    Klass.onLoop(callback);
+    equal(Klass.__service_list.length, 1);
+  });
+
+  function declareTimeoutToCheck(klass, service_status) {
+    service_status.start_count = 0;
+    service_status.stop_count = 0;
+    service_status.status = undefined;
+
+    klass.onLoop(function (evt) {
+      service_status.start_count += 1;
+      return new RSVP.Queue()
+        .push(function () {
+          service_status.status = "started";
+          service_status.defer = RSVP.defer();
+          return service_status.defer.promise;
+        })
+        .push(function () {
+          service_status.stop_count += 1;
+          service_status.status = "stopped";
+        });
+    });
+  }
+
+  test('callback is triggered on timeout', function () {
+    var service1 = {},
+      gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test599.html';
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareTimeoutToCheck(Klass, service1);
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function (g) {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 1);
+        equal(service1.stop_count, 0);
+        equal(service1.status, "started");
+        service1.defer.resolve();
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 2);
+        equal(service1.stop_count, 1);
+        equal(service1.status, "started");
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        equal(service1.start_count, 2);
+        equal(service1.stop_count, 1);
+        equal(service1.status, "started");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.declareJob
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareJob", {

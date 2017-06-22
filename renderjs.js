@@ -82,6 +82,19 @@
     return new RSVP.Promise(itsANonResolvableTrap, canceller);
   }
 
+  function promiseAnimationFrame() {
+    var request_id;
+
+    function canceller() {
+      window.cancelAnimationFrame(request_id);
+    }
+
+    function resolver(resolve) {
+      request_id = window.requestAnimationFrame(resolve);
+    }
+    return new RSVP.Promise(resolver, canceller);
+  }
+
   function ajax(url) {
     var xhr;
     function resolver(resolve, reject) {
@@ -494,6 +507,34 @@
     return this;
   };
 
+  RenderJSGadget.onLoop = function (callback, delay) {
+    if (delay === undefined) {
+      delay = 0;
+    }
+    this.__service_list.push(function () {
+      var queue_loop = new RSVP.Queue(),
+        wait = function () {
+          queue_loop
+            .push(function () {
+              return RSVP.delay(delay);
+            })
+            .push(function () {
+              // Only loop when the app has the focus
+              return promiseAnimationFrame();
+            })
+            .push(function () {
+              return callback.apply(this, []);
+            })
+            .push(function () {
+              wait();
+            });
+        };
+      wait();
+      return queue_loop;
+    });
+    return this;
+  };
+
   function runJob(gadget, name, callback, argument_list) {
     var job_promise = new RSVP.Queue()
       .push(function () {
@@ -744,6 +785,8 @@
     RenderJSGadget.declareService;
   RenderJSEmbeddedGadget.onEvent =
     RenderJSGadget.onEvent;
+  RenderJSEmbeddedGadget.onLoop =
+    RenderJSGadget.onLoop;
   RenderJSEmbeddedGadget.prototype = new RenderJSGadget();
   RenderJSEmbeddedGadget.prototype.constructor = RenderJSEmbeddedGadget;
 
@@ -807,6 +850,8 @@
     RenderJSGadget.declareService;
   RenderJSIframeGadget.onEvent =
     RenderJSGadget.onEvent;
+  RenderJSIframeGadget.onLoop =
+    RenderJSGadget.onLoop;
   RenderJSIframeGadget.prototype = new RenderJSGadget();
   RenderJSIframeGadget.prototype.constructor = RenderJSIframeGadget;
 
@@ -1176,6 +1221,8 @@
       RenderJSGadget.declareService;
     tmp_constructor.onEvent =
       RenderJSGadget.onEvent;
+    tmp_constructor.onLoop =
+      RenderJSGadget.onLoop;
     tmp_constructor.prototype = new RenderJSGadget();
     tmp_constructor.prototype.constructor = tmp_constructor;
     tmp_constructor.prototype.__path = url;
@@ -1398,6 +1445,8 @@
           RenderJSGadget.declareService;
         TmpConstructor.onEvent =
           RenderJSGadget.onEvent;
+        TmpConstructor.onLoop =
+          RenderJSGadget.onLoop;
         TmpConstructor.prototype = new RenderJSGadget();
         TmpConstructor.prototype.constructor = TmpConstructor;
         TmpConstructor.prototype.__path = url;
@@ -1526,6 +1575,8 @@
           RenderJSGadget.declareJob;
         TmpConstructor.onEvent =
           RenderJSGadget.onEvent;
+        TmpConstructor.onLoop =
+          RenderJSGadget.onLoop;
         TmpConstructor.declareAcquiredMethod =
           RenderJSGadget.declareAcquiredMethod;
         TmpConstructor.allowPublicAcquisition =
