@@ -15,8 +15,7 @@
                                      (modification_dict.foo === 'bar');
       state_change_count += 1;
     };
-
-  gk.ready(function (g) {
+  gk.ready(function () {
     ready_called = true;
   })
     .setState(init_state)

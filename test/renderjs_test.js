@@ -4868,7 +4868,8 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       acquire_called = false,
-      url = "./embedded.html";
+      url = "./embedded.html",
+      new_gadget;
 
     gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
@@ -4889,9 +4890,11 @@
     stop();
     gadget.declareGadget(url, {
       sandbox: 'iframe',
-      element: document.getElementById('qunit-fixture')
+      element: document.getElementById('qunit-fixture'),
+      scope: 'foobar'
     })
-      .then(function (new_gadget) {
+      .then(function (sub_gadget) {
+        new_gadget = sub_gadget;
         return new RSVP.Queue()
 
           // Method returns an RSVP.Queue
@@ -4901,12 +4904,14 @@
               result instanceof RSVP.Queue,
               "iframe method should return Queue"
             );
+            return result;
           })
-
+/*
           // Check that ready function are called
           .push(function () {
             return new_gadget.wasReadyCalled();
           })
+*/
           .push(function (result) {
             equal(result, true);
           })
@@ -5776,7 +5781,7 @@
     fixture.innerHTML =
       "<iframe id=renderjsIframe src='./not_declared_gadget.html'></iframe>";
     stop();
-    return RSVP.delay(900)
+    return RSVP.delay(1500)
       .then(function () {
         var iframe = document.getElementById('renderjsIframe'),
           acquisition_div = iframe.contentWindow.
@@ -5820,8 +5825,6 @@
         return;
       }
       iframe_text = iframe_body.textContent;
-      /*global console*/
-      // console.log(iframe_text);
       if (iframe_text.indexOf('Page changed') !== -1) {
         // Final page
         ok(true, iframe_text);
@@ -5873,6 +5876,9 @@
         resolve(evt.target.result);
       });
     })
+      .then(function () {
+        return RSVP.delay(1100);
+      })
       .then(function () {
         var iframe_body = iframe.contentWindow.document.body,
           iframe_text = iframe_body.textContent;
@@ -5946,7 +5952,7 @@
           // if no event is fired within 500ms, just resolve and fail later
           window.setTimeout(function () {
             reject("Timeout, RenderJS is not Ready");
-          }, 500);
+          }, 3000);
           iframe.contentWindow.rJS.manualBootstrap();
         });
       })

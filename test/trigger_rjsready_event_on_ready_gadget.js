@@ -6,9 +6,6 @@
 
   rJS(window)
     .ready(function (gadget) {
-      return gadget.getElement()
-        .push(function (element) {
-          element.dispatchEvent(new Event("rjsready"));
-        });
+      return gadget.element.dispatchEvent(new Event("rjsready"));
     });
 }(window, rJS));
