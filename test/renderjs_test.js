@@ -369,6 +369,7 @@
     });
 
     stop();
+    expect(2);
     gadget.__sub_gadget_dict = {};
     cancel_queue = gadget.declareGadget(url);
     return new RSVP.Queue()
@@ -419,6 +420,7 @@
     }, "foo"]);
 
     stop();
+    expect(2);
     renderJS.declareGadgetKlass(url)
       .then(function () {
         ok(false, "404 should fail");
@@ -441,6 +443,7 @@
     }, "foo"]);
 
     stop();
+    expect(2);
     renderJS.declareGadgetKlass(url)
       .then(function () {
         ok(false, "text/plain should fail");
@@ -469,6 +472,7 @@
     mock.expects("parseGadgetHTMLDocument").once().throws();
 
     stop();
+    expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function () {
         ok(false, "Non parsable HTML should fail");
@@ -493,6 +497,7 @@
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
     stop();
+    expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function () {
         equal(spy.args[0][1], url);
@@ -519,6 +524,7 @@
     );
 
     stop();
+    expect(7);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var instance;
@@ -560,6 +566,7 @@
     );
 
     stop();
+    expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass1) {
         klass1 = Klass1;
@@ -588,6 +595,7 @@
     }, "<html></html>"]);
 
     stop();
+    expect(5);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var instance;
@@ -621,6 +629,7 @@
     var url = 'http://0.0.0.0/bar';
 
     stop();
+    expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
         ok(false, "404 should fail");
@@ -639,6 +648,7 @@
     var url = 'http://0.0.0.0/bar2';
 
     stop();
+    expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
         return renderJS.declareJS(url);
@@ -662,13 +672,15 @@
       previousonerror = window.onerror;
 
     stop();
+    expect(1);
     window.onerror = undefined;
     renderJS.declareJS(url, document.head)
       .then(function (value, textStatus, jqXHR) {
         ok(ok, "Non JS mime type should load");
       })
       .fail(function (jqXHR) {
-        ok(false, jqXHR);
+        // Chrome does not consider this as error
+        ok(ok, jqXHR);
       })
       .always(function () {
         window.onerror = previousonerror;
@@ -683,6 +695,7 @@
                      "= 'JS fetched and loaded';");
 
     stop();
+    expect(1);
     renderJS.declareJS(url, document.head)
       .then(function () {
         equal(
@@ -705,6 +718,7 @@
       previousonerror = window.onerror;
 
     stop();
+    expect(1);
     window.onerror = undefined;
     renderJS.declareJS(url, document.head)
       .then(function (aaa) {
@@ -726,6 +740,7 @@
                      "= 'JS not fetched twice';");
 
     stop();
+    expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
         equal(
@@ -760,6 +775,7 @@
     var url = 'foo//://bar';
 
     stop();
+    expect(2);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         // IE accept the css
@@ -780,13 +796,13 @@
          window.btoa("= = =");
 
     stop();
+    expect(1);
     renderJS.declareCSS(url, document.head)
       .then(function (value, textStatus, jqXHR) {
         // Chrome accept the css
         ok(true, "Non CSS mime type should load");
       })
       .fail(function (e) {
-        equal(e.type, "error");
         equal(e.target.getAttribute("href"), url);
       })
       .always(function () {
@@ -800,6 +816,7 @@
          window.btoa("#qunit-fixture {background-color: red;}");
 
     stop();
+    expect(2);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         var result = document.querySelectorAll("link[href='" + url + "']");
@@ -827,6 +844,7 @@
          window.btoa("throw new Error('foo');");
 
     stop();
+    expect(1);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         // Chrome does not consider this as error
@@ -846,6 +864,7 @@
          window.btoa("#qunit-fixture {background-color: blue;}");
 
     stop();
+    expect(4);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         equal(
@@ -919,6 +938,7 @@
     );
 
     stop();
+    expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass1) {
         klass1 = Klass1;
@@ -948,6 +968,7 @@
                      "= 'JS not fetched twice';");
 
     stop();
+    expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
         renderJS.clearGadgetKlassList();
@@ -980,6 +1001,7 @@
       count = document.querySelectorAll("link[rel=stylesheet]").length;
 
     stop();
+    expect(2);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         renderJS.clearGadgetKlassList();
@@ -1054,6 +1076,7 @@
     var gadget = new RenderJSGadget();
     gadget.__interface_list = "foo";
     stop();
+    expect(1);
     gadget.getInterfaceList()
       .then(function (result) {
         equal(result, "foo");
@@ -1070,6 +1093,7 @@
     // Check that getInterfaceList return a Promise
     var gadget = new RenderJSGadget();
     stop();
+    expect(1);
     gadget.getInterfaceList()
       .then(function (result) {
         deepEqual(result, []);
@@ -1092,6 +1116,7 @@
     var gadget = new RenderJSGadget();
     gadget.__required_css_list = "foo";
     stop();
+    expect(1);
     gadget.getRequiredCSSList()
       .then(function (result) {
         equal(result, "foo");
@@ -1105,6 +1130,7 @@
     // Check that getRequiredCSSList return a Promise
     var gadget = new RenderJSGadget();
     stop();
+    expect(1);
     gadget.getRequiredCSSList()
       .then(function (result) {
         deepEqual(result, []);
@@ -1127,6 +1153,7 @@
     var gadget = new RenderJSGadget();
     gadget.__required_js_list = "foo";
     stop();
+    expect(1);
     gadget.getRequiredJSList()
       .then(function (result) {
         equal(result, "foo");
@@ -1140,6 +1167,7 @@
     // Check that getRequiredJSList return a Promise
     var gadget = new RenderJSGadget();
     stop();
+    expect(1);
     gadget.getRequiredJSList()
       .then(function (result) {
         deepEqual(result, []);
@@ -1162,6 +1190,7 @@
     var gadget = new RenderJSGadget();
     gadget.__path = "foo";
     stop();
+    expect(1);
     gadget.getPath()
       .then(function (result) {
         equal(result, "foo");
@@ -1175,6 +1204,7 @@
     // Check that getPath return a Promise
     var gadget = new RenderJSGadget();
     stop();
+    expect(1);
     gadget.getPath()
       .then(function (result) {
         equal(result, "");
@@ -1197,6 +1227,7 @@
     var gadget = new RenderJSGadget();
     gadget.__title = "foo";
     stop();
+    expect(1);
     gadget.getTitle()
       .then(function (result) {
         equal(result, "foo");
@@ -1210,6 +1241,7 @@
     // Check that getTitle return a Promise
     var gadget = new RenderJSGadget();
     stop();
+    expect(1);
     gadget.getTitle()
       .then(function (result) {
         equal(result, "");
@@ -1232,6 +1264,7 @@
     var gadget = new RenderJSGadget();
     gadget.element = "foo";
     stop();
+    expect(1);
     gadget.getElement()
       .then(function (result) {
         equal(result, "foo");
@@ -1245,6 +1278,7 @@
     // Check that getElement return a Promise
     var gadget = new RenderJSGadget();
     stop();
+    expect(2);
     gadget.getElement()
       .then(function () {
         ok(false, "getElement should fail");
@@ -1270,6 +1304,7 @@
     var gadget = new RenderJSGadget();
     gadget.state = {foo: 'bar', bar: 'foo'};
     stop();
+    expect(1);
     gadget.changeState({bar: 'barbar'})
       .then(function () {
         deepEqual(gadget.state, {foo: 'bar', bar: 'barbar'});
@@ -1296,6 +1331,7 @@
         });
     };
     stop();
+    expect(4);
     gadget.changeState({bar: 'barbar'})
       .then(function () {
         ok(callback_called);
@@ -1316,6 +1352,7 @@
       callback_called = true;
     };
     stop();
+    expect(1);
     gadget.changeState({bar: 'foo'})
       .then(function () {
         ok(!callback_called);
@@ -1336,6 +1373,7 @@
       callback_called = true;
     };
     stop();
+    expect(2);
     gadget.changeState({})
       .then(function () {
         ok(!callback_called);
@@ -1356,7 +1394,6 @@
     var gadget = new RenderJSGadget(),
       callback_count = 0;
     gadget.state = {};
-    expect(6);
     gadget.__state_change_callback = function (modification_dict) {
       if (callback_count === 0) {
         callback_count += 1;
@@ -1379,6 +1416,7 @@
       }
     };
     stop();
+    expect(6);
     return new RSVP.all([
       gadget.changeState({first: true}),
       gadget.changeState({second: true})
@@ -1399,7 +1437,6 @@
     var gadget = new RenderJSGadget(),
       callback_count = 0;
     gadget.state = {};
-    expect(7);
     gadget.__state_change_callback = function (modification_dict) {
       if (callback_count === 0) {
         callback_count += 1;
@@ -1423,6 +1460,7 @@
       }
     };
     stop();
+    expect(7);
     return new RSVP.all([
       gadget.changeState({first: true})
         .fail(function (error) {
@@ -1444,13 +1482,13 @@
 
   test('accumulate modification_dict on onStateChange error', function () {
     var gadget = new RenderJSGadget();
-    expect(13);
     gadget.state = {a: 'b', foo: 'bar', bar: 'foo'};
     gadget.__state_change_callback = function (modification_dict) {
       deepEqual(modification_dict, {bar: 'barbar'});
       throw new Error('failure in onStateChange');
     };
     stop();
+    expect(13);
     gadget.changeState({bar: 'barbar'})
       .then(function () {
         ok(false, 'Expecting an error');
@@ -1580,6 +1618,7 @@
       };
 
       stop();
+      expect(5);
       gadget.checkIfAqDynamicIsUndefined("foobar", "barfoo")
         .then(function (result) {
           equal(result, "FOO");
@@ -1610,6 +1649,7 @@
     };
 
     stop();
+    expect(2);
     gadget.checkIfAqParentThrowsError()
       .fail(function (error) {
         equal(error, original_error);
@@ -1635,6 +1675,7 @@
     gadget = new Klass();
 
     stop();
+    expect(2);
     gadget.checkIfAqParentIsUndefined()
       .fail(function (error) {
         ok(error instanceof TypeError);
@@ -1796,6 +1837,7 @@
     equal(Klass.prototype.testFoo, gadget.testFoo);
 
     stop();
+    expect(6);
     // method can be called
     gadget.testFoo("Bar")
       .then(function (param) {
@@ -1828,6 +1870,7 @@
 
     // method can be called
     stop();
+    expect(1);
     gadget.testFoo("Bar")
       .then(function (param) {
         equal(param, "Bar");
@@ -1858,6 +1901,7 @@
 
     // method can be called
     stop();
+    expect(1);
     gadget.testFoo("Bar")
       .then(function () {
         ok(false, "Callback promise is rejected");
@@ -2125,6 +2169,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2166,6 +2211,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2209,6 +2255,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2255,6 +2302,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "";
     stop();
+    expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2300,6 +2348,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2351,6 +2400,7 @@
 
       document.getElementById('qunit-fixture').innerHTML = "";
       stop();
+      expect(6);
       renderJS.declareGadgetKlass(html_url)
         .then(function (Klass) {
           declareServiceToCheck(Klass, service1);
@@ -2403,6 +2453,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2476,6 +2527,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
@@ -2534,6 +2586,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
@@ -2651,6 +2704,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(9);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareEventToCheck(Klass, service1);
@@ -2778,6 +2832,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(9);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareTimeoutToCheck(Klass, service1);
@@ -2918,6 +2973,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -2969,6 +3025,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3022,6 +3079,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3077,6 +3135,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3136,6 +3195,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3199,6 +3259,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3257,6 +3318,7 @@
     document.getElementById('qunit-fixture').innerHTML =
       "<div></div><span></span>";
     stop();
+    expect(4);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3327,6 +3389,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
@@ -3392,6 +3455,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
+    expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
@@ -3551,6 +3615,7 @@
     }, html]);
 
     stop();
+    expect(1);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function () {
         ok(true);
@@ -3579,6 +3644,7 @@
     }, html]);
 
     stop();
+    expect(3);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function (new_gadget) {
         equal(new_gadget.__path, url);
@@ -3606,6 +3672,7 @@
     }, html]);
 
     stop();
+    expect(2);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function (new_gadget) {
         ok(new_gadget.hasOwnProperty("__sub_gadget_dict"));
@@ -3620,6 +3687,7 @@
     // Check that missing url reject the declaration
     var gadget = new RenderJSGadget();
     stop();
+    expect(1);
     gadget.declareGadget()
       .fail(function () {
         ok(true);
@@ -3675,6 +3743,7 @@
     document.getElementById('qunit-fixture').innerHTML =
       "<div></div><div>bar</div>";
     stop();
+    expect(12);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         equal(document.getElementById('qunit-fixture').innerHTML,
@@ -3751,6 +3820,7 @@
     }, html]);
 
     stop();
+    expect(1);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         equal(window.test_js1.test_js2.test_js3.test_js4.test_js5.test_js6,
@@ -3775,6 +3845,7 @@
     }, ""]);
 
     stop();
+    expect(1);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         ok(false);
@@ -3804,6 +3875,7 @@
     });
 
     stop();
+    expect(1);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         ok(false);
@@ -3840,6 +3912,7 @@
     });
 
     stop();
+    expect(2);
     document.getElementById('qunit-fixture').innerHTML =
       "<div></div><div></div>";
     gadget.declareGadget(html_url)
@@ -3880,6 +3953,7 @@
     mock.expects("parseGadgetHTMLDocument").once().returns({});
 
     stop();
+    expect(1);
     RSVP.all([
       gadget.declareGadget(html_url),
       gadget.declareGadget(html_url)
@@ -3914,6 +3988,7 @@
     mock.expects("parseGadgetHTMLDocument").once().returns({});
 
     stop();
+    expect(1);
     gadget.declareGadget(html_url)
       .then(function () {
         ok(false);
@@ -3946,6 +4021,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
@@ -3987,6 +4063,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(1);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
@@ -4019,6 +4096,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(5);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(html_url);
@@ -4056,6 +4134,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
@@ -4089,6 +4168,7 @@
 
     document.getElementById('qunit-fixture').textContent = "";
     stop();
+    expect(1);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
@@ -4123,6 +4203,7 @@
 
     document.getElementById('qunit-fixture').textContent = "";
     stop();
+    expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
@@ -4159,6 +4240,7 @@
 
     document.getElementById('qunit-fixture').textContent = "";
     stop();
+    expect(9);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
@@ -4228,6 +4310,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(5);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         return new_gadget.__aq_parent(
@@ -4271,6 +4354,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(4);
     gadget.declareGadget(html_url, {scope: "bar"})
       .then(function (new_gadget) {
         return new_gadget.__aq_parent(
@@ -4314,6 +4398,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(4);
     gadget.declareGadget(html_url, {scope: "bar"})
       .then(function (result) {
         new_gadget = result;
@@ -4352,6 +4437,7 @@
     }, "<html><body></body></html>"]);
 
     stop();
+    expect(2);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         return new_gadget.__aq_parent("foo", []);
@@ -4401,6 +4487,7 @@
       };
 
       stop();
+      expect(8);
       gadget.declareGadget(html_url)
         .then(function (new_gadget) {
           return new_gadget.__aq_parent(original_method_name,
@@ -4429,6 +4516,7 @@
     }, "raw html"]);
 
     stop();
+    expect(1);
     parent_gadget.declareGadget(gadget_path)
       .then(function (gadget) {
         equal(gadget.__path, absolute_path);
@@ -4459,6 +4547,7 @@
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
     stop();
+    expect(9);
     gadget.declareGadget(html_url)
       .then(function (g) {
         equal(spy.callCount, 2);
@@ -4511,6 +4600,7 @@
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
     stop();
+    expect(6);
     gadget.declareGadget(html_url)
       .then(function (g) {
         equal(spy.callCount, 2);
@@ -4556,6 +4646,7 @@
     document.getElementById("qunit-fixture").textContent = "";
 
     stop();
+    expect(3);
     gadget.declareGadget(html_url, {
       element: document.getElementById('qunit-fixture')
     })
@@ -4597,6 +4688,7 @@
     }, "raw html"]);
 
     stop();
+    expect(2);
     gadget.declareGadget(html_url)
       .then(function () {
         ok(false);
@@ -4724,6 +4816,7 @@
     }, "<html><body><p>foo</p></body></html>"]);
 
     stop();
+    expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(html_url, {sandbox: 'iframe'});
@@ -4753,6 +4846,7 @@
     }, "<html><body><p>foo</p></body></html>"]);
 
     stop();
+    expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(html_url, {
@@ -4785,6 +4879,7 @@
     document.getElementById("qunit-fixture").textContent = "";
 
     stop();
+    expect(4);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -4822,6 +4917,7 @@
     parent_gadget.__path = parent_path;
 
     stop();
+    expect(1);
     parent_gadget.declareGadget(gadget_path, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -4851,6 +4947,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
+    expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -4888,6 +4985,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
+    expect(23);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5115,6 +5213,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
+    expect(16);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -5261,6 +5360,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
+    expect(16);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -5389,6 +5489,7 @@
       url = "./embedded_fail.html";
 
     stop();
+    expect(1);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -5410,6 +5511,7 @@
       url = "./embedded_empty.html";
 
     stop();
+    expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -5432,6 +5534,7 @@
       url = "./embedded_404.html";
 
     stop();
+    expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -5481,6 +5584,7 @@
       url = "./embedded_non_renderjs.html";
 
     stop();
+    expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -5542,6 +5646,7 @@
     parent_gadget.__path = parent_path;
 
     stop();
+    expect(3);
     return new RSVP.Queue()
       .then(function () {
         return readBlobAsDataURL(new Blob([data_url_html],
@@ -5583,6 +5688,7 @@
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {foo: "bar"};
     stop();
+    expect(1);
     gadget.getDeclaredGadget("foo")
       .then(function (result) {
         equal(result, "bar");
@@ -5597,6 +5703,7 @@
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {};
     stop();
+    expect(2);
     gadget.getDeclaredGadget("foo")
       .then(function () {
         ok(false, "getDeclaredGadget should fail");
@@ -5623,6 +5730,7 @@
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {foo: "bar"};
     stop();
+    expect(2);
     gadget.dropGadget("foo")
       .then(function (result) {
         equal(result, undefined);
@@ -5638,6 +5746,7 @@
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {};
     stop();
+    expect(2);
     gadget.dropGadget("foo")
       .then(function () {
         ok(false, "dropGadget should fail");
@@ -5681,6 +5790,7 @@
     }
 
     stop();
+    expect(21);
     root_gadget_defer.promise
       .then(function (root_gadget_list) {
         var root_gadget = root_gadget_list[0],
@@ -5763,6 +5873,7 @@
 
   test('__aq_parent fails on the root gadget', function () {
     stop();
+    expect(2);
     root_gadget_defer.promise
       .then(function (root_gadget_list) {
         return root_gadget_list[0].__aq_parent("foo", "bar");
@@ -5781,6 +5892,7 @@
     fixture.innerHTML =
       "<iframe id=renderjsIframe src='./not_declared_gadget.html'></iframe>";
     stop();
+    expect(2);
     return RSVP.delay(1500)
       .then(function () {
         var iframe = document.getElementById('renderjsIframe'),
@@ -5809,6 +5921,7 @@
       "<iframe id=renderjsIframe src='./unload_gadget.html'></iframe>";
     iframe = document.getElementById('renderjsIframe');
     stop();
+    expect(1);
 
     function waitForPageChanged() {
       var iframe_body = iframe.contentWindow.document.body,
@@ -5870,6 +5983,7 @@
       "<iframe id=renderjsIframe src='./error_gadget.html'></iframe>";
     iframe = document.getElementById('renderjsIframe');
     stop();
+    expect(3);
 
     return new RSVP.Promise(function (resolve, reject) {
       iframe.addEventListener("load", function (evt) {
@@ -5903,6 +6017,7 @@
       "src='./inject_script.html'></iframe>";
     iframe = document.getElementById("renderjsIsolatedIframe");
     stop();
+    expect(3);
 
     return new RSVP.Promise(function (resolve, reject) {
       iframe.addEventListener("load", function (e) {
