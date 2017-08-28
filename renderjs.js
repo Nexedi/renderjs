@@ -668,7 +668,8 @@
           }
           for (key in state_dict) {
             if (state_dict.hasOwnProperty(key) &&
-                (state_dict[key] !== context.state[key])) {
+                state_dict[key] !== undefined &&
+                state_dict[key] !== context.state[key]) {
               context.state[key] = state_dict[key];
               modification_dict[key] = state_dict[key];
               modified = true;
