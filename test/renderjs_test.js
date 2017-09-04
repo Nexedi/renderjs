@@ -2807,6 +2807,7 @@
 
     klass.onLoop(function (evt) {
       service_status.start_count += 1;
+      service_status.this = this;
       return new RSVP.Queue()
         .push(function () {
           service_status.status = "started";
@@ -2823,6 +2824,7 @@
   test('callback is triggered on timeout', function () {
     var service1 = {},
       gadget = new RenderJSGadget(),
+      sub_gadget,
       html_url = 'https://example.org/files/qunittest/test599.html';
     gadget.__sub_gadget_dict = {};
 
@@ -2832,7 +2834,7 @@
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
-    expect(9);
+    expect(11);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareTimeoutToCheck(Klass, service1);
@@ -2843,12 +2845,14 @@
         );
       })
       .then(function (g) {
+        sub_gadget = g;
         return RSVP.delay(50);
       })
       .then(function () {
         equal(service1.start_count, 1);
         equal(service1.stop_count, 0);
         equal(service1.status, "started");
+        equal(service1.this, sub_gadget);
         service1.defer.resolve();
         return RSVP.delay(50);
       })
@@ -2856,6 +2860,7 @@
         equal(service1.start_count, 2);
         equal(service1.stop_count, 1);
         equal(service1.status, "started");
+        equal(service1.this, sub_gadget);
         return RSVP.delay(50);
       })
       .then(function () {
