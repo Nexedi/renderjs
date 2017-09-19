@@ -1,6 +1,6 @@
 {
   "name": "renderjs",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "RenderJs provides HTML5 gadgets",
   "main": "dist/renderjs-latest.js",
   "dependencies": {
