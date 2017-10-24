@@ -300,7 +300,6 @@
       promise_list = [],
       promise,
       reject,
-      notify,
       resolved;
 
     if (!(this instanceof Monitor)) {
@@ -317,7 +316,7 @@
       promise_list = [];
     }
 
-    promise = new RSVP.Promise(function promiseMonitor(done, fail, progress) {
+    promise = new RSVP.Promise(function promiseMonitor(done, fail) {
       reject = function rejectMonitor(rejectedReason) {
         if (resolved) {
           return;
@@ -328,7 +327,6 @@
         canceller();
         return fail(rejectedReason);
       };
-      notify = progress;
     }, canceller);
 
     monitor.cancel = function cancelMonitor() {
@@ -377,9 +375,6 @@
           }
           reject(rejectedReason);
           throw rejectedReason;
-        }, function handlePromiseToMonitorNotification(notificationValue) {
-          notify(notificationValue);
-          return notificationValue;
         });
 
       promise_list.push(queue);
