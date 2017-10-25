@@ -3,7 +3,7 @@
 
 /*
  * renderJs - Generic Gadget library renderer.
- * http://www.renderjs.org/documentation
+ * https://renderjs.nexedi.com/
  */
 (function wrapRenderJS(document, window, RSVP, DOMParser, Channel,
                        MutationObserver, Node, FileReader, Blob, navigator,
