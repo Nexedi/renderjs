@@ -1231,15 +1231,27 @@
   }
 
   renderJS.declareGadgetKlass = function declareGadgetKlass(url) {
+    var tmp_constructor,
+      defer;
+
     if (gadget_model_defer_dict.hasOwnProperty(url)) {
       // Return klass object if it already exists
-      return gadget_model_defer_dict[url].promise;
+      if (gadget_model_defer_dict[url].hasOwnProperty('defer_list')) {
+        // Klass not yet loaded.
+        // Add a new defer
+        defer = RSVP.defer();
+        gadget_model_defer_dict[url].defer_list.push(defer);
+        return defer.promise;
+      }
+      if (gadget_model_defer_dict[url].is_resolved) {
+        return RSVP.resolve(gadget_model_defer_dict[url].result);
+      }
+      return RSVP.reject(gadget_model_defer_dict[url].result);
     }
 
-    var tmp_constructor,
-      defer = RSVP.defer();
-
-    gadget_model_defer_dict[url] = defer;
+    gadget_model_defer_dict[url] = {
+      defer_list: []
+    };
 
     // Fetch the HTML page and parse it
     return new RSVP.Queue()
@@ -1269,13 +1281,27 @@
         return RSVP.all(promise_list);
       })
       .push(function handleGadgetKlassLoadingSuccess() {
-        defer.resolve(tmp_constructor);
+        var i,
+          len = gadget_model_defer_dict[url].defer_list.length;
+        for (i = 0; i < len; i += 1) {
+          gadget_model_defer_dict[url].defer_list[i].resolve(tmp_constructor);
+        }
+        delete gadget_model_defer_dict[url].defer_list;
+        gadget_model_defer_dict[url].result = tmp_constructor;
+        gadget_model_defer_dict[url].is_resolved = true;
         return tmp_constructor;
       })
       .push(undefined, function handleGadgetKlassLoadingError(e) {
         // Drop the current loading klass info used by selector
         // even in case of error
-        defer.reject(e);
+        var i,
+          len = gadget_model_defer_dict[url].defer_list.length;
+        for (i = 0; i < len; i += 1) {
+          gadget_model_defer_dict[url].defer_list[i].reject(e);
+        }
+        delete gadget_model_defer_dict[url].defer_list;
+        gadget_model_defer_dict[url].result = e;
+        gadget_model_defer_dict[url].is_resolved = false;
         throw e;
       });
   };

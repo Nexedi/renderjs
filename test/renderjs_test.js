@@ -3974,6 +3974,74 @@
       });
   });
 
+  test('One failing gadget can not be reloaded', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test98709.html',
+      error;
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [404, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    stop();
+    expect(2);
+
+    gadget.declareGadget(html_url)
+      .fail(function (e) {
+        error = e;
+        ok(true, 'first gadget should fail');
+        return gadget.declareGadget(html_url);
+      })
+      .fail(function (e) {
+        equal(e, error, 'second gadget should fail the same way');
+      })
+      .always(function () {
+        // Check that only one request has been done.
+        start();
+      });
+  });
+
+  test('Load 2 concurrent failing gadgets in parallel', function () {
+    // Check that dependencies are loaded once if 2 gadgets are created
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test9871.html',
+      load1,
+      load2,
+      error,
+      mock;
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [404, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+    mock.expects("parseGadgetHTMLDocument").once().returns({});
+
+    stop();
+    load1 = gadget.declareGadget(html_url);
+    load2 = gadget.declareGadget(html_url);
+
+    expect(2);
+
+    load1
+      .fail(function (e) {
+        error = e;
+        ok(true, 'load1 should fail');
+        return load2;
+      })
+      .fail(function (e) {
+        equal(e, error, 'load2 must fail like load1');
+      })
+      .always(function () {
+        // Check that only one request has been done.
+        start();
+        mock.verify();
+        mock.restore();
+      });
+  });
+
   test('One failing gadget does not prevent the others to load', function () {
     // Check that dependencies are loaded once if 2 gadgets are created
     var gadget = new RenderJSGadget(),
