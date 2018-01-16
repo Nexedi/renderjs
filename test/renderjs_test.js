@@ -5891,6 +5891,8 @@
           URI("../dist/renderjs-latest.js")
             .absoluteTo(parent_path).toString(),
           URI("renderjs_test.js")
+            .absoluteTo(parent_path).toString(),
+          URI("mutex_test.js")
             .absoluteTo(parent_path).toString()
         ]);
         equal(root_gadget.element.outerHTML, document.body.outerHTML);
@@ -5914,6 +5916,8 @@
           URI("../dist/renderjs-latest.js")
             .absoluteTo(parent_path).toString(),
           URI("renderjs_test.js")
+            .absoluteTo(parent_path).toString(),
+          URI("mutex_test.js")
             .absoluteTo(parent_path).toString()
         ]);
         html = root_gadget.constructor.__template_element.outerHTML;
