@@ -20,15 +20,16 @@
     .declareMethod('checkAcquisitionError', function () {
       var g = this;
       return g.willFail()
-        .push(undefined , function (e) {
+        .push(undefined, function (e) {
           g.props.element.querySelector('.acquisitionError')
-            .innerHTML = e; 
+            .innerHTML = e;
         });
     })
     .declareMethod('checkKlass', function () {
       var g = this;
       g.props.element.querySelector('.klass')
         .innerHTML = "klass" +
-        ((g instanceof window.__RenderJSEmbeddedGadget)? " = embedded" : " != embedded");
+        ((g instanceof window.__RenderJSEmbeddedGadget) ?
+            " = embedded" : " != embedded");
     });
 }(window, rJS));

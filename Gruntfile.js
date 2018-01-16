@@ -73,7 +73,10 @@ module.exports = function (grunt) {
         }
       },
       test: {
-        src: ['test/embedded.js', 'test/renderjs_test.js'],
+        src: ['test/embedded.js', 'test/renderjs_test.js',
+              'test/embedded.js', 'test/inject_script.js',
+              'test/not_declared_gadget.js',
+              'test/trigger_rjsready_event_on_ready_gadget.js'],
         directives: {
           maxlen: 79,
           indent: 2,
