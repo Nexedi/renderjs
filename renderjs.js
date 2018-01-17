@@ -643,15 +643,26 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareMethod
   /////////////////////////////////////////////////////////////////
-  RenderJSGadget.declareMethod = function declareMethod(name, callback) {
+  RenderJSGadget.declareMethod = function declareMethod(name, callback,
+                                                        options) {
     this.prototype[name] = function triggerMethod() {
       var context = this,
-        argument_list = arguments;
+        argument_list = arguments,
+        mutex_name;
 
+      function waitForMethodCallback() {
+        return callback.apply(context, argument_list);
+      }
+
+      if ((options !== undefined) && (options.hasOwnProperty('mutex'))) {
+        mutex_name = '__mutex_' + options.mutex;
+        if (!context.hasOwnProperty(mutex_name)) {
+          context[mutex_name] = new Mutex();
+        }
+        return context[mutex_name].lockAndRun(waitForMethodCallback);
+      }
       return new RSVP.Queue()
-        .push(function waitForMethodCallback() {
-          return callback.apply(context, argument_list);
-        });
+        .push(waitForMethodCallback);
     };
     // Allow chain
     return this;
