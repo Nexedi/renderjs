@@ -698,54 +698,37 @@
       return this.element;
     })
     .declareMethod('changeState', function changeState(state_dict) {
-      var next_onStateChange = new RSVP.Queue(),
-        previous_onStateCHange,
-        context = this;
-      if (context.hasOwnProperty('__previous_onStateChange')) {
-        previous_onStateCHange = context.__previous_onStateChange;
-        next_onStateChange
-          .push(function waitForPreviousStateChange() {
-            return previous_onStateCHange;
+      var context = this,
+        key,
+        modified = false,
+        previous_cancelled = context.hasOwnProperty('__modification_dict'),
+        modification_dict;
+      if (previous_cancelled) {
+        modification_dict = context.__modification_dict;
+        modified = true;
+      } else {
+        modification_dict = {};
+      }
+      for (key in state_dict) {
+        if (state_dict.hasOwnProperty(key) &&
+            (state_dict[key] !== context.state[key])) {
+          context.state[key] = state_dict[key];
+          modification_dict[key] = state_dict[key];
+          modified = true;
+        }
+      }
+      if (modified && context.__state_change_callback !== undefined) {
+        context.__modification_dict = modification_dict;
+        return new RSVP.Queue()
+          .push(function waitForStateChangeCallback() {
+            return context.__state_change_callback(modification_dict);
           })
-          .push(undefined, function handlePreviousStateChangeError() {
-            // Run callback even if previous failed
-            return;
+          .push(function handleStateChangeSuccess(result) {
+            delete context.__modification_dict;
+            return result;
           });
       }
-      context.__previous_onStateChange = next_onStateChange;
-      return next_onStateChange
-        .push(function checkStateModification() {
-          var key,
-            modified = false,
-            previous_cancelled = context.hasOwnProperty('__modification_dict'),
-            modification_dict;
-          if (previous_cancelled) {
-            modification_dict = context.__modification_dict;
-            modified = true;
-          } else {
-            modification_dict = {};
-          }
-          for (key in state_dict) {
-            if (state_dict.hasOwnProperty(key) &&
-                (state_dict[key] !== context.state[key])) {
-              context.state[key] = state_dict[key];
-              modification_dict[key] = state_dict[key];
-              modified = true;
-            }
-          }
-          if (modified && context.__state_change_callback !== undefined) {
-            context.__modification_dict = modification_dict;
-            return new RSVP.Queue()
-              .push(function waitForStateChangeCallback() {
-                return context.__state_change_callback(modification_dict);
-              })
-              .push(function handleStateChangeSuccess(result) {
-                delete context.__modification_dict;
-                return result;
-              });
-          }
-        });
-    });
+    }, {mutex: 'changestate'});
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareAcquiredMethod
