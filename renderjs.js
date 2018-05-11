@@ -10,6 +10,25 @@
                        Event, URL) {
   "use strict";
 
+  function ensurePushableQueue(callback, argument_list, context) {
+    var result;
+    try {
+      result = callback.apply(context, argument_list);
+    } catch (e) {
+      return new RSVP.Queue()
+        .push(function returnPushableError() {
+          return RSVP.reject(e);
+        });
+    }
+    if (result instanceof RSVP.Queue) {
+      return result;
+    }
+    return new RSVP.Queue()
+      .push(function returnPushableResult() {
+        return result;
+      });
+  }
+
   function readBlobAsDataURL(blob) {
     var fr = new FileReader();
     return new RSVP.Promise(function waitFormDataURLRead(resolve, reject) {
@@ -194,10 +213,7 @@
       return queue
         .push(function generateMutexUnlock() {
           return function runAndUnlock(callback) {
-            return new RSVP.Queue()
-              .push(function executeMutexCallback() {
-                return callback();
-              })
+            return ensurePushableQueue(callback)
               .push(function releaseMutexAfterSuccess(result) {
                 current_defer.resolve(result);
                 return result;
@@ -583,10 +599,7 @@
   };
 
   function runJob(gadget, name, callback, argument_list) {
-    var job_promise = new RSVP.Queue()
-      .push(function waitForJobCallback() {
-        return callback.apply(gadget, argument_list);
-      });
+    var job_promise = ensurePushableQueue(callback, argument_list, gadget);
     if (gadget.__job_dict.hasOwnProperty(name)) {
       gadget.__job_dict[name].cancel();
     }
@@ -661,8 +674,7 @@
         }
         return context[mutex_name].lockAndRun(waitForMethodCallback);
       }
-      return new RSVP.Queue()
-        .push(waitForMethodCallback);
+      return ensurePushableQueue(callback, argument_list, context);
     };
     // Allow chain
     return this;
@@ -719,10 +731,11 @@
       }
       if (modified && context.__state_change_callback !== undefined) {
         context.__modification_dict = modification_dict;
-        return new RSVP.Queue()
-          .push(function waitForStateChangeCallback() {
-            return context.__state_change_callback(modification_dict);
-          })
+        return ensurePushableQueue(
+          context.__state_change_callback,
+          [modification_dict],
+          context
+        )
           .push(function handleStateChangeSuccess(result) {
             delete context.__modification_dict;
             return result;
@@ -755,11 +768,11 @@
       }
     }
 
-    return new RSVP.Queue()
-      .push(function waitForAcquireMethod() {
-        return aq_dict[method_name].apply(gadget,
-                                          [argument_list, gadget_scope]);
-      })
+    return ensurePushableQueue(
+      aq_dict[method_name],
+      [argument_list, gadget_scope],
+      gadget
+    )
       .push(undefined, function handleAcquireMethodError(error) {
         if (error instanceof renderJS.AcquisitionError) {
           return gadget.__aq_parent(method_name, argument_list);
@@ -773,10 +786,11 @@
       this.prototype[name] = function acquireMethod() {
         var argument_list = Array.prototype.slice.call(arguments, 0),
           gadget = this;
-        return new RSVP.Queue()
-          .push(function waitForAqParent() {
-            return gadget.__aq_parent(method_name_to_acquire, argument_list);
-          });
+        return ensurePushableQueue(
+          gadget.__aq_parent,
+          [method_name_to_acquire, argument_list],
+          gadget
+        );
       };
 
       // Allow chain
@@ -962,10 +976,10 @@
                 });
               }
             );
-          return new RSVP.Queue()
-            .push(function waitForChannelCall() {
-              return wait_promise;
-            });
+
+          return ensurePushableQueue(function waitForChannelCall() {
+            return wait_promise;
+          });
         };
         return "OK";
       }

@@ -1675,15 +1675,10 @@
     gadget = new Klass();
 
     stop();
-    expect(2);
+    expect(1);
     gadget.checkIfAqParentIsUndefined()
       .fail(function (error) {
         ok(error instanceof TypeError);
-        ok((error.message ===
-              "gadget.__aq_parent is not a function") ||
-           (error.message ===
-              "undefined is not a function") ||
-           (error.message.indexOf("__aq_parent") !== -1), error);
       })
       .always(function () {
         start();
