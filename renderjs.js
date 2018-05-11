@@ -735,8 +735,17 @@
   /////////////////////////////////////////////////////////////////
   function acquire(child_gadget, method_name, argument_list) {
     var gadget = this,
+      // Do not specify default __acquired_method_dict on prototype
+      // to prevent modifying this default value (with
+      // allowPublicAcquiredMethod for example)
+      aq_dict = gadget.__acquired_method_dict || {},
       key,
       gadget_scope;
+
+    if (!aq_dict.hasOwnProperty(method_name)) {
+      // "aq_dynamic is not defined"
+      return gadget.__aq_parent(method_name, argument_list);
+    }
 
     for (key in gadget.__sub_gadget_dict) {
       if (gadget.__sub_gadget_dict.hasOwnProperty(key)) {
@@ -745,17 +754,11 @@
         }
       }
     }
+
     return new RSVP.Queue()
       .push(function waitForAcquireMethod() {
-        // Do not specify default __acquired_method_dict on prototype
-        // to prevent modifying this default value (with
-        // allowPublicAcquiredMethod for example)
-        var aq_dict = gadget.__acquired_method_dict || {};
-        if (aq_dict.hasOwnProperty(method_name)) {
-          return aq_dict[method_name].apply(gadget,
-                                            [argument_list, gadget_scope]);
-        }
-        throw new renderJS.AcquisitionError("aq_dynamic is not defined");
+        return aq_dict[method_name].apply(gadget,
+                                          [argument_list, gadget_scope]);
       })
       .push(undefined, function handleAcquireMethodError(error) {
         if (error instanceof renderJS.AcquisitionError) {
@@ -980,7 +983,10 @@
       });
     gadget_instance.__chan.bind("acquire",
                                 function handleChannelAcquire(trans, params) {
-        gadget_instance.__aq_parent.apply(gadget_instance, params)
+        new RSVP.Queue()
+          .push(function () {
+            return gadget_instance.__aq_parent.apply(gadget_instance, params);
+          })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
             trans.error(e.toString());
