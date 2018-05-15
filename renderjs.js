@@ -1073,21 +1073,8 @@
         .push(function setGadgetInstanceHTMLContext(gadget_instance) {
           var i,
             scope,
-            queue = new RSVP.Queue();
+            queue;
           clearGadgetInternalParameters(gadget_instance);
-          // Trigger calling of all ready callback
-          function ready_executable_wrapper(fct) {
-            return function executeReadyWrapper() {
-              return fct.call(gadget_instance, gadget_instance);
-            };
-          }
-          for (i = 0; i < gadget_instance.constructor.__ready_list.length;
-               i += 1) {
-            // Put a timeout?
-            queue.push(ready_executable_wrapper(
-              gadget_instance.constructor.__ready_list[i]
-            ));
-          }
 
           // Store local reference to the gadget instance
           scope = options.scope;
@@ -1109,6 +1096,12 @@
                                                options.sandbox);
           gadget_instance.element._gadget = gadget_instance;
 
+          function ready_executable_wrapper(fct) {
+            return function executeReadyWrapper() {
+              return fct.call(gadget_instance, gadget_instance);
+            };
+          }
+
           function ready_wrapper() {
             if (document.contains(gadget_instance.element)) {
               startService(gadget_instance);
@@ -1116,9 +1109,21 @@
             // Always return the gadget instance after ready function
             return gadget_instance;
           }
-          queue.push(ready_wrapper);
 
-          return queue;
+          if (gadget_instance.constructor.__ready_list.length) {
+            queue = new RSVP.Queue();
+            // Trigger calling of all ready callback
+            for (i = 0; i < gadget_instance.constructor.__ready_list.length;
+                 i += 1) {
+              // Put a timeout?
+              queue.push(ready_executable_wrapper(
+                gadget_instance.constructor.__ready_list[i]
+              ));
+            }
+            queue.push(ready_wrapper);
+            return queue;
+          }
+          return ready_wrapper();
         });
     })
     .declareMethod('getDeclaredGadget',
