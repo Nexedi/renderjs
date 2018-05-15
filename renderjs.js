@@ -492,9 +492,9 @@
     }).fail(letsCrash);
   }
 
-  function clearGadgetInternalParameters() {
-    this.__sub_gadget_dict = {};
-    createGadgetMonitor(this);
+  function clearGadgetInternalParameters(gadget) {
+    gadget.__sub_gadget_dict = {};
+    createGadgetMonitor(gadget);
   }
 
   function loadSubGadgetDOMDeclaration() {
@@ -539,8 +539,7 @@
     return RSVP.all(promise_list);
   }
 
-  RenderJSGadget.__ready_list = [clearGadgetInternalParameters,
-                                 loadSubGadgetDOMDeclaration];
+  RenderJSGadget.__ready_list = [loadSubGadgetDOMDeclaration];
   RenderJSGadget.ready = function ready(callback) {
     this.__ready_list.push(callback);
     return this;
@@ -1075,6 +1074,7 @@
           var i,
             scope,
             queue = new RSVP.Queue();
+          clearGadgetInternalParameters(gadget_instance);
           // Trigger calling of all ready callback
           function ready_wrapper() {
             return gadget_instance;
@@ -1812,6 +1812,7 @@
         return configureMutationObserver(TmpConstructor, url, root_gadget);
       })
       .push(function waitForReadyList() {
+        clearGadgetInternalParameters(root_gadget);
         // Trigger all ready functions
         return triggerReadyList(TmpConstructor, root_gadget);
       })
