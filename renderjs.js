@@ -542,7 +542,7 @@
     return RSVP.all(promise_list);
   }
 
-  RenderJSGadget.__ready_list = [loadSubGadgetDOMDeclaration];
+  RenderJSGadget.__ready_list = [];
   RenderJSGadget.ready = function ready(callback) {
     this.__ready_list.push(callback);
     return this;
@@ -830,7 +830,7 @@
     }
     RenderJSGadget.call(this);
   }
-  RenderJSEmbeddedGadget.__ready_list = RenderJSGadget.__ready_list.slice();
+  RenderJSEmbeddedGadget.__ready_list = [];
   RenderJSEmbeddedGadget.__service_list =
     RenderJSGadget.__service_list.slice();
   RenderJSEmbeddedGadget.ready =
@@ -890,14 +890,14 @@
     }
     RenderJSGadget.call(this);
   }
-  RenderJSIframeGadget.__ready_list = RenderJSGadget.__ready_list.slice();
+  RenderJSIframeGadget.__ready_list = [];
   RenderJSIframeGadget.ready =
     RenderJSGadget.ready;
   RenderJSIframeGadget.setState =
     RenderJSGadget.setState;
   RenderJSIframeGadget.onStateChange =
     RenderJSGadget.onStateChange;
-  RenderJSIframeGadget.__service_list = RenderJSGadget.__service_list.slice();
+  RenderJSIframeGadget.__service_list = [];
   RenderJSIframeGadget.declareService =
     RenderJSGadget.declareService;
   RenderJSIframeGadget.onEvent =
@@ -1257,7 +1257,7 @@
     tmp_constructor = function createSuperKlass() {
       RenderJSGadget.call(this);
     };
-    tmp_constructor.__ready_list = RenderJSGadget.__ready_list.slice();
+    tmp_constructor.__ready_list = [];
     tmp_constructor.__service_list = RenderJSGadget.__service_list.slice();
     tmp_constructor.declareMethod =
       RenderJSGadget.declareMethod;
@@ -1296,6 +1296,11 @@
       if (parsed_html.hasOwnProperty(key)) {
         tmp_constructor.prototype['__' + key] = parsed_html[key];
       }
+    }
+    // Check if there is a HTML declared subgadget
+    if (tmp_constructor.__template_element
+                       .querySelectorAll('[data-gadget-url]').length) {
+      tmp_constructor.__ready_list.push(loadSubGadgetDOMDeclaration);
     }
     return tmp_constructor;
   }
@@ -1610,7 +1615,7 @@
 
     // Create the root gadget instance and put it in the loading stack
     TmpConstructor = RenderJSEmbeddedGadget;
-    TmpConstructor.__ready_list = RenderJSGadget.__ready_list.slice();
+    TmpConstructor.__ready_list = [];
     TmpConstructor.__service_list = RenderJSGadget.__service_list.slice();
     TmpConstructor.prototype.__path = url;
     root_gadget = new RenderJSEmbeddedGadget();
@@ -1804,6 +1809,7 @@
       })
       .push(function waitForReadyList() {
         clearGadgetInternalParameters(root_gadget);
+        TmpConstructor.__ready_list.unshift(loadSubGadgetDOMDeclaration);
         // Trigger all ready functions
         return triggerReadyList(TmpConstructor, root_gadget);
       })

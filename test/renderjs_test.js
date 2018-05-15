@@ -524,7 +524,7 @@
     );
 
     stop();
-    expect(7);
+    expect(8);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var instance;
@@ -533,6 +533,7 @@
         deepEqual(Klass.prototype.__acquired_method_dict, {});
         equal(Klass.prototype.__foo, 'bar');
         equal(Klass.__template_element.nodeType, 9);
+        deepEqual(Klass.__ready_list, [], 'Ready list is empty by default');
 
         instance = new Klass();
         ok(instance instanceof RenderJSGadget);
@@ -610,6 +611,27 @@
       })
       .fail(function (jqXHR) {
         ok(false, "Failed to load " + jqXHR.status);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('Ready list length is one if HTML sub gadget', function () {
+    var url = 'https://example.org/files/qunittest/test';
+
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html; charset=utf-8"
+    }, "<html><body><div data-gadget-url='foo'></div></body></html>"]);
+
+    stop();
+    expect(1);
+    renderJS.declareGadgetKlass(url)
+      .then(function (Klass) {
+        equal(Klass.__ready_list.length, 1);
+      })
+      .fail(function (error) {
+        ok(false, error);
       })
       .always(function () {
         start();
