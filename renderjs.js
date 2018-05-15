@@ -1076,9 +1076,6 @@
             queue = new RSVP.Queue();
           clearGadgetInternalParameters(gadget_instance);
           // Trigger calling of all ready callback
-          function ready_wrapper() {
-            return gadget_instance;
-          }
           function ready_executable_wrapper(fct) {
             return function executeReadyWrapper() {
               return fct.call(gadget_instance, gadget_instance);
@@ -1090,8 +1087,6 @@
             queue.push(ready_executable_wrapper(
               gadget_instance.constructor.__ready_list[i]
             ));
-            // Always return the gadget instance after ready function
-            queue.push(ready_wrapper);
           }
 
           // Store local reference to the gadget instance
@@ -1114,11 +1109,13 @@
                                                options.sandbox);
           gadget_instance.element._gadget = gadget_instance;
 
-          if (document.contains(gadget_instance.element)) {
-            // Put a timeout
-            queue.push(startService);
+          function ready_wrapper() {
+            if (document.contains(gadget_instance.element)) {
+              startService(gadget_instance);
+            }
+            // Always return the gadget instance after ready function
+            return gadget_instance;
           }
-          // Always return the gadget instance after ready function
           queue.push(ready_wrapper);
 
           return queue;
@@ -1721,25 +1718,19 @@
     var i,
       ready_queue = new RSVP.Queue();
 
-    function ready_wrapper() {
-      return root_gadget;
-    }
     function ready_executable_wrapper(fct) {
-      return function wrapReadyFunction(g) {
-        return fct.call(g, g);
+      return function wrapReadyFunction() {
+        return fct.call(root_gadget, root_gadget);
       };
     }
     TmpConstructor.ready(function startServiceInReady() {
-      return startService(this);
+      return startService(root_gadget);
     });
 
-    ready_queue.push(ready_wrapper);
     for (i = 0; i < TmpConstructor.__ready_list.length; i += 1) {
       // Put a timeout?
       ready_queue
-        .push(ready_executable_wrapper(TmpConstructor.__ready_list[i]))
-        // Always return the gadget instance after ready function
-        .push(ready_wrapper);
+        .push(ready_executable_wrapper(TmpConstructor.__ready_list[i]));
     }
     return ready_queue;
   }
