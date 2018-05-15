@@ -494,6 +494,9 @@
 
   function clearGadgetInternalParameters(gadget) {
     gadget.__sub_gadget_dict = {};
+    if (gadget.__json_state !== undefined) {
+      gadget.state = JSON.parse(gadget.__json_state);
+    }
     createGadgetMonitor(gadget);
   }
 
@@ -545,10 +548,7 @@
     return this;
   };
   RenderJSGadget.setState = function setState(state_dict) {
-    var json_state = JSON.stringify(state_dict);
-    this.__ready_list.unshift(function setStateDefaultValue() {
-      this.state = JSON.parse(json_state);
-    });
+    this.prototype.__json_state = JSON.stringify(state_dict);
     return this;
   };
   RenderJSGadget.onStateChange = function onStateChange(callback) {
