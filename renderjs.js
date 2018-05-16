@@ -185,51 +185,22 @@
     if (!(this instanceof Mutex)) {
       return new Mutex();
     }
-    this._latest_defer = null;
+    this._latest_promise = null;
   };
 
   Mutex.prototype = {
     constructor: Mutex,
-
-    lock: function lockMutex() {
-      var previous_defer = this._latest_defer,
-        current_defer = RSVP.defer(),
-        queue = new RSVP.Queue();
-
-      this._latest_defer = current_defer;
-
-      if (previous_defer !== null) {
-        queue.push(function acquireMutex() {
-          return previous_defer.promise;
-        });
+    lockAndRun: function lockMutexAndRun(callback) {
+      var previous_promise = this._latest_promise;
+      if (previous_promise === null) {
+        this._latest_promise = RSVP.resolve(callback());
+      } else {
+        this._latest_promise = this._latest_promise
+          .always(function () {
+            return callback();
+          });
       }
-
-      // Create a new promise (.then) not cancellable
-      // to allow external cancellation of the callback
-      // without breaking the mutex implementation
-      queue
-        .fail(current_defer.resolve.bind(current_defer));
-
-      return queue
-        .push(function generateMutexUnlock() {
-          return function runAndUnlock(callback) {
-            return ensurePushableQueue(callback)
-              .push(function releaseMutexAfterSuccess(result) {
-                current_defer.resolve(result);
-                return result;
-              }, function releaseMutexAfterError(error) {
-                current_defer.resolve(error);
-                throw error;
-              });
-          };
-        });
-    },
-
-    lockAndRun: function (callback) {
-      return this.lock()
-        .push(function executeLockAndRunCallback(runAndUnlock) {
-          return runAndUnlock(callback);
-        });
+      return this._latest_promise;
     }
   };
 
@@ -671,7 +642,9 @@
         if (!context.hasOwnProperty(mutex_name)) {
           context[mutex_name] = new Mutex();
         }
-        return context[mutex_name].lockAndRun(waitForMethodCallback);
+        return ensurePushableQueue(context[mutex_name].lockAndRun,
+                                   [waitForMethodCallback],
+                                   context[mutex_name]);
       }
       return ensurePushableQueue(callback, argument_list, context);
     };

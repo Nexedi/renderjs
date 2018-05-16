@@ -152,14 +152,17 @@
     var mutex = new Mutex(),
       counter = 0;
     stop();
-    expect(4);
+    expect(5);
     function assertCounter(value) {
       equal(counter, value);
       counter += 1;
     }
     function callback1() {
-      assertCounter(0);
-      throw new Error('error in callback1');
+      return new RSVP.Queue()
+        .push(function () {
+          assertCounter(0);
+          throw new Error('error in callback1');
+        });
     }
     function callback2() {
       assertCounter(1);
@@ -179,7 +182,7 @@
       })
       .push(undefined, function (error) {
         equal(error.message, 'error in callback1');
-        assertCounter(2);
+        assertCounter(3);
       })
       .always(function () {
         start();
@@ -196,7 +199,10 @@
       counter += 1;
     }
     function callback1() {
-      ok(false, 'Should not reach that code');
+      return new RSVP.Queue()
+        .push(function () {
+          ok(false, 'Should not reach that code');
+        });
     }
     function callback2() {
       assertCounter(1);
@@ -208,7 +214,7 @@
         return RSVP.all([
           promise1
             .then(function () {
-              ok(false, 'Should not reach that code');
+              ok(false, 'Should not reach that code 2');
             }, function (error) {
               assertCounter(0);
               equal(error.message, 'Default Message');
@@ -282,78 +288,6 @@
         equal(result_list[0], 'callback1 result');
         equal(result_list[1], 'handler2 result');
         assertCounter(4);
-      })
-      .always(function () {
-        start();
-      });
-  });
-
-  test('lockAndRun only wait for the callback', function () {
-    var mutex = new Mutex(),
-      counter = 0;
-    stop();
-    expect(4);
-    function assertCounter(value) {
-      equal(counter, value);
-      counter += 1;
-    }
-    function callback1() {
-      assertCounter(0);
-      return 'callback1 result';
-    }
-    function callback2() {
-      assertCounter(1);
-      return 'callback2 result';
-    }
-    return new RSVP.Queue()
-      .push(function () {
-        return RSVP.any([
-          mutex.lockAndRun(callback1)
-            .push(function () {
-              return RSVP.delay(10000);
-            }),
-          mutex.lockAndRun(callback2)
-        ]);
-      })
-      .push(function (result) {
-        equal(result, 'callback2 result');
-        assertCounter(2);
-      })
-      .always(function () {
-        start();
-      });
-  });
-
-  test('lockAndRun only wait for the error callback', function () {
-    var mutex = new Mutex(),
-      counter = 0;
-    stop();
-    expect(4);
-    function assertCounter(value) {
-      equal(counter, value);
-      counter += 1;
-    }
-    function callback1() {
-      assertCounter(0);
-      throw new Error('callback1 error');
-    }
-    function callback2() {
-      assertCounter(1);
-      return 'callback2 result';
-    }
-    return new RSVP.Queue()
-      .push(function () {
-        return RSVP.any([
-          mutex.lockAndRun(callback1)
-            .push(undefined, function () {
-              return RSVP.delay(10000);
-            }),
-          mutex.lockAndRun(callback2)
-        ]);
-      })
-      .push(function (result) {
-        equal(result, 'callback2 result');
-        assertCounter(2);
       })
       .always(function () {
         start();
