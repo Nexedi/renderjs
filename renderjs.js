@@ -448,9 +448,11 @@
   RenderJSGadget.prototype.__required_js_list = [];
 
   function deleteGadgetMonitor(g) {
-    g.__monitor.cancel();
-    delete g.__monitor;
-    g.__job_list = [];
+    if (g.hasOwnProperty('__monitor')) {
+      g.__monitor.cancel();
+      delete g.__monitor;
+      g.__job_list = [];
+    }
   }
 
   function createGadgetMonitor(g) {
@@ -588,6 +590,10 @@
   }
 
   function startService(gadget) {
+    if ((gadget.constructor.__service_list.length === 0) &&
+        (!gadget.constructor.__job_declared)) {
+      return;
+    }
     createGadgetMonitor(gadget);
     gadget.__monitor.monitor(new RSVP.Queue()
       .push(function monitorAllServiceList() {
@@ -612,6 +618,7 @@
   // of a function inside a service
   /////////////////////////////////////////////////////////////////
   RenderJSGadget.declareJob = function declareJob(name, callback) {
+    this.__job_declared = true;
     this.prototype[name] = function triggerJob() {
       var context = this,
         argument_list = arguments;
