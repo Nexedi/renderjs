@@ -447,13 +447,15 @@
   RenderJSGadget.prototype.__required_css_list = [];
   RenderJSGadget.prototype.__required_js_list = [];
 
+  function deleteGadgetMonitor(g) {
+    g.__monitor.cancel();
+    delete g.__monitor;
+    g.__job_list = [];
+  }
+
   function createGadgetMonitor(g) {
-    if (g.__monitor !== undefined) {
-      g.__monitor.cancel();
-    }
     g.__monitor = new Monitor();
     g.__job_dict = {};
-    g.__job_list = [];
     g.__job_triggered = false;
     g.__monitor.fail(function handleGadgetMonitorError(error) {
       if (!(error instanceof RSVP.CancellationError)) {
@@ -465,10 +467,10 @@
 
   function clearGadgetInternalParameters(gadget) {
     gadget.__sub_gadget_dict = {};
+    gadget.__job_list = [];
     if (gadget.__json_state !== undefined) {
       gadget.state = JSON.parse(gadget.__json_state);
     }
-    createGadgetMonitor(gadget);
   }
 
   function loadSubGadgetDOMDeclaration() {
@@ -586,6 +588,7 @@
   }
 
   function startService(gadget) {
+    createGadgetMonitor(gadget);
     gadget.__monitor.monitor(new RSVP.Queue()
       .push(function monitorAllServiceList() {
         var i,
@@ -1495,7 +1498,7 @@
                   if (node.nodeType === Node.ELEMENT_NODE) {
                     if (node.hasAttribute("data-gadget-url") &&
                         (node._gadget !== undefined)) {
-                      createGadgetMonitor(node._gadget);
+                      deleteGadgetMonitor(node._gadget);
                     }
                     added_list =
                       node.querySelectorAll("[data-gadget-url]");
@@ -1503,7 +1506,7 @@
                     for (k = 0; k < len2; k += 1) {
                       node = added_list[k];
                       if (node._gadget !== undefined) {
-                        createGadgetMonitor(node._gadget);
+                        deleteGadgetMonitor(node._gadget);
                       }
                     }
                   }
