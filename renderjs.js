@@ -10,6 +10,19 @@
                        Event, URL) {
   "use strict";
 
+  /////////////////////////////////////////////////////////////////
+  // Error
+  /////////////////////////////////////////////////////////////////
+  function ScopeError(message) {
+    this.name = "scopeerror";
+    if ((message !== undefined) && (typeof message !== "string")) {
+      throw new TypeError('You must pass a string.');
+    }
+    this.message = message || "Scope Error";
+  }
+  ScopeError.prototype = new Error();
+  ScopeError.prototype.constructor = ScopeError;
+
   function ensurePushableQueue(callback, argument_list, context) {
     var result;
     try {
@@ -1130,13 +1143,15 @@
     .declareMethod('getDeclaredGadget',
       function getDeclaredGadget(gadget_scope) {
         if (!this.__sub_gadget_dict.hasOwnProperty(gadget_scope)) {
-          throw new Error("Gadget scope '" + gadget_scope + "' is not known.");
+          throw new ScopeError("Gadget scope '" + gadget_scope +
+                               "' is not known.");
         }
         return this.__sub_gadget_dict[gadget_scope];
       })
     .declareMethod('dropGadget', function dropGadget(gadget_scope) {
       if (!this.__sub_gadget_dict.hasOwnProperty(gadget_scope)) {
-        throw new Error("Gadget scope '" + gadget_scope + "' is not known.");
+        throw new ScopeError("Gadget scope '" + gadget_scope +
+                             "' is not known.");
       }
       // http://perfectionkills.com/understanding-delete/
       delete this.__sub_gadget_dict[gadget_scope];
@@ -1453,6 +1468,7 @@
   // global
   /////////////////////////////////////////////////////////////////
   renderJS.Mutex = Mutex;
+  renderJS.ScopeError = ScopeError;
   window.rJS = window.renderJS = renderJS;
   window.__RenderJSGadget = RenderJSGadget;
   window.__RenderJSEmbeddedGadget = RenderJSEmbeddedGadget;

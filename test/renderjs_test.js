@@ -5777,7 +5777,7 @@
         ok(false, "getDeclaredGadget should fail");
       })
       .fail(function (e) {
-        ok(e instanceof Error);
+        ok(e instanceof rJS.ScopeError);
         equal(e.message, "Gadget scope 'foo' is not known.");
       })
       .always(function () {
@@ -5820,7 +5820,7 @@
         ok(false, "dropGadget should fail");
       })
       .fail(function (e) {
-        ok(e instanceof Error);
+        ok(e instanceof rJS.ScopeError);
         equal(e.message, "Gadget scope 'foo' is not known.");
       })
       .always(function () {
