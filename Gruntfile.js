@@ -24,7 +24,7 @@ module.exports = function (grunt) {
   };
 
   grunt.loadNpmTasks("grunt-jslint");
-  grunt.loadNpmTasks("grunt-contrib-uglify");
+  // grunt.loadNpmTasks("grunt-contrib-uglify");
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -128,11 +128,13 @@ module.exports = function (grunt) {
     copy: {
       latest: {
         files: [{
-          src: '<%= uglify.renderjs.src %>',
+          src: '<%= concat.dist.dest %>',
           dest: "dist/<%= pkg.name %>-latest.js"
+/*
         }, {
           src: '<%= uglify.renderjs.dest %>',
           dest: "dist/<%= pkg.name %>-latest.min.js"
+*/
         }]
       }
     },
@@ -193,6 +195,6 @@ module.exports = function (grunt) {
   grunt.registerTask('lint', ['jslint']);
   grunt.registerTask('test', ['qunit']);
   grunt.registerTask('server', ['connect:client', 'watch']);
-  grunt.registerTask('build', ['concat', 'uglify', 'copy']);
+  grunt.registerTask('build', ['concat', 'copy']);
 
 };
