@@ -642,6 +642,13 @@
       );
   }
 
+  function registerMethod(gadget_klass, method_name, method_type) {
+    if (!gadget_klass.hasOwnProperty('__method_type_dict')) {
+      gadget_klass.__method_type_dict = {};
+    }
+    gadget_klass.__method_type_dict[method_name] = method_type;
+  }
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareJob
   // gadget internal method, which trigger execution
@@ -659,6 +666,7 @@
         context.__job_list.push([name, callback, argument_list]);
       }
     };
+    registerMethod(this, name, 'job');
     // Allow chain
     return this;
   };
@@ -688,6 +696,7 @@
       }
       return ensurePushableQueue(callback, argument_list, context);
     };
+    registerMethod(this, name, 'method');
     // Allow chain
     return this;
   };
@@ -696,6 +705,21 @@
     .declareMethod('getInterfaceList', function getInterfaceList() {
       // Returns the list of gadget prototype
       return this.__interface_list;
+    })
+    .declareMethod('getMethodList', function getMethodList(type) {
+      // Returns the list of gadget methods
+      var key,
+        method_list = [],
+        method_dict = this.constructor.__method_type_dict || {};
+      for (key in method_dict) {
+        if (method_dict.hasOwnProperty(key)) {
+          if ((type === undefined) ||
+              (type === method_dict[key])) {
+            method_list.push(key);
+          }
+        }
+      }
+      return method_list;
     })
     .declareMethod('getRequiredCSSList', function getRequiredCSSList() {
       // Returns a list of CSS required by the gadget
@@ -804,7 +828,7 @@
           gadget
         );
       };
-
+      registerMethod(this, name, 'acquired_method');
       // Allow chain
       return this;
     };
@@ -1657,7 +1681,7 @@
     TmpConstructor.__ready_list = [];
     TmpConstructor.__service_list = RenderJSGadget.__service_list.slice();
     TmpConstructor.prototype.__path = url;
-    root_gadget = new RenderJSEmbeddedGadget();
+    root_gadget = new TmpConstructor();
     setAqParent(root_gadget, createLastAcquisitionGadget());
 
     declare_method_list_waiting = [
@@ -1665,7 +1689,8 @@
       "getRequiredCSSList",
       "getRequiredJSList",
       "getPath",
-      "getTitle"
+      "getTitle",
+      "getMethodList"
     ];
 
     // Inform parent gadget about declareMethod calls here.

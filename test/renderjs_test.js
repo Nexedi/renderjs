@@ -38,10 +38,15 @@
     RenderJSIframeGadget = __RenderJSIframeGadget;
 
   // Keep track of the root gadget
-  renderJS(window).ready(function (g) {
-    root_gadget_defer.resolve([g, this]);
-  });
-
+  renderJS(window)
+    .ready(function (g) {
+      root_gadget_defer.resolve([g, this]);
+    })
+    .declareMethod('fakeRootMethod1')
+    .declareMethod('fakeRootMethod2')
+    .declareJob('fakeRootJob1')
+    .declareJob('fakeRootJob2')
+    .declareAcquiredMethod('fakeRootAcquiredMethod1', 'fakeParentMethod1');
 
   QUnit.config.testTimeout = 10000;
 //   QUnit.config.reorder = false;
@@ -1136,6 +1141,83 @@
     stop();
     expect(1);
     gadget.getInterfaceList()
+      .then(function (result) {
+        deepEqual(result, []);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  /////////////////////////////////////////////////////////////////
+  // RenderJSGadget.getMethodList
+  /////////////////////////////////////////////////////////////////
+  module("RenderJSGadget.getMethodList", {
+    setup: function () {
+      renderJS.clearGadgetKlassList();
+    }
+  });
+  test('returns method', function () {
+    // Check that getMethodList return a Promise
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+
+    gadget = new Klass();
+    Klass.__method_type_dict = {
+      getFoo: 'type_foo',
+      getBar: 'type_bar',
+      getBar2: 'type_bar'
+    };
+    stop();
+    expect(4);
+    gadget.getMethodList()
+      .then(function (method_list) {
+        deepEqual(method_list, ['getFoo', 'getBar', 'getBar2']);
+      })
+
+      .then(function (method_list) {
+        return gadget.getMethodList('type_bar');
+      })
+      .then(function (method_list) {
+        deepEqual(method_list, ['getBar', 'getBar2']);
+      })
+
+      .then(function (method_list) {
+        return gadget.getMethodList('type_foo');
+      })
+      .then(function (method_list) {
+        deepEqual(method_list, ['getFoo']);
+      })
+
+      .then(function (method_list) {
+        return gadget.getMethodList('type_foobar');
+      })
+      .then(function (method_list) {
+        deepEqual(method_list, []);
+      })
+
+      .always(function () {
+        start();
+      });
+  });
+
+  test('default value', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+
+    gadget = new Klass();
+
+    stop();
+    expect(1);
+    gadget.getMethodList()
       .then(function (result) {
         deepEqual(result, []);
       })
@@ -5877,7 +5959,7 @@
     }
 
     stop();
-    expect(21);
+    expect(25);
     root_gadget_defer.promise
       .then(function (root_gadget_list) {
         var root_gadget = root_gadget_list[0],
@@ -5943,15 +6025,32 @@
         deepEqual(root_gadget.__sub_gadget_dict, {});
         deepEqual(root_gadget_klass.__service_list, []);
         deepEqual(root_gadget.__job_list, []);
+
         return new RSVP.Queue()
           .push(function () {
             return root_gadget.declareGadget("./embedded.html", {
               sandbox: 'iframe',
               element: document.querySelector('#qunit-fixture')
-            })
-              .fail(function (e) {
-                ok(false, e);
-              });
+            });
+          })
+          .push(function () {
+            return RSVP.all([
+              root_gadget.getMethodList(),
+              root_gadget.getMethodList('method'),
+              root_gadget.getMethodList('job'),
+              root_gadget.getMethodList('acquired_method')
+            ]);
+          })
+          .push(function (result_list) {
+            deepEqual(result_list[0], ['fakeRootMethod1', 'fakeRootMethod2',
+                                       'fakeRootJob1', 'fakeRootJob2',
+                                       'fakeRootAcquiredMethod1']);
+            deepEqual(result_list[1], ['fakeRootMethod1', 'fakeRootMethod2']);
+            deepEqual(result_list[2], ['fakeRootJob1', 'fakeRootJob2']);
+            deepEqual(result_list[3], ['fakeRootAcquiredMethod1']);
+          })
+          .fail(function (e) {
+            ok(false, e);
           });
       })
       .fail(function (e) {
