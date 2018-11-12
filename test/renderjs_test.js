@@ -4190,23 +4190,26 @@
     }, "<html><body></body></html>"]);
 
     stop();
-    expect(3);
+    expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
         Klass.ready(function (g) {
+          deepEqual(gadget.__sub_gadget_dict, {});
           equal(g, this, "Context should be the gadget instance");
           ready_gadget = g;
           return RSVP.delay(50).then(function () {
             // Modify the value after 50ms
             called = true;
+            deepEqual(gadget.__sub_gadget_dict, {});
           });
         });
-        return gadget.declareGadget(html_url);
+        return gadget.declareGadget(html_url, {scope: 'sub'});
       })
       .then(function (result) {
         equal(result, ready_gadget, "Context should be the gadget instance");
         ok(called);
+        deepEqual(gadget.__sub_gadget_dict, {'sub': result});
       })
       .fail(function (e) {
         ok(false);
