@@ -620,8 +620,9 @@
   }
 
   function startService(gadget) {
-    if ((gadget.constructor.__service_list.length === 0) &&
-        (!gadget.constructor.__job_declared)) {
+    if (((gadget.constructor.__service_list.length === 0) &&
+         (!gadget.constructor.__job_declared)) ||
+        (gadget.hasOwnProperty('__monitor'))) {
       return;
     }
     createGadgetMonitor(gadget);
@@ -888,11 +889,9 @@
   /////////////////////////////////////////////////////////////////
   // privateDeclarePublicGadget
   /////////////////////////////////////////////////////////////////
-  function createPrivateInstanceFromKlass(Klass, options, parent_gadget) {
+  function createPrivateInstanceFromKlass(Klass, options, parent_gadget,
+                                          old_element) {
     // Get the gadget class and instanciate it
-    if (options.element === undefined) {
-      options.element = document.createElement("div");
-    }
     var i,
       gadget_instance,
       template_node_list = Klass.__template_element.body.childNodes,
@@ -907,10 +906,18 @@
     }
     gadget_instance.element.appendChild(fragment);
     setAqParent(gadget_instance, parent_gadget);
+    clearGadgetInternalParameters(gadget_instance);
+    if (old_element !== undefined) {
+      // Add gadget to the DOM if needed
+      // Do it when all DOM modifications are done
+      old_element.parentNode.replaceChild(options.element,
+                                          old_element);
+    }
     return gadget_instance;
   }
 
-  function privateDeclarePublicGadget(url, options, parent_gadget) {
+  function privateDeclarePublicGadget(url, options, parent_gadget,
+                                      old_element) {
     var klass = renderJS.declareGadgetKlass(url);
     // gadget loading should not be interrupted
     // if not, gadget's definition will not be complete
@@ -918,10 +925,12 @@
     //so loading_klass_promise can't be cancel
     if (typeof klass.then === 'function') {
       return klass.then(function createAsyncPrivateInstanceFromKlass(Klass) {
-        return createPrivateInstanceFromKlass(Klass, options, parent_gadget);
+        return createPrivateInstanceFromKlass(Klass, options, parent_gadget,
+                                              old_element);
       });
     }
-    return createPrivateInstanceFromKlass(klass, options, parent_gadget);
+    return createPrivateInstanceFromKlass(klass, options, parent_gadget,
+                                          old_element);
   }
 
   /////////////////////////////////////////////////////////////////
@@ -953,17 +962,18 @@
   /////////////////////////////////////////////////////////////////
   // privateDeclareIframeGadget
   /////////////////////////////////////////////////////////////////
-  function privateDeclareIframeGadget(url, options, parent_gadget) {
+  function privateDeclareIframeGadget(url, options, parent_gadget,
+                                      old_element) {
     var gadget_instance,
       iframe,
       iframe_loading_deferred = RSVP.defer();
-    if (options.element === undefined) {
+    if (old_element === undefined) {
       throw new Error("DOM element is required to create Iframe Gadget " +
                       url);
     }
 
     // Check if the element is attached to the DOM
-    if (!document.contains(options.element)) {
+    if (!document.contains(old_element)) {
       throw new Error("The parent element is not attached to the DOM for " +
                       url);
     }
@@ -987,8 +997,12 @@
     gadget_instance.__path = url;
     gadget_instance.element = options.element;
     gadget_instance.state = {};
-    // Attach it to the DOM
     options.element.appendChild(iframe);
+    clearGadgetInternalParameters(gadget_instance);
+    // Add gadget to the DOM if needed
+    // Do it when all DOM modifications are done
+    old_element.parentNode.replaceChild(options.element,
+                                        old_element);
 
     // XXX Manage unbind when deleting the gadget
 
@@ -1056,7 +1070,8 @@
   /////////////////////////////////////////////////////////////////
   // privateDeclareDataUrlGadget
   /////////////////////////////////////////////////////////////////
-  function privateDeclareDataUrlGadget(url, options, parent_gadget) {
+  function privateDeclareDataUrlGadget(url, options, parent_gadget,
+                                       old_element) {
 
     return new RSVP.Queue()
       .push(function waitForDataUrlAjax() {
@@ -1076,7 +1091,8 @@
         return readBlobAsDataURL(blob);
       })
       .push(function handleDataURL(data_url) {
-        return privateDeclareIframeGadget(data_url, options, parent_gadget);
+        return privateDeclareIframeGadget(data_url, options, parent_gadget,
+                                          old_element);
       });
   }
 
@@ -1084,30 +1100,10 @@
   // RenderJSGadget.declareGadget
   /////////////////////////////////////////////////////////////////
   function setGadgetInstanceHTMLContext(gadget_instance, options,
-                                        parent_gadget, url) {
+                                        parent_gadget, url,
+                                        old_element, scope) {
     var i,
-      scope,
       queue;
-    clearGadgetInternalParameters(gadget_instance);
-
-    // Store local reference to the gadget instance
-    scope = options.scope;
-    if (scope === undefined) {
-      scope = 'RJS_' + scope_increment;
-      scope_increment += 1;
-      while (parent_gadget.__sub_gadget_dict.hasOwnProperty(scope)) {
-        scope = 'RJS_' + scope_increment;
-        scope_increment += 1;
-      }
-    }
-    gadget_instance.element.setAttribute("data-gadget-scope",
-                                         scope);
-
-    // Put some attribute to ease page layout comprehension
-    gadget_instance.element.setAttribute("data-gadget-url", url);
-    gadget_instance.element.setAttribute("data-gadget-sandbox",
-                                         options.sandbox);
-    gadget_instance.element._gadget = gadget_instance;
 
     function ready_executable_wrapper(fct) {
       return function executeReadyWrapper() {
@@ -1116,13 +1112,14 @@
     }
 
     function ready_wrapper() {
-      if (document.contains(gadget_instance.element)) {
-        startService(gadget_instance);
-      }
       // Always set the parent reference when all ready are finished
       // in case the gadget declaration is cancelled
       // (and ready are not finished)
+      gadget_instance.element._gadget = gadget_instance;
       parent_gadget.__sub_gadget_dict[scope] = gadget_instance;
+      if (document.contains(gadget_instance.element)) {
+        startService(gadget_instance);
+      }
       // Always return the gadget instance after ready function
       return gadget_instance;
     }
@@ -1147,7 +1144,9 @@
     .declareMethod('declareGadget', function declareGadget(url, options) {
       var parent_gadget = this,
         method,
-        result;
+        result,
+        scope,
+        old_element;
 
       if (options === undefined) {
         options = {};
@@ -1155,9 +1154,38 @@
       if (options.sandbox === undefined) {
         options.sandbox = "public";
       }
+      if (options.element === undefined) {
+        options.element = document.createElement('div');
+      } else if (typeof options.element === 'string') {
+        options.element = document.createElement(options.element);
+      } else if (options.element.parentNode) {
+        old_element = options.element;
+        // Clean up the element content
+        // Remove all existing event listener
+        options.element = old_element.cloneNode(false);
+      } else {
+        throw new Error('No need to manually provide a DOM element ' +
+                        'without a parentNode: ' + url);
+      }
 
       // transform url to absolute url if it is relative
       url = renderJS.getAbsoluteURL(url, this.__path);
+
+      // Store local reference to the gadget instance
+      scope = options.scope;
+      if (scope === undefined) {
+        scope = 'RJS_' + scope_increment;
+        scope_increment += 1;
+        while (parent_gadget.__sub_gadget_dict.hasOwnProperty(scope)) {
+          scope = 'RJS_' + scope_increment;
+          scope_increment += 1;
+        }
+      }
+      options.element.setAttribute("data-gadget-scope", scope);
+
+      // Put some attribute to ease page layout comprehension
+      options.element.setAttribute("data-gadget-url", url);
+      options.element.setAttribute("data-gadget-sandbox", options.sandbox);
 
       if (options.sandbox === "public") {
         method = privateDeclarePublicGadget;
@@ -1169,7 +1197,7 @@
         throw new Error("Unsupported sandbox options '" +
                         options.sandbox + "'");
       }
-      result = method(url, options, parent_gadget);
+      result = method(url, options, parent_gadget, old_element);
       // Set the HTML context
       if (typeof result.then === 'function') {
         return new RSVP.Queue()
@@ -1178,11 +1206,13 @@
           })
           .push(function setAsyncGadgetInstanceHTMLContext(gadget_instance) {
             return setGadgetInstanceHTMLContext(gadget_instance, options,
-                                                parent_gadget, url);
+                                                parent_gadget, url,
+                                                old_element, scope);
           });
       }
       return setGadgetInstanceHTMLContext(result, options,
-                                          parent_gadget, url);
+                                          parent_gadget, url, old_element,
+                                          scope);
     })
     .declareMethod('getDeclaredGadget',
       function getDeclaredGadget(gadget_scope) {
