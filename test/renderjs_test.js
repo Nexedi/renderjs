@@ -3940,6 +3940,7 @@
     // Check that gadget is not created if klass is can not be loaded
     var gadget = new RenderJSGadget(),
       html_url = 'http://example.org/files/qunittest/test3.html';
+    gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [404, {
       "Content-Type": "text/html"
@@ -4331,24 +4332,27 @@
 
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
-      html_url = 'https://example.org/files/qunittest/test98.html';
+      html_url = 'https://example.org/files/qunittest/test98.html',
+      previous_fixture = document.getElementById('qunit-fixture');
     gadget.__sub_gadget_dict = {};
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
     }, "<html><body><p>foo</p></body></html>"]);
 
-    document.getElementById('qunit-fixture').textContent = "";
+    previous_fixture.innerHTML = "<div>bar</div>";
     stop();
-    expect(1);
+    expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
           html_url,
-          {element: document.getElementById('qunit-fixture')}
+          {element: previous_fixture}
         );
       })
-      .then(function () {
+      .then(function (g) {
+        notEqual(document.getElementById('qunit-fixture'), previous_fixture);
+        equal(document.getElementById('qunit-fixture'), g.element);
         equal(
           document.getElementById('qunit-fixture').innerHTML,
           '<p>foo</p>'
@@ -5011,7 +5015,11 @@
   test('Require a DOM element as option', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
-      html_url = 'https://example.org/files/qunittest/test98.html';
+      html_url = 'https://example.org/files/qunittest/test98.html',
+      parent_element = document.createElement("div"),
+      gadget_element = document.createElement("div");
+    gadget.__sub_gadget_dict = {};
+    parent_element.appendChild(gadget_element);
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
@@ -5023,7 +5031,7 @@
       .then(function (Klass) {
         return gadget.declareGadget(html_url, {
           sandbox: 'iframe',
-          element: document.createElement("div")
+          element: gadget_element
         });
       })
       .then(function () {
@@ -5659,6 +5667,7 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_fail.html";
+    gadget.__sub_gadget_dict = {};
 
     stop();
     expect(1);
@@ -5681,6 +5690,7 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_empty.html";
+    gadget.__sub_gadget_dict = {};
 
     stop();
     expect(2);
@@ -5704,6 +5714,7 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_404.html";
+    gadget.__sub_gadget_dict = {};
 
     stop();
     expect(2);
@@ -5754,6 +5765,7 @@
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_non_renderjs.html";
+    gadget.__sub_gadget_dict = {};
 
     stop();
     expect(2);
@@ -6254,7 +6266,7 @@
         return new RSVP.Promise(function (resolve, reject) {
           // listen for an event fired in the ready function of the parent
           // gadget
-          parentDiv.addEventListener("rjsready", function (e) {
+          parentDiv.parentNode.addEventListener("rjsready", function (e) {
             resolve();
           });
           // if no event is fired within 500ms, just resolve and fail later

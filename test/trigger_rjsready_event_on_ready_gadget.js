@@ -22,9 +22,9 @@
 
 (function (window, rJS) {
   "use strict";
-
   rJS(window)
     .ready(function (gadget) {
-      return gadget.element.dispatchEvent(new Event("rjsready"));
+      return gadget.element.dispatchEvent(new Event("rjsready",
+                                          {bubbles: true}));
     });
 }(window, rJS));
