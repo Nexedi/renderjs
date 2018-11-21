@@ -1784,10 +1784,11 @@
     }
 
     // Surcharge declareMethod to inform parent window
-    TmpConstructor.declareMethod = function declareMethod(name, callback) {
+    TmpConstructor.declareMethod = function declareMethod(name, callback,
+                                                          options) {
       var result = RenderJSGadget.declareMethod.apply(
           this,
-          [name, callback]
+          [name, callback, options]
         );
       notifyDeclareMethod(name);
       return result;
