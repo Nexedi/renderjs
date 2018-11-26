@@ -2337,6 +2337,52 @@
       });
   });
 
+  test('service started after ready is finished', function () {
+    // couscous romain xxxxxxxxx
+    // Subclass RenderJSGadget to not pollute its namespace
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test5011.html',
+      defer = RSVP.defer();
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    expect(1);
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        Klass.declareService(function () {
+          defer.reject('Triggered before ready');
+        });
+        Klass.ready(function () {
+          return RSVP.delay(500)
+            .then(function () {
+              defer.resolve('Triggered before service');
+            });
+        });
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function () {
+        return defer.promise;
+      })
+      .then(function (result) {
+        equal(result, 'Triggered before service');
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('service started when gadget element added in DOM', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
