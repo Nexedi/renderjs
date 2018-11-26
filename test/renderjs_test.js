@@ -2338,7 +2338,6 @@
   });
 
   test('service started after ready is finished', function () {
-    // couscous romain xxxxxxxxx
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test5011.html',
