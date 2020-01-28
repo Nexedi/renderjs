@@ -86,6 +86,7 @@
     // Check that parseGadgetHTMLDocument returns the default value
     // if the string is not a valid xml
     deepEqual(parseGadgetHTML("", "http://example.org"), {
+      base_url: "http://example.org",
       title: "",
       interface_list: [],
       required_css_list: [],
@@ -118,6 +119,7 @@
       document.implementation.createHTMLDocument(""),
       "http://example.org"
     ), {
+      base_url: "http://example.org",
       title: "",
       interface_list: [],
       required_css_list: [],
@@ -161,6 +163,31 @@
 //     settings = parseGadgetHTML(html);
 //     equal(settings.title, '', 'Title not found');
 //   });
+
+  test('Extract base url', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the title
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<base href='./bar/bar2/'></base>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org");
+    equal(settings.base_url, 'http://example.org/bar/bar2/', 'Base extracted');
+  });
+
+  test('Extract only one base url', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the first title
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<base href='./bar/bar2/'></base>" +
+        "<base href='./bar3/bar4/'></base>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org");
+    equal(settings.base_url, 'http://example.org/bar/bar2/', 'Base extracted');
+  });
 
   // XXX innerHTML is not extracted anymore
 //   test('Extract body', function () {
@@ -206,6 +233,38 @@
       html = "<html>" +
         "<head>" +
         "<link rel='stylesheet' href='../lib/qunit/qunit.css' " +
+        "type='text/css'/>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
+    deepEqual(settings.required_css_list,
+              ['http://example.org/lib/qunit/qunit.css'],
+              "CSS extracted");
+  });
+
+  test('Extract CSS after base tag', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the CSS
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<base href='./bar/bar2/'></base>" +
+        "<link rel='stylesheet' href='../lib/qunit/qunit.css' " +
+        "type='text/css'/>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
+    deepEqual(settings.required_css_list,
+              ['http://example.org/foo/bar/lib/qunit/qunit.css'],
+              "CSS extracted");
+  });
+
+  test('Extract CSS before base tag', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the CSS
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<link rel='stylesheet' href='../lib/qunit/qunit.css' " +
+        "<base href='./bar/bar2/'></base>" +
         "type='text/css'/>" +
         "</head></html>";
 
@@ -261,6 +320,38 @@
               "interface extracted");
   });
 
+  test('Extract interface after base tag', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the interface
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<base href='./bar/bar2/'></base>" +
+        "<link rel='http://www.renderjs.org/rel/interface'" +
+        "      href='./interface/renderable'/>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
+    deepEqual(settings.interface_list,
+              ['http://example.org/foo/bar/bar2/interface/renderable'],
+              "interface extracted");
+  });
+
+  test('Extract interface before base tag', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the interface
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<link rel='http://www.renderjs.org/rel/interface'" +
+        "      href='./interface/renderable'/>" +
+        "<base href='./bar/bar2/'></base>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
+    deepEqual(settings.interface_list,
+              ['http://example.org/foo/interface/renderable'],
+              "interface extracted");
+  });
+
   test('Extract interface order', function () {
     // Check that parseGadgetHTMLDocument correctly keep interface order
     var settings,
@@ -307,6 +398,38 @@
               "JS extracted");
   });
 
+  test('Extract JS after base tag', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the JS
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<base href='./bar/bar2/'></base>" +
+        "<script src='../lib/qunit/qunit.js' " +
+        "type='text/javascript'></script>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
+    deepEqual(settings.required_js_list,
+              ['http://example.org/foo/bar/lib/qunit/qunit.js'],
+              "JS extracted");
+  });
+
+  test('Extract JS before base tag', function () {
+    // Check that parseGadgetHTMLDocument correctly extract the JS
+    var settings,
+      html = "<html>" +
+        "<head>" +
+        "<script src='../lib/qunit/qunit.js' " +
+        "type='text/javascript'></script>" +
+        "<base href='./bar/bar2/'></base>" +
+        "</head></html>";
+
+    settings = parseGadgetHTML(html, "http://example.org/foo/");
+    deepEqual(settings.required_js_list,
+              ['http://example.org/lib/qunit/qunit.js'],
+              "JS extracted");
+  });
+
   test('Extract JS order', function () {
     // Check that parseGadgetHTMLDocument correctly keep JS order
     var settings,
@@ -345,6 +468,7 @@
       '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' +
       '</head><body><p>Non valid XML</p></body></html>',
       'http://example.org/foo/'), {
+      base_url: "http://example.org/foo/",
       title: "Test non valid XML",
       interface_list: [],
       required_css_list: [],
