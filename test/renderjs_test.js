@@ -672,11 +672,12 @@
     );
 
     stop();
-    expect(7);
+    expect(8);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var instance;
 
+        equal(Klass.prototype.__path, url);
         deepEqual(Klass.prototype.__acquired_method_dict, {});
         equal(Klass.prototype.__foo, 'bar');
         equal(Klass.__template_element.nodeType, 9);

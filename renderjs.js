@@ -1376,6 +1376,7 @@
       RenderJSGadget.onLoop;
     tmp_constructor.prototype = new RenderJSGadget();
     tmp_constructor.prototype.constructor = tmp_constructor;
+    tmp_constructor.prototype.__path = url;
     tmp_constructor.prototype.__acquired_method_dict = {};
     // https://developer.mozilla.org/en-US/docs/HTML_in_XMLHttpRequest
     // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
