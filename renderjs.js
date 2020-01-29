@@ -1376,7 +1376,6 @@
       RenderJSGadget.onLoop;
     tmp_constructor.prototype = new RenderJSGadget();
     tmp_constructor.prototype.constructor = tmp_constructor;
-    tmp_constructor.prototype.__path = url;
     tmp_constructor.prototype.__acquired_method_dict = {};
     // https://developer.mozilla.org/en-US/docs/HTML_in_XMLHttpRequest
     // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
@@ -1496,7 +1495,7 @@
           interface_list: [],
           required_css_list: [],
           required_js_list: [],
-          base_url: url
+          path: url
         },
         i,
         element,
@@ -1518,25 +1517,26 @@
               if (element.rel === "stylesheet") {
                 settings.required_css_list.push(
                   renderJS.getAbsoluteURL(element.getAttribute("href"),
-                                          settings.base_url)
+                                          settings.path)
                 );
               } else if (element.nodeName === "SCRIPT" &&
                          (element.type === "text/javascript" ||
                           !element.type)) {
                 settings.required_js_list.push(
                   renderJS.getAbsoluteURL(element.getAttribute("src"),
-                                          settings.base_url)
+                                          settings.path)
                 );
               } else if (element.rel ===
                          "http://www.renderjs.org/rel/interface") {
                 settings.interface_list.push(
                   renderJS.getAbsoluteURL(element.getAttribute("href"),
-                                          settings.base_url)
+                                          settings.path)
                 );
-              } else if ((element.nodeName === "BASE") && !base_found) {
-                settings.base_url = renderJS.getAbsoluteURL(
+              } else if ((element.nodeName === "BASE") && !base_found &&
+                         element.getAttribute("href")) {
+                settings.path = renderJS.getAbsoluteURL(
                   element.getAttribute("href"),
-                  settings.base_url
+                  settings.path
                 );
                 // Only use the first base element found
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base#Usage_notes

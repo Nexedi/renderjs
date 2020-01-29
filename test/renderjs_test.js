@@ -86,7 +86,7 @@
     // Check that parseGadgetHTMLDocument returns the default value
     // if the string is not a valid xml
     deepEqual(parseGadgetHTML("", "http://example.org"), {
-      base_url: "http://example.org",
+      path: "http://example.org",
       title: "",
       interface_list: [],
       required_css_list: [],
@@ -119,7 +119,7 @@
       document.implementation.createHTMLDocument(""),
       "http://example.org"
     ), {
-      base_url: "http://example.org",
+      path: "http://example.org",
       title: "",
       interface_list: [],
       required_css_list: [],
@@ -173,7 +173,7 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.base_url, 'http://example.org/bar/bar2/', 'Base extracted');
+    equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
   });
 
   test('Extract only one base url', function () {
@@ -186,7 +186,7 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.base_url, 'http://example.org/bar/bar2/', 'Base extracted');
+    equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
   });
 
   // XXX innerHTML is not extracted anymore
@@ -468,7 +468,7 @@
       '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' +
       '</head><body><p>Non valid XML</p></body></html>',
       'http://example.org/foo/'), {
-      base_url: "http://example.org/foo/",
+      path: "http://example.org/foo/",
       title: "Test non valid XML",
       interface_list: [],
       required_css_list: [],
@@ -672,12 +672,11 @@
     );
 
     stop();
-    expect(8);
+    expect(7);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var instance;
 
-        equal(Klass.prototype.__path, url);
         deepEqual(Klass.prototype.__acquired_method_dict, {});
         equal(Klass.prototype.__foo, 'bar');
         equal(Klass.__template_element.nodeType, 9);
@@ -4937,6 +4936,96 @@
       "Content-Type": "text/html"
     }, "<html><body><div data-foo='bar' " +
        "data-gadget-scope='bar' data-gadget-url='" + html_url2 +
+       "'></div></body></html>"]);
+    this.server.respondWith("GET", html_url2, [200, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
+
+    stop();
+    expect(6);
+    gadget.declareGadget(html_url)
+      .then(function (g) {
+        equal(spy.callCount, 2);
+        equal(spy.firstCall.args[1], html_url);
+        equal(spy.secondCall.args[1], html_url2);
+        // Second gadget is a child
+        return g.getDeclaredGadget("bar");
+      })
+      .then(function (g2) {
+        equal(g2.__path, html_url2);
+        // The gadget element is the one defined in HTML
+        equal(g2.element.getAttribute("data-foo"), "bar");
+        // The gadget is public by default
+        equal(g2.element.innerHTML, "raw html");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+        spy.restore();
+      });
+  });
+
+  test('can declareGadget relativeurl in HTML', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test12345.html',
+      html_relative_url2 = 'test12346.html',
+      html_url2 = 'https://example.org/files/qunittest/test12346.html',
+      spy;
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div data-foo='bar' " +
+       "data-gadget-scope='bar' data-gadget-url='" + html_relative_url2 +
+       "'></div></body></html>"]);
+    this.server.respondWith("GET", html_url2, [200, {
+      "Content-Type": "text/html"
+    }, "raw html"]);
+
+    spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
+
+    stop();
+    expect(6);
+    gadget.declareGadget(html_url)
+      .then(function (g) {
+        equal(spy.callCount, 2);
+        equal(spy.firstCall.args[1], html_url);
+        equal(spy.secondCall.args[1], html_url2);
+        // Second gadget is a child
+        return g.getDeclaredGadget("bar");
+      })
+      .then(function (g2) {
+        equal(g2.__path, html_url2);
+        // The gadget element is the one defined in HTML
+        equal(g2.element.getAttribute("data-foo"), "bar");
+        // The gadget is public by default
+        equal(g2.element.innerHTML, "raw html");
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+        spy.restore();
+      });
+  });
+
+  test('can declareGadget relativeurl in HTML with base tag', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test12345.html',
+      html_relative_url2 = 'test12346.html',
+      html_url2 = 'https://example.org/files/qunittest/foo/test12346.html',
+      spy;
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><head><base href='./foo/'></head><body><div data-foo='bar' " +
+       "data-gadget-scope='bar' data-gadget-url='" + html_relative_url2 +
        "'></div></body></html>"]);
     this.server.respondWith("GET", html_url2, [200, {
       "Content-Type": "text/html"
