@@ -698,6 +698,79 @@
       });
   });
 
+  test('Convert body relative url', function () {
+    // Check that declareGadgetKlass converts all relative url
+    var url = 'https://example.org/files/qunittest/test';
+
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body><div href='a' src='b' srcset='c'></div></body></html>"]);
+
+    stop();
+    expect(4);
+    renderJS.declareGadgetKlass(url)
+      .then(function (Klass) {
+        var div;
+        equal(Klass.__template_element.nodeType, 9);
+        div = Klass.__template_element.body.querySelector('div');
+        equal(
+          div.getAttribute('href'),
+          'https://example.org/files/qunittest/a'
+        );
+        equal(
+          div.getAttribute('src'),
+          'https://example.org/files/qunittest/b'
+        );
+        equal(
+          div.getAttribute('srcset'),
+          'https://example.org/files/qunittest/c'
+        );
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('Convert body relative url with base', function () {
+    // Check that declareGadgetKlass converts all relative url
+    var url = 'https://example.org/files/qunittest/test';
+
+    this.server.respondWith("GET", url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><head><base href='../'></base></head>" +
+       "<body><div href='a' src='b' srcset='c'></div></body></html>"]);
+
+    stop();
+    expect(4);
+    renderJS.declareGadgetKlass(url)
+      .then(function (Klass) {
+        var div;
+        equal(Klass.__template_element.nodeType, 9);
+        div = Klass.__template_element.body.querySelector('div');
+        equal(
+          div.getAttribute('href'),
+          'https://example.org/files/a'
+        );
+        equal(
+          div.getAttribute('src'),
+          'https://example.org/files/b'
+        );
+        equal(
+          div.getAttribute('srcset'),
+          'https://example.org/files/c'
+        );
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('Klass is not reloaded if called twice', function () {
     // Check that declareGadgetKlass does not reload the gadget
     // if it has already been loaded
@@ -6233,7 +6306,7 @@
     }
 
     stop();
-    expect(25);
+    expect(28);
     root_gadget_defer.promise
       .then(function (root_gadget_list) {
         var root_gadget = root_gadget_list[0],
@@ -6292,6 +6365,12 @@
         ]);
         html = root_gadget.constructor.__template_element.outerHTML;
         ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
+        html = root_gadget.constructor.__template_element
+                          .querySelector('#check-relative-url');
+        // relative url are not modified on the root gadget
+        equal(html.getAttribute('href'), 'one');
+        equal(html.getAttribute('src'), 'two');
+        equal(html.getAttribute('srcset'), 'three');
         ok(root_gadget instanceof RenderJSGadget);
         ok(root_gadget_klass, root_gadget.constructor);
         ok(root_gadget.__aq_parent !== undefined);

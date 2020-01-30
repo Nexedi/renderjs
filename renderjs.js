@@ -1385,7 +1385,8 @@
       (new DOMParser()).parseFromString(xhr.responseText, "text/html");
     parsed_html = renderJS.parseGadgetHTMLDocument(
       tmp_constructor.__template_element,
-      url
+      url,
+      true
     );
     for (key in parsed_html) {
       if (parsed_html.hasOwnProperty(key)) {
@@ -1490,7 +1491,8 @@
   // renderJS.parseGadgetHTMLDocument
   /////////////////////////////////////////////////////////////////
   renderJS.parseGadgetHTMLDocument =
-    function parseGadgetHTMLDocument(document_element, url) {
+    function parseGadgetHTMLDocument(document_element, url,
+                                     update_relative_url) {
       var settings = {
           title: "",
           interface_list: [],
@@ -1500,10 +1502,18 @@
         },
         i,
         element,
+        element_list,
+        j,
+        url_attribute_list = ['src', 'href', 'srcset'],
+        url_attribute,
         base_found = false;
 
       if (!url || !isAbsoluteOrDataURL.test(url)) {
         throw new Error("The url should be absolute: " + url);
+      }
+
+      if (update_relative_url === undefined) {
+        update_relative_url = false;
       }
 
       if (document_element.nodeType === 9) {
@@ -1546,6 +1556,25 @@
             }
           }
         }
+
+        if (update_relative_url && (document_element.body !== null)) {
+          // Resolve all relativeurl configure in the dom as absolute from
+          // the gadget url
+          for (j = 0; j < url_attribute_list.length; j += 1) {
+            url_attribute = url_attribute_list[j];
+            element_list = document_element.body.querySelectorAll(
+              '[' + url_attribute + ']'
+            );
+            for (i = 0; i < element_list.length; i += 1) {
+              element = element_list[i];
+              element.setAttribute(url_attribute, renderJS.getAbsoluteURL(
+                element.getAttribute(url_attribute),
+                settings.path
+              ));
+            }
+          }
+        }
+
       } else {
         throw new Error("The first parameter should be an HTMLDocument");
       }
