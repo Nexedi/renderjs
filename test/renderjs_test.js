@@ -2229,6 +2229,151 @@
       });
   });
 
+  test('mutex prevent concurrent execution', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
+      counter = 0;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
+
+    gadget = new Klass();
+
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+
+    Klass.declareMethod('testFoo', function (expected_counter) {
+      assertCounter(expected_counter);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(expected_counter + 1);
+          return counter;
+        });
+    }, {mutex: 'foo'});
+
+    // method can be called
+    stop();
+    expect(10);
+    return new RSVP.Queue()
+      .push(function () {
+        return RSVP.all([
+          gadget.testFoo(0),
+          gadget.testFoo(2),
+          gadget.testFoo(4)
+        ]);
+      })
+      .push(function (result_list) {
+        equal(result_list[0], 2);
+        equal(result_list[1], 4);
+        equal(result_list[2], 6);
+        assertCounter(6);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('mutex first cancellation stop execution', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
+      counter = 0;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
+
+    gadget = new Klass();
+
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+
+    Klass.declareMethod('testFoo', function (expected_counter) {
+      assertCounter(expected_counter);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(expected_counter + 1);
+          ok(false, 'Should not reach that code');
+        });
+    }, {mutex: 'foo'});
+
+    // method can be called
+    stop();
+    expect(2);
+
+    return new RSVP.Queue()
+      .push(function () {
+        // Immediately cancel the first call
+        gadget.testFoo(0).cancel();
+        return RSVP.delay(200);
+      })
+      .push(function () {
+        assertCounter(1);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('not mutex first cancellation stop execution', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
+      counter = 0;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
+
+    gadget = new Klass();
+
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+
+    Klass.declareMethod('testFoo', function (expected_counter) {
+      assertCounter(expected_counter);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(expected_counter + 1);
+          ok(false, 'Should not reach that code');
+        });
+    });
+
+    // method can be called
+    stop();
+    expect(2);
+
+    return new RSVP.Queue()
+      .push(function () {
+        // Immediately cancel the first call
+        gadget.testFoo(0).cancel();
+        return RSVP.delay(200);
+      })
+      .push(function () {
+        assertCounter(1);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.ready
   /////////////////////////////////////////////////////////////////
@@ -2431,21 +2576,13 @@
     service_status.status = undefined;
 
     klass.declareService(function () {
-      service_status.start_count += 1;
-      return new RSVP.Queue()
-        .push(function () {
-          service_status.status = "started";
-          return RSVP.defer().promise;
-        })
-        .push(undefined, function (error) {
-          service_status.stop_count += 1;
-          if (error instanceof RSVP.CancellationError) {
-            service_status.status = "stopped";
-          } else {
-            service_status.status = "error";
-          }
-          throw error;
-        });
+      return RSVP.Promise(function () {
+        service_status.start_count += 1;
+        service_status.status = "started";
+      }, function () {
+        service_status.stop_count += 1;
+        service_status.status = "stopped";
+      });
     });
   }
 
@@ -3011,22 +3148,14 @@
     service_status.stop_count = 0;
     service_status.status = undefined;
 
-    klass.onEvent('bar', function (evt) {
-      service_status.start_count += 1;
-      return new RSVP.Queue()
-        .push(function () {
-          service_status.status = "started";
-          return RSVP.defer().promise;
-        })
-        .push(undefined, function (error) {
-          service_status.stop_count += 1;
-          if (error instanceof RSVP.CancellationError) {
-            service_status.status = "stopped";
-          } else {
-            service_status.status = "error";
-          }
-          throw error;
-        });
+    klass.onEvent('bar', function () {
+      return new RSVP.Promise(function () {
+        service_status.start_count += 1;
+        service_status.status = "started";
+      }, function () {
+        service_status.stop_count += 1;
+        service_status.status = "stopped";
+      });
     });
   }
 
@@ -3283,22 +3412,14 @@
     service_status.status = undefined;
 
     klass.declareJob(name, function (parameter) {
-      service_status.start_count += 1;
-      service_status.parameter = parameter;
-      return new RSVP.Queue()
-        .push(function () {
-          service_status.status = "started";
-          return RSVP.defer().promise;
-        })
-        .push(undefined, function (error) {
-          service_status.stop_count += 1;
-          if (error instanceof RSVP.CancellationError) {
-            service_status.status = "stopped";
-          } else {
-            service_status.status = "error";
-          }
-          throw error;
-        });
+      return new RSVP.Promise(function () {
+        service_status.start_count += 1;
+        service_status.parameter = parameter;
+        service_status.status = "started";
+      }, function () {
+        service_status.stop_count += 1;
+        service_status.status = "stopped";
+      });
     });
   }
 
