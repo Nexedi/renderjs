@@ -2229,6 +2229,153 @@
       });
   });
 
+  test('mutex prevent concurrent execution', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
+      counter = 0;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
+
+    gadget = new Klass();
+
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+
+    Klass.declareMethod('testFoo', function (expected_counter) {
+      assertCounter(expected_counter);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(expected_counter + 1);
+          return counter;
+        });
+    }, {mutex: 'foo'});
+
+    // method can be called
+    stop();
+    expect(10);
+    return new RSVP.Queue()
+      .push(function () {
+        return RSVP.all([
+          gadget.testFoo(0),
+          gadget.testFoo(2),
+          gadget.testFoo(4)
+        ]);
+      })
+      .push(function (result_list) {
+        equal(result_list[0], 2);
+        equal(result_list[1], 4);
+        equal(result_list[2], 6);
+        assertCounter(6);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('mutex first cancellation stop execution', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
+      counter = 0;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
+
+    gadget = new Klass();
+
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+
+    Klass.declareMethod('testFoo', function (expected_counter) {
+      assertCounter(expected_counter);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(expected_counter + 1);
+          ok(false, 'Should not reach that code');
+        });
+    }, {mutex: 'foo'});
+
+    // method can be called
+    stop();
+    expect(2);
+
+    return new RSVP.Queue()
+      .push(function () {
+        // Immediately cancel the first call
+        gadget.testFoo(0).cancel();
+        return RSVP.delay(200);
+      })
+      .push(function () {
+        assertCounter(1);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
+  test('not mutex first cancellation stop execution', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var Klass = function () {
+      RenderJSGadget.call(this);
+    }, gadget,
+      counter = 0;
+    Klass.prototype = new RenderJSGadget();
+    Klass.prototype.constructor = Klass;
+    Klass.declareMethod = RenderJSGadget.declareMethod;
+
+    gadget = new Klass();
+
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+
+    Klass.declareMethod('testFoo', function (expected_counter) {
+      // console.log('aaaaa', expected_counter);
+      assertCounter(expected_counter);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          // console.log('bbbbbbb', expected_counter);
+          assertCounter(expected_counter + 1);
+          ok(false, 'Should not reach that code');
+        });
+    });
+
+    // method can be called
+    stop();
+    expect(2);
+
+    return new RSVP.Queue()
+      .push(function () {
+        // Immediately cancel the first call
+        gadget.testFoo(0).cancel();
+        return RSVP.delay(200);
+      })
+      .push(function () {
+        assertCounter(1);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.ready
   /////////////////////////////////////////////////////////////////

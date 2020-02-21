@@ -253,6 +253,39 @@
       });
   });
 
+  test('lockAndRun cancel stop first execution', function () {
+    var mutex = new Mutex(),
+      counter = 0;
+    stop();
+    expect(2);
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+    function callback1() {
+      assertCounter(0);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(-999);
+          ok(false, 'Should not reach that code');
+        });
+    }
+    return new RSVP.Queue()
+      .push(function () {
+        var promise = mutex.lockAndRun(callback1);
+        promise.cancel('cancel callback1');
+        return RSVP.delay(200);
+      })
+      .push(function () {
+        assertCounter(1);
+      })
+      .always(function () {
+        start();
+      });
+  });
 
   test('lockAndRun cancel does not cancel previous execution', function () {
     var mutex = new Mutex(),
