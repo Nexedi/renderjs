@@ -287,6 +287,53 @@
       });
   });
 
+  test('lockAndRun cancel stop second execution', function () {
+    var mutex = new Mutex(),
+      counter = 0;
+    stop();
+    expect(2);
+    function assertCounter(value) {
+      equal(counter, value);
+      counter += 1;
+    }
+    function callback1() {
+      assertCounter(0);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(1);
+        });
+    }
+    function callback2() {
+      assertCounter(2);
+      return new RSVP.Queue()
+        .push(function () {
+          return RSVP.delay(50);
+        })
+        .push(function () {
+          assertCounter(-999);
+          ok(false, 'Should not reach that code');
+        });
+    }
+    return new RSVP.Queue()
+      .push(function () {
+        return mutex.lockAndRun(callback1);
+      })
+      .push(function () {
+        var promise = mutex.lockAndRun(callback2);
+        promise.cancel('cancel callback2');
+        return RSVP.delay(200);
+      })
+      .push(function () {
+        assertCounter(3);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('lockAndRun cancel does not cancel previous execution', function () {
     var mutex = new Mutex(),
       counter = 0,
