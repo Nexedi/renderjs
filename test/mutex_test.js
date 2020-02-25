@@ -171,7 +171,7 @@
     var mutex = new Mutex(),
       counter = 0;
     stop();
-    expect(5);
+    expect(4);
     function assertCounter(value) {
       equal(counter, value);
       counter += 1;
@@ -201,7 +201,9 @@
       })
       .push(undefined, function (error) {
         equal(error.message, 'error in callback1');
-        assertCounter(3);
+        // Callback 2 is called before RSVP.all is rejected
+        // Callback 3 is cancelled by RSVP.all
+        assertCounter(2);
       })
       .always(function () {
         start();
@@ -291,7 +293,7 @@
     var mutex = new Mutex(),
       counter = 0;
     stop();
-    expect(2);
+    expect(3);
     function assertCounter(value) {
       equal(counter, value);
       counter += 1;
@@ -327,7 +329,7 @@
         return RSVP.delay(200);
       })
       .push(function () {
-        assertCounter(3);
+        assertCounter(2);
       })
       .always(function () {
         start();
