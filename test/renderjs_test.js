@@ -2578,21 +2578,13 @@
     service_status.status = undefined;
 
     klass.declareService(function () {
-      service_status.start_count += 1;
-      return new RSVP.Queue()
-        .push(function () {
-          service_status.status = "started";
-          return RSVP.defer().promise;
-        })
-        .push(undefined, function (error) {
-          service_status.stop_count += 1;
-          if (error instanceof RSVP.CancellationError) {
-            service_status.status = "stopped";
-          } else {
-            service_status.status = "error";
-          }
-          throw error;
-        });
+      return RSVP.Promise(function () {
+        service_status.start_count += 1;
+        service_status.status = "started";
+      }, function () {
+        service_status.stop_count += 1;
+        service_status.status = "stopped";
+      });
     });
   }
 
@@ -3158,22 +3150,14 @@
     service_status.stop_count = 0;
     service_status.status = undefined;
 
-    klass.onEvent('bar', function (evt) {
-      service_status.start_count += 1;
-      return new RSVP.Queue()
-        .push(function () {
-          service_status.status = "started";
-          return RSVP.defer().promise;
-        })
-        .push(undefined, function (error) {
-          service_status.stop_count += 1;
-          if (error instanceof RSVP.CancellationError) {
-            service_status.status = "stopped";
-          } else {
-            service_status.status = "error";
-          }
-          throw error;
-        });
+    klass.onEvent('bar', function () {
+      return new RSVP.Promise(function () {
+        service_status.start_count += 1;
+        service_status.status = "started";
+      }, function () {
+        service_status.stop_count += 1;
+        service_status.status = "stopped";
+      });
     });
   }
 
@@ -3430,22 +3414,14 @@
     service_status.status = undefined;
 
     klass.declareJob(name, function (parameter) {
-      service_status.start_count += 1;
-      service_status.parameter = parameter;
-      return new RSVP.Queue()
-        .push(function () {
-          service_status.status = "started";
-          return RSVP.defer().promise;
-        })
-        .push(undefined, function (error) {
-          service_status.stop_count += 1;
-          if (error instanceof RSVP.CancellationError) {
-            service_status.status = "stopped";
-          } else {
-            service_status.status = "error";
-          }
-          throw error;
-        });
+      return new RSVP.Promise(function () {
+        service_status.start_count += 1;
+        service_status.parameter = parameter;
+        service_status.status = "started";
+      }, function () {
+        service_status.stop_count += 1;
+        service_status.status = "stopped";
+      });
     });
   }
 
