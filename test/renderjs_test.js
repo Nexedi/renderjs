@@ -3034,6 +3034,55 @@
       });
   });
 
+  test('Service error from iframe are reported to parent gadget', function () {
+    // Subclass RenderJSGadget to not pollute its namespace
+    var ParentKlass = function () {
+      RenderJSGadget.call(this);
+    },
+      gadget,
+      defer = RSVP.defer();
+    ParentKlass.prototype = new RenderJSGadget();
+    ParentKlass.prototype.constructor = ParentKlass;
+    ParentKlass.prototype.__acquired_method_dict = {};
+    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+
+    ParentKlass.allowPublicAcquisition('reportServiceError',
+                                       function (argument_list) {
+        defer.resolve(argument_list[0]);
+      });
+
+    gadget = new ParentKlass();
+    gadget.__sub_gadget_dict = {};
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    expect(3);
+
+    return gadget.declareGadget(
+      'embedded_crashing_service.html',
+      {element: document.getElementById('qunit-fixture')
+                        .querySelector("div"),
+        sandbox: 'iframe'}
+    )
+      .then(function () {
+        return defer.promise;
+      })
+      .then(function (catched_error) {
+        ok(catched_error instanceof Object);
+        ok(!(catched_error instanceof Error));
+        equal(
+          catched_error.message,
+          "Cannot read property 'bar' of undefined"
+        );
+      })
+      .fail(function (e) {
+        ok(false, e);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('Service error stops the other services', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
