@@ -987,7 +987,7 @@
       iframe_loading_deferred.reject(error);
     });
     iframe.addEventListener('load', function handleIframeLoad() {
-      return RSVP.timeout(5000)
+      return RSVP.timeout(30000)
         .fail(function triggerIframeTimeout() {
           iframe_loading_deferred.reject(
             new Error('Timeout while loading: ' + url)
