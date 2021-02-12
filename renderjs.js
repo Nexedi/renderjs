@@ -1585,6 +1585,7 @@
   /////////////////////////////////////////////////////////////////
   renderJS.Mutex = Mutex;
   renderJS.ScopeError = ScopeError;
+  renderJS.loopEventListener = loopEventListener;
   window.rJS = window.renderJS = renderJS;
   window.__RenderJSGadget = RenderJSGadget;
   window.__RenderJSEmbeddedGadget = RenderJSEmbeddedGadget;
