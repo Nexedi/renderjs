@@ -61,6 +61,19 @@
   ScopeError.prototype = new Error();
   ScopeError.prototype.constructor = ScopeError;
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.IframeSerializationError
+  /////////////////////////////////////////////////////////////////
+  function IframeSerializationError(message) {
+    this.name = "IframeSerializationError";
+    if ((message !== undefined) && (typeof message !== "string")) {
+      throw new TypeError('You must pass a string.');
+    }
+    this.message = message || "Parameter serialization failed";
+  }
+  IframeSerializationError.prototype = new Error();
+  IframeSerializationError.prototype.constructor = IframeSerializationError;
+
   function ensurePushableQueue(callback, argument_list, context) {
     var result;
     try {
@@ -208,6 +221,7 @@
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
     error_list = [],
+    unhandled_error_type = 0,
     all_dependency_loaded_deferred;
 
   window.addEventListener('error', function handleGlobalError(error) {
@@ -255,6 +269,40 @@
       url = url.substring(0, index);
     }
     return url;
+  }
+
+  function getErrorTypeMapping() {
+    var error_type_mapping = {
+      1: renderJS.AcquisitionError,
+      2: RSVP.CancellationError
+    };
+    // set the unhandle error type to be used as default
+    error_type_mapping[unhandled_error_type] = IframeSerializationError;
+    return error_type_mapping;
+  }
+
+  function convertObjectToErrorType(error) {
+    var error_type,
+      error_type_mapping = getErrorTypeMapping();
+
+    for (error_type in error_type_mapping) {
+      if (error_type_mapping.hasOwnProperty(error_type) &&
+          error instanceof error_type_mapping[error_type]) {
+        return error_type;
+      }
+    }
+    return unhandled_error_type;
+  }
+
+  function rejectErrorType(value, reject) {
+    var error_type_mapping = getErrorTypeMapping();
+    if (value.hasOwnProperty("type") &&
+        error_type_mapping.hasOwnProperty(value.type)) {
+      value = new error_type_mapping[value.type](
+        value.msg
+      );
+    }
+    return reject(value);
   }
 
   function letsCrash(e) {
@@ -968,6 +1016,7 @@
                                       old_element) {
     var gadget_instance,
       iframe,
+      transaction_dict = {},
       iframe_loading_deferred = RSVP.defer();
     if (old_element === undefined) {
       throw new Error("DOM element is required to create Iframe Gadget " +
@@ -1025,13 +1074,17 @@
             channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
+                function errorWrap(value) {
+                  return rejectErrorType(value, reject);
+                }
+
                 channel_call_id = gadget_instance.__chan.call({
                   method: "methodCall",
                   params: [
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
-                  error: reject
+                  error: errorWrap
                 });
               },
               function cancelChannelCall(msg) {
@@ -1063,15 +1116,43 @@
         iframe_loading_deferred.reject(params);
         return "OK";
       });
+    gadget_instance.__chan.bind("cancel",
+                                function handleChannelFail(trans,
+                                                           transaction_id) {
+        if (transaction_dict.hasOwnProperty(transaction_id)) {
+          transaction_dict[transaction_id].cancel();
+          delete transaction_dict[transaction_id];
+        }
+        return "OK";
+      });
     gadget_instance.__chan.bind("acquire",
-                                function handleChannelAcquire(trans, params) {
+                                function handleChannelAcquire(trans, params,
+                                                              transaction_id) {
+        function cleanUpTransactionDict(transaction_id) {
+          if (transaction_dict.hasOwnProperty(transaction_id)) {
+            delete transaction_dict[transaction_id];
+          }
+        }
         new RSVP.Queue()
           .push(function () {
-            return gadget_instance.__aq_parent.apply(gadget_instance, params);
+            var promise = gadget_instance.__aq_parent.apply(
+              gadget_instance,
+              params
+            );
+            transaction_dict[transaction_id] = promise;
+            return promise;
           })
-          .then(trans.complete)
+          .then(function () {
+            cleanUpTransactionDict(transaction_id);
+            trans.complete.apply(trans, arguments);
+          })
           .fail(function handleChannelAcquireError(e) {
-            trans.error(e.toString());
+            var message = e instanceof Error ? e.message : e;
+            trans.error({
+              type: convertObjectToErrorType(e),
+              msg: message
+            });
+            return cleanUpTransactionDict(transaction_id);
           });
         trans.delayReturn(true);
       });
@@ -1595,6 +1676,7 @@
   /////////////////////////////////////////////////////////////////
   renderJS.Mutex = Mutex;
   renderJS.ScopeError = ScopeError;
+  renderJS.IframeSerializationError = IframeSerializationError;
   renderJS.loopEventListener = loopEventListener;
   window.rJS = window.renderJS = renderJS;
   window.__RenderJSGadget = RenderJSGadget;
@@ -1899,17 +1981,30 @@
       TmpConstructor.prototype.__aq_parent = function aq_parent(method_name,
                                                                 argument_list,
                                                                 time_out) {
+        var channel_call_id;
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
-            embedded_channel.call({
+            function errorWrap(value) {
+              return rejectErrorType(value, reject);
+            }
+
+            channel_call_id = embedded_channel.call({
               method: "acquire",
               params: [
                 method_name,
-                argument_list
+                Array.prototype.slice.call(argument_list, 0)
               ],
               success: resolve,
-              error: reject,
+              error: errorWrap,
               timeout: time_out
+            });
+          },
+          function cancelChannelCall(msg) {
+            embedded_channel.notify({
+              method: "cancel",
+              params: [
+                channel_call_id
+              ]
             });
           }
         );
@@ -1925,9 +2020,23 @@
             delete transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
+            var error_type = convertObjectToErrorType(e),
+              message;
+            if (e instanceof Error) {
+              if (error_type !== unhandled_error_type) {
+                message = e.message;
+              } else {
+                message = e.toString();
+              }
+            } else {
+              message = e;
+            }
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
-            trans.error(e.toString());
+            trans.error({
+              type: error_type,
+              msg: message
+            });
           });
         trans.delayReturn(true);
       });
@@ -1936,6 +2045,8 @@
                           function cancelMethodCall(trans, v) {
         if (transaction_dict.hasOwnProperty(v[0])) {
           transaction_dict[v[0]].cancel(v[1]);
+          // drop the promise reference, to allow garbage collection
+          delete transaction_dict[v[0]];
         }
       });
 
