@@ -5840,12 +5840,7 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
-            equal(
-              error,
-              "AcquisitionError: Can not handle " +
-                "acquireMethodRequestedWithAcquisitionError",
-              error
-            );
+            ok(error instanceof renderJS.AcquisitionError, error);
           })
 
           // cancel call is correctly propagated by declareMethod
