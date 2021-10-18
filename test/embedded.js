@@ -17,8 +17,9 @@
  * See COPYING file for full licensing terms.
  * See https://www.nexedi.com/licensing for rationale and options.
  */
+
 /*jslint nomen: true*/
-(function (window, rJS) {
+(function (window, rJS, RSVP) {
   "use strict";
 
   var gk = rJS(window),
@@ -27,6 +28,7 @@
     job_started = false,
     event_started = false,
     method_cancel_called = false,
+    acquired_method_cancel_called = false,
     state_change_callback_called = false,
     state_change_count = 0,
     init_state = {bar: 'foo'},
@@ -97,6 +99,9 @@
     .declareMethod('triggerError', function (value) {
       throw new Error("Manually triggered embedded error");
     })
+    .declareMethod('triggerStringError', function (value) {
+      throw "Manually triggered embedded error as string";
+    })
     .declareMethod('setContent', function (value) {
       this.embedded_property = value;
     })
@@ -110,7 +115,15 @@
     .declareAcquiredMethod('plugErrorAcquire',
                           'acquireMethodRequestedWithAcquisitionError')
     .declareMethod('callErrorAcquire', function (param1, param2) {
-      return this.plugErrorAcquire(param1, param2);
+      return this.plugErrorAcquire(param1, param2)
+        .push(undefined, function (error) {
+          if (error instanceof renderJS.AcquisitionError) {
+            throw error;
+          }
+          throw new Error(
+            'Expected AcquisitionError: ' + JSON.stringify(error)
+          );
+        });
     })
     .declareMethod('triggerMethodToCancel', function () {
       return new RSVP.Promise(function () {
@@ -121,6 +134,40 @@
     })
     .declareMethod('wasMethodCancelCalled', function () {
       return method_cancel_called;
+    })
+    .declareAcquiredMethod('acquireCancellationError',
+                          'acquireCancellationError')
+    .declareMethod('triggerAcquiredMethodToCancel', function () {
+      return this.acquireCancellationError()
+        .push(undefined, function (error) {
+          if (error instanceof RSVP.CancellationError) {
+            acquired_method_cancel_called = true;
+            throw error;
+          }
+          throw new Error(
+            'Expected CancellationError: ' + JSON.stringify(error)
+          );
+        });
+    })
+    .declareMethod('wasAcquiredMethodCancelCalled', function () {
+      return acquired_method_cancel_called;
+    })
+    .declareAcquiredMethod('acquiredStringError',
+                          'acquiredStringError')
+    .declareMethod('triggerAcquiredStringError',
+      function () {
+        return this.acquiredStringError();
+      })
+    .declareAcquiredMethod("acquiredManualCancellationError",
+                           "acquiredManualCancellationError")
+    .declareMethod('acquirePromiseToCancel',
+      function () {
+        return this.acquiredManualCancellationError();
+      })
+    .declareAcquiredMethod("isAcquiredMethodCancelCalled",
+                           "isAcquiredMethodCancelCalled")
+    .declareMethod('wasAcquiredMethodCancelCalledFromParent', function () {
+      return this.isAcquiredMethodCancelCalled();
     });
 
-}(window, rJS));
+}(window, rJS, RSVP));
