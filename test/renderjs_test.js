@@ -17,9 +17,10 @@
  * See COPYING file for full licensing terms.
  * See https://www.nexedi.com/licensing for rationale and options.
  */
+
 /*jslint nomen: true*/
 (function (document, renderJS, QUnit, sinon, URI, URL, Event,
-           MutationObserver) {
+           MutationObserver, RSVP) {
   "use strict";
   var test = QUnit.test,
     stop = QUnit.stop,
@@ -5661,13 +5662,16 @@
           );
         return "result correctly fetched from parent";
       }
+      if (method_name === "acquireCancellationError") {
+        throw new RSVP.CancellationError('Explicit cancellation');
+      }
       throw new renderJS.AcquisitionError("Can not handle " + method_name);
     };
 
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(25);
+    expect(28);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5843,7 +5847,7 @@
             ok(error instanceof renderJS.AcquisitionError, error);
           })
 
-          // cancel call is correctly propagated by declareMethod
+          // cancel is correctly propagated by declareMethod
           .push(function () {
             var method_to_cancel = new_gadget.triggerMethodToCancel();
             return new RSVP.Queue(RSVP.delay(400))
@@ -5859,7 +5863,19 @@
             return new_gadget.wasMethodCancelCalled();
           })
           .push(function (result) {
-            ok(result, 'Embedded method not cancelled');
+            ok(result, 'Embedded method not cancelled ' + result);
+          })
+
+          // cancel is correctly propagated by acquiredMethod
+          .push(function () {
+            return new_gadget.triggerAcquiredMethodToCancel();
+          })
+          .push(undefined, function (error) {
+            ok(error instanceof RSVP.CancellationError, error);
+            return new_gadget.wasAcquiredMethodCancelCalled();
+          })
+          .push(function (result) {
+            ok(result, 'Embedded acquired method not cancelled ' + result);
           });
       })
       .fail(function (error) {
@@ -6810,5 +6826,5 @@
   });
 
 }(document, renderJS, QUnit, sinon, URI, URL, Event,
-  MutationObserver));
+  MutationObserver, RSVP));
 
