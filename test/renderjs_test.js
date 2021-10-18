@@ -5667,7 +5667,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(23);
+    expect(25);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5846,6 +5846,25 @@
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
+          })
+
+          // cancel call is correctly propagated by declareMethod
+          .push(function () {
+            var method_to_cancel = new_gadget.triggerMethodToCancel();
+            return new RSVP.Queue(RSVP.delay(400))
+              .push(function () {
+                return RSVP.all([
+                  method_to_cancel,
+                  method_to_cancel.cancel()
+                ]);
+              });
+          })
+          .push(undefined, function (error) {
+            ok(error instanceof RSVP.CancellationError, error);
+            return new_gadget.wasMethodCancelCalled();
+          })
+          .push(function (result) {
+            ok(result, 'Embedded method not cancelled');
           });
       })
       .fail(function (error) {

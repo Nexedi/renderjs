@@ -1022,15 +1022,25 @@
       function handleChannelDeclareMethod(trans, method_name) {
         gadget_instance[method_name] = function triggerChannelDeclareMethod() {
           var argument_list = arguments,
+            channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
-                gadget_instance.__chan.call({
+                channel_call_id = gadget_instance.__chan.call({
                   method: "methodCall",
                   params: [
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
                   error: reject
+                });
+              },
+              function cancelChannelCall(msg) {
+                gadget_instance.__chan.notify({
+                  method: "cancelMethodCall",
+                  params: [
+                    channel_call_id,
+                    msg
+                  ]
                 });
               }
             );
@@ -1883,6 +1893,7 @@
 
   function finishAqParentConfiguration(TmpConstructor, root_gadget,
                                        embedded_channel) {
+    var local_transaction_dict = {};
     // Define __aq_parent to inform parent window
     root_gadget.__aq_parent =
       TmpConstructor.prototype.__aq_parent = function aq_parent(method_name,
@@ -1905,14 +1916,31 @@
       };
 
     // bind calls to renderJS method on the instance
-    embedded_channel.bind("methodCall", function methodCall(trans, v) {
-      root_gadget[v[0]].apply(root_gadget, v[1])
-        .push(trans.complete,
-          function handleMethodCallError(e) {
+    embedded_channel.bind("methodCall",
+                          function methodCall(trans, v, transaction_id) {
+        local_transaction_dict[transaction_id] =
+          root_gadget[v[0]].apply(root_gadget, v[1])
+            .push(function handleMethodCallSuccess() {
+            // drop the promise reference, to allow garbage collection
+            delete local_transaction_dict[transaction_id];
+            trans.complete.apply(trans, arguments);
+          }, function handleMethodCallError(e) {
+            // drop the promise reference, to allow garbage collection
+            delete local_transaction_dict[transaction_id];
             trans.error(e.toString());
           });
-      trans.delayReturn(true);
-    });
+        trans.delayReturn(true);
+      });
+
+    embedded_channel.bind("cancelMethodCall",
+                          function cancelMethodCall(trans, v) {
+        if (local_transaction_dict.hasOwnProperty(v[0])) {
+          local_transaction_dict[v[0]].cancel(v[1]);
+          // drop the promise reference, to allow garbage collection
+          delete local_transaction_dict[v[0]];
+        }
+      });
+
   }
 
   function bootstrap(url) {
