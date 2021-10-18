@@ -26,6 +26,7 @@
     service_started = false,
     job_started = false,
     event_started = false,
+    method_cancel_called = false,
     state_change_callback_called = false,
     state_change_count = 0,
     init_state = {bar: 'foo'},
@@ -110,6 +111,16 @@
                           'acquireMethodRequestedWithAcquisitionError')
     .declareMethod('callErrorAcquire', function (param1, param2) {
       return this.plugErrorAcquire(param1, param2);
+    })
+    .declareMethod('triggerMethodToCancel', function () {
+      return new RSVP.Promise(function () {
+        return;
+      }, function () {
+        method_cancel_called = true;
+      });
+    })
+    .declareMethod('wasMethodCancelCalled', function () {
+      return method_cancel_called;
     });
 
 }(window, rJS));
