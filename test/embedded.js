@@ -17,8 +17,9 @@
  * See COPYING file for full licensing terms.
  * See https://www.nexedi.com/licensing for rationale and options.
  */
+
 /*jslint nomen: true*/
-(function (window, rJS) {
+(function (window, rJS, RSVP) {
   "use strict";
 
   var gk = rJS(window),
@@ -27,6 +28,7 @@
     job_started = false,
     event_started = false,
     method_cancel_called = false,
+    acquired_method_cancel_called = false,
     state_change_callback_called = false,
     state_change_count = 0,
     init_state = {bar: 'foo'},
@@ -127,6 +129,21 @@
     })
     .declareMethod('wasMethodCancelCalled', function () {
       return method_cancel_called;
+    })
+    .declareAcquiredMethod('acquireCancellationError',
+                          'acquireCancellationError')
+    .declareMethod('triggerAcquiredMethodToCancel', function () {
+      return this.acquireCancellationError()
+        .push(undefined, function (error) {
+          if (error instanceof RSVP.CancellationError) {
+            acquired_method_cancel_called = true;
+            throw error;
+          }
+          throw new Error('Expected CancellationError: ' + error);
+        });
+    })
+    .declareMethod('wasAcquiredMethodCancelCalled', function () {
+      return acquired_method_cancel_called;
     });
 
-}(window, rJS));
+}(window, rJS, RSVP));
