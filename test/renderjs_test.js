@@ -5797,7 +5797,7 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            equal(e, "Error: Manually triggered embedded error");
+            equal(e.message, "Manually triggered embedded error");
           })
 
           // sub_gadget_dict private property is created
@@ -5844,9 +5844,11 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
-            ok(error instanceof renderJS.AcquisitionError, error);
+            ok(error.name, 'AcquisitionError');
+            ok(error.message,
+              "Can not handle " +
+              "acquireMethodRequestedWithAcquisitionError");
           })
-
           // cancel is correctly propagated by declareMethod
           .push(function () {
             var method_to_cancel = new_gadget.triggerMethodToCancel();
@@ -5985,7 +5987,7 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            equal(e, "Error: Manually triggered embedded error");
+            equal(e.message, "Manually triggered embedded error");
           })
 
           // sub_gadget_dict private property is created
@@ -6033,8 +6035,8 @@
           })
           .push(undefined, function (error) {
             equal(
-              error,
-              "AcquisitionError: Can not handle " +
+              error.message,
+              "Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
@@ -6132,7 +6134,7 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            equal(e, "Error: Manually triggered embedded error");
+            equal(e.message, "Manually triggered embedded error");
           })
 
           // sub_gadget_dict private property is created

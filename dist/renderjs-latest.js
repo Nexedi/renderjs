@@ -1779,7 +1779,7 @@ if (typeof document.contains !== 'function') {
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
-            trans.error(e.toString());
+            trans.error(e.toJSON());
           });
         trans.delayReturn(true);
       });
@@ -2627,7 +2627,7 @@ if (typeof document.contains !== 'function') {
       root_gadget[v[0]].apply(root_gadget, v[1])
         .push(trans.complete,
           function handleMethodCallError(e) {
-            trans.error(e.toString());
+            trans.error(e.toJSON());
           });
       trans.delayReturn(true);
     });
