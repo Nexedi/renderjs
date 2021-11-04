@@ -1032,6 +1032,21 @@
                   success: resolve,
                   error: reject
                 });
+              },
+              function () {
+                gadget_instance.__chan.call({
+                  method: "cancel",
+                  params: [
+                    method_name,
+                    Array.prototype.slice.call(argument_list, 0)
+                  ],
+                  success: function () {
+                    return;
+                  },
+                  error: function (e) {
+                    return;
+                  }
+                });
               }
             );
 
@@ -1912,6 +1927,9 @@
             trans.error(e.toJSON());
           });
       trans.delayReturn(true);
+    });
+    embedded_channel.bind("cancel", function cancel(trans) {
+      trans.cancel();
     });
   }
 
