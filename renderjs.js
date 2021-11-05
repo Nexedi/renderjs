@@ -1037,8 +1037,7 @@
                 gadget_instance.__chan.call({
                   method: "cancel",
                   params: [
-                    method_name,
-                    Array.prototype.slice.call(argument_list, 0)
+                    method_name
                   ],
                   success: function () {
                     return;
@@ -1068,6 +1067,12 @@
         iframe_loading_deferred.reject(params);
         return "OK";
       });
+    gadget_instance.__chan.bind("cancel",
+                                function handleChannelCancel(trans, params) {
+        iframe_loading_deferred.promise.cancel();
+        return "OK";
+      });
+
     gadget_instance.__chan.bind("acquire",
                                 function handleChannelAcquire(trans, params) {
         new RSVP.Queue()
@@ -1928,8 +1933,8 @@
           });
       trans.delayReturn(true);
     });
-    embedded_channel.bind("cancel", function cancel(trans) {
-      trans.cancel();
+    embedded_channel.bind("cancel", function cancel(trans, v) {
+      trans.cancel(v);
     });
   }
 
