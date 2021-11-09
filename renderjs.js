@@ -1063,6 +1063,12 @@
         iframe_loading_deferred.reject(params);
         return "OK";
       });
+    gadget_instance.__chan.bind("cancel",
+                                function handleChannelCancel(trans, params) {
+        iframe_loading_deferred.promise.cancel();
+        return "OK";
+      });
+
     gadget_instance.__chan.bind("acquire",
                                 function handleChannelAcquire(trans, params) {
         new RSVP.Queue()
@@ -1071,7 +1077,7 @@
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
-            trans.error(e.toString());
+            trans.error(e, e.message);
           });
         trans.delayReturn(true);
       });
@@ -1916,11 +1922,22 @@
       };
 
     // bind calls to renderJS method on the instance
-    embedded_channel.bind("methodCall", function methodCall(trans, v) {
-      root_gadget[v[0]].apply(root_gadget, v[1])
-        .push(trans.complete,
-          function handleMethodCallError(e) {
-            trans.error(e.toString());
+    embedded_channel.bind("methodCall",
+                          function methodCall(trans, v, transaction_id) {
+        transaction_dict[transaction_id] =
+          root_gadget[v[0]].apply(root_gadget, v[1])
+            .push(function handleMethodCallSuccess() {
+            // drop the promise reference, to allow garbage collection
+            delete transaction_dict[transaction_id];
+            trans.complete.apply(trans, arguments);
+          }, function handleMethodCallError(e) {
+            // drop the promise reference, to allow garbage collection
+            delete transaction_dict[transaction_id];
+            if (e.constructor === Object) {
+              trans.error(e, e.message);
+            } else {
+              trans.error(e, e.toString());
+            }
           });
         trans.delayReturn(true);
       });
