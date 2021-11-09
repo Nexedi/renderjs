@@ -1933,7 +1933,7 @@
           }, function handleMethodCallError(e) {
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
-            trans.error(e.toJSON());
+            trans.error(e.toString());
           });
         trans.delayReturn(true);
       });
