@@ -5671,7 +5671,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(29);
+    expect(30);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5844,7 +5844,8 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
-            ok(error, "AcquisitionError: Can not handle " +
+            equal(error.name, "AcquisitionError");
+            equal(error.message, "Can not handle " +
               "acquireMethodRequestedWithAcquisitionError");
           })
           // cancel is correctly propagated by declareMethod
@@ -6073,7 +6074,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(16);
+    expect(17);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -6180,9 +6181,10 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
+            equal(error.name, "AcquisitionError");
             equal(
-              error,
-              "AcquisitionError: Can not handle " +
+              error.message,
+              "Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
