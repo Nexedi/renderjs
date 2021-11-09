@@ -1071,7 +1071,7 @@
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
-            trans.error(e.toString());
+            trans.error(e, e.message);
           });
         trans.delayReturn(true);
       });
@@ -1927,7 +1927,11 @@
           }, function handleMethodCallError(e) {
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
-            trans.error(e.toString());
+            if (e.constructor === Object) {
+              trans.error(e, e.message);
+            } else {
+              trans.error(e, e.toString());
+            }
           });
         trans.delayReturn(true);
       });
