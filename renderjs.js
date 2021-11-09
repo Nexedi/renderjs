@@ -1063,11 +1063,6 @@
         iframe_loading_deferred.reject(params);
         return "OK";
       });
-    gadget_instance.__chan.bind("cancel",
-                                function handleChannelCancel(trans, params) {
-        iframe_loading_deferred.promise.cancel();
-        return "OK";
-      });
 
     gadget_instance.__chan.bind("acquire",
                                 function handleChannelAcquire(trans, params) {
