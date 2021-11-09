@@ -1022,15 +1022,25 @@
       function handleChannelDeclareMethod(trans, method_name) {
         gadget_instance[method_name] = function triggerChannelDeclareMethod() {
           var argument_list = arguments,
+            channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
-                gadget_instance.__chan.call({
+                channel_call_id = gadget_instance.__chan.call({
                   method: "methodCall",
                   params: [
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
                   error: reject
+                });
+              },
+              function cancelChannelCall(msg) {
+                gadget_instance.__chan.notify({
+                  method: "cancelMethodCall",
+                  params: [
+                    channel_call_id,
+                    msg
+                  ]
                 });
               }
             );
@@ -1883,6 +1893,7 @@
 
   function finishAqParentConfiguration(TmpConstructor, root_gadget,
                                        embedded_channel) {
+    var transaction_dict = {};
     // Define __aq_parent to inform parent window
     root_gadget.__aq_parent =
       TmpConstructor.prototype.__aq_parent = function aq_parent(method_name,
@@ -1911,8 +1922,16 @@
           function handleMethodCallError(e) {
             trans.error(e.toString());
           });
-      trans.delayReturn(true);
-    });
+        trans.delayReturn(true);
+      });
+
+    embedded_channel.bind("cancelMethodCall",
+                          function cancelMethodCall(trans, v) {
+        if (transaction_dict.hasOwnProperty(v[0])) {
+          transaction_dict[v[0]].cancel(v[1]);
+        }
+      });
+
   }
 
   function bootstrap(url) {
