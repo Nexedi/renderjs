@@ -5797,7 +5797,6 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            console.log(e);
             equal(e.message, "Manually triggered embedded error");
             ok(
               e.stack.indexOf(
