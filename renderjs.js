@@ -208,6 +208,7 @@
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
     error_list = [],
+    unhandled_error_type = 2,
     all_dependency_loaded_deferred;
 
   window.addEventListener('error', function handleGlobalError(error) {
@@ -255,6 +256,28 @@
       url = url.substring(0, index);
     }
     return url;
+  }
+
+  function getErrorTypeMapping() {
+    var error_type_mapping = {
+      0: renderJS.AcquisitionError,
+      1: RSVP.CancellationError
+    };
+    // set the unhandle error type to be used as default
+    error_type_mapping[unhandled_error_type] = Error;
+    return error_type_mapping;
+  }
+  function convertObjectToErrorType(error) {
+    var error_type,
+      error_type_mapping = getErrorTypeMapping();
+
+    for (error_type in error_type_mapping) {
+      if (error_type_mapping.hasOwnProperty(error_type) &&
+          error instanceof error_type_mapping[error_type]) {
+        return error_type;
+      }
+    }
+    return unhandled_error_type;
   }
 
   function letsCrash(e) {
@@ -1025,13 +1048,25 @@
             channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
+                function error_wrap(value) {
+                  var error_type_mapping = getErrorTypeMapping();
+
+                  if (value.hasOwnProperty("type") &&
+                      error_type_mapping.hasOwnProperty(value.type)) {
+                    return reject(new error_type_mapping[value.type](
+                      value.msg.message || value.msg
+                    ));
+                  }
+
+                  return reject(value);
+                }
                 channel_call_id = gadget_instance.__chan.call({
                   method: "methodCall",
                   params: [
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
-                  error: reject
+                  error: error_wrap
                 });
               },
               function cancelChannelCall(msg) {
@@ -1071,7 +1106,10 @@
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
-            trans.error(e.toString());
+            trans.error({
+              type: convertObjectToErrorType(e),
+              msg: e.toJSON()
+            }, e.toString());
           });
         trans.delayReturn(true);
       });
@@ -1894,6 +1932,7 @@
   function finishAqParentConfiguration(TmpConstructor, root_gadget,
                                        embedded_channel) {
     var transaction_dict = {};
+
     // Define __aq_parent to inform parent window
     root_gadget.__aq_parent =
       TmpConstructor.prototype.__aq_parent = function aq_parent(method_name,
@@ -1901,6 +1940,17 @@
                                                                 time_out) {
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
+            function error_wrap(value) {
+              var error_type_mapping = getErrorTypeMapping();
+              if (value.hasOwnProperty("type") &&
+                  error_type_mapping.hasOwnProperty(value.type)) {
+                value = new error_type_mapping[value.type](
+                  value.msg.message
+                );
+              }
+              return reject(value);
+            }
+
             embedded_channel.call({
               method: "acquire",
               params: [
@@ -1908,7 +1958,7 @@
                 argument_list
               ],
               success: resolve,
-              error: reject,
+              error: error_wrap,
               timeout: time_out
             });
           }
@@ -1925,9 +1975,26 @@
             delete transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
+            var error;
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
-            trans.error(e.toString());
+            if (e instanceof renderJS.AcquisitionError) {
+              error = {
+                type: 0,
+                msg: e.toJSON()
+              };
+            } else if (e instanceof RSVP.CancellationError) {
+              error = {
+                type: 1,
+                msg: e.toString()
+              };
+            } else {
+              error = {
+                type: 2,
+                msg: e.message
+              };
+            }
+            trans.error(error, e.message);
           });
         trans.delayReturn(true);
       });
