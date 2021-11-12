@@ -117,7 +117,9 @@
           if (error instanceof renderJS.AcquisitionError) {
             throw error;
           }
-          throw new Error('Expected AcquisitionError: ' + error);
+          throw new Error(
+            'Expected AcquisitionError: ' + JSON.stringify(error)
+          );
         });
     })
     .declareMethod('triggerMethodToCancel', function () {
@@ -139,7 +141,9 @@
             acquired_method_cancel_called = true;
             throw error;
           }
-          throw new Error('Expected CancellationError: ' + error);
+          throw new Error(
+            'Expected CancellationError: ' + JSON.stringify(error)
+          );
         });
     })
     .declareMethod('wasAcquiredMethodCancelCalled', function () {
