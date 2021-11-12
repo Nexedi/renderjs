@@ -114,7 +114,7 @@
     .declareMethod('callErrorAcquire', function (param1, param2) {
       return this.plugErrorAcquire(param1, param2)
         .push(undefined, function (error) {
-          if (error instanceof renderJS.AcquisitionError) {
+          if (error.name === "AcquisitionError") {
             throw error;
           }
           throw new Error('Expected AcquisitionError: ' + error);
@@ -135,7 +135,7 @@
     .declareMethod('triggerAcquiredMethodToCancel', function () {
       return this.acquireCancellationError()
         .push(undefined, function (error) {
-          if (error instanceof RSVP.CancellationError) {
+          if (error.name === "cancel") {
             acquired_method_cancel_called = true;
             throw error;
           }
