@@ -1025,18 +1025,13 @@
             channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
-                function wrap(value) {
+                function error_wrap(value) {
                   var error_type_mapping = {
                     0: renderJS.AcquisitionError,
                     1: RSVP.CancellationError,
                     2: Error
                   };
 
-                  if (value.name === "AcquisitionError") {
-                    return reject(
-                      new renderJS.AcquisitionError(value.message)
-                    );
-                  }
                   if (value.hasOwnProperty("type") &&
                       error_type_mapping.hasOwnProperty(value.type)) {
                     return reject(new error_type_mapping[value.type](
@@ -1052,7 +1047,7 @@
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
-                  error: wrap
+                  error: error_wrap
                 });
               },
               function cancelChannelCall(msg) {
