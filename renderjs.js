@@ -1975,24 +1975,19 @@
             delete transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
-            var error;
+            var error_type = convertObjectToErrorType(e),
+              error = {
+                type: error_type
+              };
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
-            if (e instanceof renderJS.AcquisitionError) {
-              error = {
-                type: 0,
-                msg: e.toJSON()
-              };
-            } else if (e instanceof RSVP.CancellationError) {
-              error = {
-                type: 1,
-                msg: e.toString()
-              };
+
+            if (error_type === 0) {
+              error.msg = e.toJSON();
+            } else if (error_type === 1) {
+              error.msg = e.toString();
             } else {
-              error = {
-                type: 2,
-                msg: e.message
-              };
+              error.msg = e.message;
             }
             trans.error(error, e.message);
           });
