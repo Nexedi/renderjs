@@ -208,6 +208,7 @@
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
     error_list = [],
+    unhandled_error_type = 2,
     all_dependency_loaded_deferred;
 
   window.addEventListener('error', function handleGlobalError(error) {
@@ -255,6 +256,28 @@
       url = url.substring(0, index);
     }
     return url;
+  }
+
+  function getErrorTypeMapping() {
+    var error_type_mapping = {
+      0: renderJS.AcquisitionError,
+      1: RSVP.CancellationError
+    };
+    // set the unhandle error type to be used as default
+    error_type_mapping[unhandled_error_type] = Error;
+    return error_type_mapping;
+  }
+  function convertObjectToErrorType(error) {
+    var error_type,
+      error_type_mapping = getErrorTypeMapping();
+
+    for (error_type in error_type_mapping) {
+      if (error_type_mapping.hasOwnProperty(error_type) &&
+          error instanceof error_type_mapping[error_type]) {
+        return error_type;
+      }
+    }
+    return unhandled_error_type;
   }
 
   function letsCrash(e) {
@@ -1026,11 +1049,7 @@
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
                 function error_wrap(value) {
-                  var error_type_mapping = {
-                    0: renderJS.AcquisitionError,
-                    1: RSVP.CancellationError,
-                    2: Error
-                  };
+                  var error_type_mapping = getErrorTypeMapping();
 
                   if (value.hasOwnProperty("type") &&
                       error_type_mapping.hasOwnProperty(value.type)) {
@@ -1087,16 +1106,8 @@
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
-            var error_type;
-            if (e instanceof renderJS.AcquisitionError) {
-              error_type = 0;
-            } else if (e instanceof RSVP.CancellationError) {
-              error_type = 1;
-            } else {
-              error_type = 2;
-            }
             trans.error({
-              type: error_type,
+              type: convertObjectToErrorType(e),
               msg: e.toJSON()
             }, e.toString());
           });
@@ -1930,11 +1941,7 @@
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
             function error_wrap(value) {
-              var error_type_mapping = {
-                0: renderJS.AcquisitionError,
-                1: RSVP.CancellationError
-              };
-
+              var error_type_mapping = getErrorTypeMapping();
               if (value.hasOwnProperty("type") &&
                   error_type_mapping.hasOwnProperty(value.type)) {
                 value = new error_type_mapping[value.type](
