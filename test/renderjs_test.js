@@ -5671,7 +5671,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(28);
+    expect(29);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5797,7 +5797,11 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            equal(e.toString(), "Error: Manually triggered embedded error");
+            ok(e instanceof renderJS.IframeSerializationError);
+            equal(
+              e.toString(),
+              "IframeSerializationError: Manually triggered embedded error"
+            );
           })
 
           // sub_gadget_dict private property is created
@@ -5988,8 +5992,11 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            ok(e instanceof Error);
-            equal(e.toString(), "Error: Manually triggered embedded error");
+            ok(e instanceof renderJS.IframeSerializationError);
+            equal(
+              e.toString(),
+              "IframeSerializationError: Manually triggered embedded error"
+            );
           })
 
           // sub_gadget_dict private property is created
@@ -6142,8 +6149,11 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            ok(e instanceof Error);
-            equal(e.toString(), "Error: Manually triggered embedded error");
+            ok(e instanceof renderJS.IframeSerializationError);
+            equal(
+              e.toString(),
+              "IframeSerializationError: Manually triggered embedded error"
+            );
           })
 
           // sub_gadget_dict private property is created

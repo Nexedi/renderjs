@@ -61,6 +61,19 @@
   ScopeError.prototype = new Error();
   ScopeError.prototype.constructor = ScopeError;
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.IframeSerializationError
+  /////////////////////////////////////////////////////////////////
+  function IframeSerializationError(message) {
+    this.name = "IframeSerializationError";
+    if ((message !== undefined) && (typeof message !== "string")) {
+      throw new TypeError('You must pass a string.');
+    }
+    this.message = message || "IframeSerialization Error";
+  }
+  IframeSerializationError.prototype = new Error();
+  IframeSerializationError.prototype.constructor = IframeSerializationError;
+
   function ensurePushableQueue(callback, argument_list, context) {
     var result;
     try {
@@ -264,7 +277,7 @@
       1: RSVP.CancellationError
     };
     // set the unhandle error type to be used as default
-    error_type_mapping[unhandled_error_type] = Error;
+    error_type_mapping[unhandled_error_type] = IframeSerializationError;
     return error_type_mapping;
   }
   function convertObjectToErrorType(error) {
@@ -1633,6 +1646,7 @@
   /////////////////////////////////////////////////////////////////
   renderJS.Mutex = Mutex;
   renderJS.ScopeError = ScopeError;
+  renderJS.IframeSerializationError = IframeSerializationError;
   renderJS.loopEventListener = loopEventListener;
   window.rJS = window.renderJS = renderJS;
   window.__RenderJSGadget = RenderJSGadget;
