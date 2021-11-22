@@ -5671,7 +5671,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(28);
+    expect(29);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5797,7 +5797,11 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            equal(e, "Error: Manually triggered embedded error");
+            ok(e instanceof renderJS.IframeSerializationError);
+            equal(
+              e.toString(),
+              "IframeSerializationError: Manually triggered embedded error"
+            );
           })
 
           // sub_gadget_dict private property is created
@@ -5844,7 +5848,10 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
-            ok(error instanceof renderJS.AcquisitionError, error);
+            ok(
+              error instanceof renderJS.AcquisitionError,
+              JSON.stringify(error)
+            );
           })
 
           // cancel is correctly propagated by declareMethod
@@ -5871,7 +5878,7 @@
             return new_gadget.triggerAcquiredMethodToCancel();
           })
           .push(undefined, function (error) {
-            ok(error instanceof RSVP.CancellationError, error);
+            ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
             return new_gadget.wasAcquiredMethodCancelCalled();
           })
           .push(function (result) {
@@ -5925,7 +5932,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(16);
+    expect(19);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -5985,7 +5992,11 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            equal(e, "Error: Manually triggered embedded error");
+            ok(e instanceof renderJS.IframeSerializationError);
+            equal(
+              e.toString(),
+              "IframeSerializationError: Manually triggered embedded error"
+            );
           })
 
           // sub_gadget_dict private property is created
@@ -6032,10 +6043,16 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
+            ok(error instanceof renderJS.AcquisitionError);
             equal(
-              error,
+              error.toString(),
               "AcquisitionError: Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
+              error
+            );
+            equal(
+              error.name,
+              "AcquisitionError",
               error
             );
           });
@@ -6072,7 +6089,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(16);
+    expect(19);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -6132,7 +6149,11 @@
           .push(function () {
             ok(false, "triggerError should fail");
           }, function (e) {
-            equal(e, "Error: Manually triggered embedded error");
+            ok(e instanceof renderJS.IframeSerializationError);
+            equal(
+              e.toString(),
+              "IframeSerializationError: Manually triggered embedded error"
+            );
           })
 
           // sub_gadget_dict private property is created
@@ -6179,10 +6200,16 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
+            ok(error instanceof renderJS.AcquisitionError, error);
             equal(
-              error,
+              error.toString(),
               "AcquisitionError: Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
+              error
+            );
+            equal(
+              error.name,
+              "AcquisitionError",
               error
             );
           });

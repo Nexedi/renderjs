@@ -61,6 +61,19 @@
   ScopeError.prototype = new Error();
   ScopeError.prototype.constructor = ScopeError;
 
+  /////////////////////////////////////////////////////////////////
+  // renderJS.IframeSerializationError
+  /////////////////////////////////////////////////////////////////
+  function IframeSerializationError(message) {
+    this.name = "IframeSerializationError";
+    if ((message !== undefined) && (typeof message !== "string")) {
+      throw new TypeError('You must pass a string.');
+    }
+    this.message = message || "IframeSerialization Error";
+  }
+  IframeSerializationError.prototype = new Error();
+  IframeSerializationError.prototype.constructor = IframeSerializationError;
+
   function ensurePushableQueue(callback, argument_list, context) {
     var result;
     try {
@@ -208,6 +221,7 @@
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
     error_list = [],
+    unhandled_error_type = 2,
     all_dependency_loaded_deferred;
 
   window.addEventListener('error', function handleGlobalError(error) {
@@ -255,6 +269,28 @@
       url = url.substring(0, index);
     }
     return url;
+  }
+
+  function getErrorTypeMapping() {
+    var error_type_mapping = {
+      0: renderJS.AcquisitionError,
+      1: RSVP.CancellationError
+    };
+    // set the unhandle error type to be used as default
+    error_type_mapping[unhandled_error_type] = IframeSerializationError;
+    return error_type_mapping;
+  }
+  function convertObjectToErrorType(error) {
+    var error_type,
+      error_type_mapping = getErrorTypeMapping();
+
+    for (error_type in error_type_mapping) {
+      if (error_type_mapping.hasOwnProperty(error_type) &&
+          error instanceof error_type_mapping[error_type]) {
+        return error_type;
+      }
+    }
+    return unhandled_error_type;
   }
 
   function letsCrash(e) {
@@ -1025,13 +1061,25 @@
             channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
+                function error_wrap(value) {
+                  var error_type_mapping = getErrorTypeMapping();
+
+                  if (value.hasOwnProperty("type") &&
+                      error_type_mapping.hasOwnProperty(value.type)) {
+                    return reject(new error_type_mapping[value.type](
+                      value.msg
+                    ));
+                  }
+
+                  return reject(value);
+                }
                 channel_call_id = gadget_instance.__chan.call({
                   method: "methodCall",
                   params: [
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
-                  error: reject
+                  error: error_wrap
                 });
               },
               function cancelChannelCall(msg) {
@@ -1071,7 +1119,10 @@
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
-            trans.error(e.toString());
+            trans.error({
+              type: convertObjectToErrorType(e),
+              msg: e.message
+            });
           });
         trans.delayReturn(true);
       });
@@ -1595,6 +1646,7 @@
   /////////////////////////////////////////////////////////////////
   renderJS.Mutex = Mutex;
   renderJS.ScopeError = ScopeError;
+  renderJS.IframeSerializationError = IframeSerializationError;
   renderJS.loopEventListener = loopEventListener;
   window.rJS = window.renderJS = renderJS;
   window.__RenderJSGadget = RenderJSGadget;
@@ -1901,6 +1953,17 @@
                                                                 time_out) {
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
+            function error_wrap(value) {
+              var error_type_mapping = getErrorTypeMapping();
+              if (value.hasOwnProperty("type") &&
+                  error_type_mapping.hasOwnProperty(value.type)) {
+                value = new error_type_mapping[value.type](
+                  value.msg
+                );
+              }
+              return reject(value);
+            }
+
             embedded_channel.call({
               method: "acquire",
               params: [
@@ -1908,7 +1971,7 @@
                 argument_list
               ],
               success: resolve,
-              error: reject,
+              error: error_wrap,
               timeout: time_out
             });
           }
@@ -1925,9 +1988,13 @@
             delete transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
+            var error = {
+                type: convertObjectToErrorType(e),
+                msg: e.message
+              };
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
-            trans.error(e.toString());
+            trans.error(error);
           });
         trans.delayReturn(true);
       });
