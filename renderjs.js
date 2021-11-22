@@ -1054,7 +1054,7 @@
                   if (value.hasOwnProperty("type") &&
                       error_type_mapping.hasOwnProperty(value.type)) {
                     return reject(new error_type_mapping[value.type](
-                      value.msg.message || value.msg
+                      value.msg
                     ));
                   }
 
@@ -1108,8 +1108,8 @@
           .fail(function handleChannelAcquireError(e) {
             trans.error({
               type: convertObjectToErrorType(e),
-              msg: e.toJSON()
-            }, e.toString());
+              msg: e.message
+            });
           });
         trans.delayReturn(true);
       });
@@ -1945,7 +1945,7 @@
               if (value.hasOwnProperty("type") &&
                   error_type_mapping.hasOwnProperty(value.type)) {
                 value = new error_type_mapping[value.type](
-                  value.msg.message
+                  value.msg
                 );
               }
               return reject(value);
@@ -1980,7 +1980,7 @@
                 msg: e.message
               };
             // drop the promise reference, to allow garbage collection
-            delete transaction_dict[transaction_id];s
+            delete transaction_dict[transaction_id];
             trans.error(error);
           });
         trans.delayReturn(true);

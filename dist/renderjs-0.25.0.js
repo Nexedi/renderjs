@@ -379,12 +379,12 @@
                                     obj[pathItems[pathItems.length - 1]] = (function() {
                                         var cbName = path;
                                         return function(params) {
-                                            return trans.invoke(cbName, params);
+                                            return trans.invoke(cbName, params, m.id);
                                         };
                                     })();
                                 }
                             }
-                            var resp = regTbl[method](trans, m.params);
+                            var resp = regTbl[method](trans, m.params, m.id);
                             if (!trans.delayReturn() && !trans.completed()) trans.complete(resp);
                         } catch(e) {
                             // automagic handling of exceptions:
@@ -580,6 +580,8 @@
                     s_curTranId++;
 
                     postMessage(msg);
+                    // return the transaction id
+                    return s_curTranId - 1;
                 },
                 notify: function(m) {
                     if (!m) throw 'missing arguments to notify function';
@@ -926,6 +928,7 @@ if (typeof document.contains !== 'function') {
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
     error_list = [],
+    unhandled_error_type = 2,
     all_dependency_loaded_deferred;
 
   window.addEventListener('error', function handleGlobalError(error) {
@@ -973,6 +976,28 @@ if (typeof document.contains !== 'function') {
       url = url.substring(0, index);
     }
     return url;
+  }
+
+  function getErrorTypeMapping() {
+    var error_type_mapping = {
+      0: renderJS.AcquisitionError,
+      1: RSVP.CancellationError
+    };
+    // set the unhandle error type to be used as default
+    error_type_mapping[unhandled_error_type] = Error;
+    return error_type_mapping;
+  }
+  function convertObjectToErrorType(error) {
+    var error_type,
+      error_type_mapping = getErrorTypeMapping();
+
+    for (error_type in error_type_mapping) {
+      if (error_type_mapping.hasOwnProperty(error_type) &&
+          error instanceof error_type_mapping[error_type]) {
+        return error_type;
+      }
+    }
+    return unhandled_error_type;
   }
 
   function letsCrash(e) {
@@ -1740,15 +1765,37 @@ if (typeof document.contains !== 'function') {
       function handleChannelDeclareMethod(trans, method_name) {
         gadget_instance[method_name] = function triggerChannelDeclareMethod() {
           var argument_list = arguments,
+            channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
-                gadget_instance.__chan.call({
+                function error_wrap(value) {
+                  var error_type_mapping = getErrorTypeMapping();
+
+                  if (value.hasOwnProperty("type") &&
+                      error_type_mapping.hasOwnProperty(value.type)) {
+                    return reject(new error_type_mapping[value.type](
+                      value.msg
+                    ));
+                  }
+
+                  return reject(value);
+                }
+                channel_call_id = gadget_instance.__chan.call({
                   method: "methodCall",
                   params: [
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
-                  error: reject
+                  error: error_wrap
+                });
+              },
+              function cancelChannelCall(msg) {
+                gadget_instance.__chan.notify({
+                  method: "cancelMethodCall",
+                  params: [
+                    channel_call_id,
+                    msg
+                  ]
                 });
               }
             );
@@ -1779,7 +1826,10 @@ if (typeof document.contains !== 'function') {
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
-            trans.error(e.toString());
+            trans.error({
+              type: convertObjectToErrorType(e),
+              msg: e.message
+            });
           });
         trans.delayReturn(true);
       });
@@ -2601,6 +2651,8 @@ if (typeof document.contains !== 'function') {
 
   function finishAqParentConfiguration(TmpConstructor, root_gadget,
                                        embedded_channel) {
+    var transaction_dict = {};
+
     // Define __aq_parent to inform parent window
     root_gadget.__aq_parent =
       TmpConstructor.prototype.__aq_parent = function aq_parent(method_name,
@@ -2608,6 +2660,18 @@ if (typeof document.contains !== 'function') {
                                                                 time_out) {
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
+            function error_wrap(value) {
+              var error_type_mapping = getErrorTypeMapping();
+              if (value.hasOwnProperty("type") &&
+                  error_type_mapping.hasOwnProperty(value.type)) {
+                console.log(value);
+                value = new error_type_mapping[value.type](
+                  value.msg
+                );
+              }
+              return reject(value);
+            }
+
             embedded_channel.call({
               method: "acquire",
               params: [
@@ -2615,7 +2679,7 @@ if (typeof document.contains !== 'function') {
                 argument_list
               ],
               success: resolve,
-              error: reject,
+              error: error_wrap,
               timeout: time_out
             });
           }
@@ -2623,14 +2687,33 @@ if (typeof document.contains !== 'function') {
       };
 
     // bind calls to renderJS method on the instance
-    embedded_channel.bind("methodCall", function methodCall(trans, v) {
-      root_gadget[v[0]].apply(root_gadget, v[1])
-        .push(trans.complete,
-          function handleMethodCallError(e) {
-            trans.error(e.toString());
+    embedded_channel.bind("methodCall",
+                          function methodCall(trans, v, transaction_id) {
+        transaction_dict[transaction_id] =
+          root_gadget[v[0]].apply(root_gadget, v[1])
+            .push(function handleMethodCallSuccess() {
+            // drop the promise reference, to allow garbage collection
+            delete transaction_dict[transaction_id];
+            trans.complete.apply(trans, arguments);
+          }, function handleMethodCallError(e) {
+            var error = {
+                type: convertObjectToErrorType(e),
+                msg: e.message
+              };
+            // drop the promise reference, to allow garbage collection
+            delete transaction_dict[transaction_id];
+            trans.error(error);
           });
-      trans.delayReturn(true);
-    });
+        trans.delayReturn(true);
+      });
+
+    embedded_channel.bind("cancelMethodCall",
+                          function cancelMethodCall(trans, v) {
+        if (transaction_dict.hasOwnProperty(v[0])) {
+          transaction_dict[v[0]].cancel(v[1]);
+        }
+      });
+
   }
 
   function bootstrap(url) {

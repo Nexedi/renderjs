@@ -5928,7 +5928,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(18);
+    expect(19);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -6036,9 +6036,10 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
+            ok(error instanceof renderJS.AcquisitionError);
             equal(
-              error.message,
-              "Can not handle " +
+              error.toString(),
+              "AcquisitionError: Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
@@ -6081,7 +6082,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(18);
+    expect(19);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -6189,9 +6190,10 @@
             ok(false, result);
           })
           .push(undefined, function (error) {
+            ok(error instanceof renderJS.AcquisitionError, error);
             equal(
-              error.message,
-              "Can not handle " +
+              error.toString(),
+              "AcquisitionError: Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
