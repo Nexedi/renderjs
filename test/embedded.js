@@ -99,6 +99,9 @@
     .declareMethod('triggerError', function (value) {
       throw new Error("Manually triggered embedded error");
     })
+    .declareMethod('triggerStringError', function (value) {
+      throw "Manually triggered embedded error as string";
+    })
     .declareMethod('setContent', function (value) {
       this.embedded_property = value;
     })
@@ -117,7 +120,9 @@
           if (error instanceof renderJS.AcquisitionError) {
             throw error;
           }
-          throw new Error('Expected AcquisitionError: ' + error);
+          throw new Error(
+            'Expected AcquisitionError: ' + JSON.stringify(error)
+          );
         });
     })
     .declareMethod('triggerMethodToCancel', function () {
@@ -139,11 +144,34 @@
             acquired_method_cancel_called = true;
             throw error;
           }
-          throw new Error('Expected CancellationError: ' + error);
+          throw new Error(
+            'Expected CancellationError: ' + JSON.stringify(error)
+          );
         });
     })
+    .declareAcquiredMethod('acquiredStringError',
+                          'acquiredStringError')
+    .declareMethod('triggerAcquiredStringError',
+      function () {
+        return this.acquiredStringError();
+      })
+    .declareAcquiredMethod("acquireManualCancellationError",
+                           "acquireMethodRequested")
+    .declareMethod('triggerAcquiredMethodToCancelManually',
+      function (param1, param2) {
+        var gadget = this;
+        return new RSVP.Promise(function () {
+          return gadget.acquireManualCancellationError(param1, param2);
+        }, function () {
+          acquired_method_cancel_called = true;
+        });
+      })
     .declareMethod('wasAcquiredMethodCancelCalled', function () {
       return acquired_method_cancel_called;
+    })
+    .declareMethod('resetAcquiredMethodCancelCalled', function () {
+      acquired_method_cancel_called = false;
+      return "OK";
     });
 
 }(window, rJS, RSVP));
