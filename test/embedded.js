@@ -146,8 +146,18 @@
           );
         });
     })
+    .declareAcquiredMethod("acquireManualCancellationError",
+                           "acquireMethodRequested")
+    .declareMethod('triggerAcquiredMethodToCancelManually',
+      function (param1, param2) {
+        return this.acquireManualCancellationError(param1, param2);
+      })
     .declareMethod('wasAcquiredMethodCancelCalled', function () {
       return acquired_method_cancel_called;
+    })
+    .declareMethod('resetAcquiredMethodCancelCalled', function () {
+      acquired_method_cancel_called = false;
+      return "OK";
     });
 
 }(window, rJS, RSVP));
