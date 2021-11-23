@@ -146,8 +146,23 @@
           );
         });
     })
+    .declareAcquiredMethod("acquireManualCancellationError",
+                           "acquireMethodRequested")
+    .declareMethod('triggerAcquiredMethodToCancelManually',
+      function (param1, param2) {
+        var gadget = this;
+        return new RSVP.Promise(function () {
+          return gadget.acquireManualCancellationError(param1, param2);
+        }, function () {
+          acquired_method_cancel_called = true;
+        });
+      })
     .declareMethod('wasAcquiredMethodCancelCalled', function () {
       return acquired_method_cancel_called;
+    })
+    .declareMethod('resetAcquiredMethodCancelCalled', function () {
+      acquired_method_cancel_called = false;
+      return "OK";
     });
 
 }(window, rJS, RSVP));
