@@ -5671,7 +5671,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(29);
+    expect(33);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5883,6 +5883,31 @@
           })
           .push(function (result) {
             ok(result, 'Embedded acquired method not cancelled ' + result);
+          })
+          .push(function () {
+            return new_gadget.resetAcquiredMethodCancelCalled();
+          })
+          .push(function (result) {
+            return new_gadget.wasAcquiredMethodCancelCalled();
+          })
+          .push(function (result) {
+            ok(!result, result);
+          })
+
+          // cancellation of a acquiredMethod call
+          .push(function () {
+            var method_to_cancel = new_gadget.triggerAcquiredMethodToCancel();
+            return new RSVP.Queue(RSVP.delay(400))
+              .push(function () {
+                return RSVP.all([
+                  method_to_cancel,
+                  method_to_cancel.cancel()
+                ]);
+              });
+          })
+          .push(undefined, function (error) {
+            ok(error instanceof RSVP.CancellationError);
+            equal(error.message, 'Explicit cancellation', error);
           });
       })
       .fail(function (error) {

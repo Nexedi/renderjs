@@ -148,6 +148,10 @@
     })
     .declareMethod('wasAcquiredMethodCancelCalled', function () {
       return acquired_method_cancel_called;
+    })
+    .declareMethod('resetAcquiredMethodCancelCalled', function () {
+      acquired_method_cancel_called = false;
+      return "OK";
     });
 
 }(window, rJS, RSVP));

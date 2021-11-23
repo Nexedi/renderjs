@@ -1063,7 +1063,6 @@
               function handleChannelCall(resolve, reject) {
                 function error_wrap(value) {
                   var error_type_mapping = getErrorTypeMapping();
-
                   if (value.hasOwnProperty("type") &&
                       error_type_mapping.hasOwnProperty(value.type)) {
                     return reject(new error_type_mapping[value.type](
@@ -1988,13 +1987,12 @@
             delete transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
-            var error = {
-                type: convertObjectToErrorType(e),
-                msg: e.message
-              };
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
-            trans.error(error);
+            trans.error({
+              type: convertObjectToErrorType(e),
+              msg: e.message
+            });
           });
         trans.delayReturn(true);
       });
