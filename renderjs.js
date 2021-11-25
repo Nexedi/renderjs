@@ -69,7 +69,7 @@
     if ((message !== undefined) && (typeof message !== "string")) {
       throw new TypeError('You must pass a string.');
     }
-    this.message = message || "IframeSerialization Error";
+    this.message = message || "Parameter serialization failed";
   }
   IframeSerializationError.prototype = new Error();
   IframeSerializationError.prototype.constructor = IframeSerializationError;
