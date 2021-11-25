@@ -293,6 +293,17 @@
     return unhandled_error_type;
   }
 
+  function rejectErrorType(value, reject) {
+    var error_type_mapping = getErrorTypeMapping();
+    if (value.hasOwnProperty("type") &&
+        error_type_mapping.hasOwnProperty(value.type)) {
+      value = new error_type_mapping[value.type](
+        value.msg
+      );
+    }
+    return reject(value);
+  }
+
   function letsCrash(e) {
     var i,
       body,
@@ -1062,16 +1073,9 @@
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
                 function error_wrap(value) {
-                  var error_type_mapping = getErrorTypeMapping();
-                  if (value.hasOwnProperty("type") &&
-                      error_type_mapping.hasOwnProperty(value.type)) {
-                    return reject(new error_type_mapping[value.type](
-                      value.msg
-                    ));
-                  }
-
-                  return reject(value);
+                  return rejectErrorType(value, reject);
                 }
+
                 channel_call_id = gadget_instance.__chan.call({
                   method: "methodCall",
                   params: [
@@ -1953,14 +1957,7 @@
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
             function error_wrap(value) {
-              var error_type_mapping = getErrorTypeMapping();
-              if (value.hasOwnProperty("type") &&
-                  error_type_mapping.hasOwnProperty(value.type)) {
-                value = new error_type_mapping[value.type](
-                  value.msg
-                );
-              }
-              return reject(value);
+              return rejectErrorType(value, reject);
             }
 
             embedded_channel.call({
