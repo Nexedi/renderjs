@@ -273,8 +273,8 @@
 
   function getErrorTypeMapping() {
     var error_type_mapping = {
-      0: renderJS.AcquisitionError,
-      1: RSVP.CancellationError
+      1: renderJS.AcquisitionError,
+      2: RSVP.CancellationError
     };
     // set the unhandle error type to be used as default
     error_type_mapping[unhandled_error_type] = IframeSerializationError;
