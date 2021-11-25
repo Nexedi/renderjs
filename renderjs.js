@@ -221,7 +221,7 @@
     isAbsoluteOrDataURL = new RegExp('^(?:[a-z]+:)?//|data:', 'i'),
     is_page_unloaded = false,
     error_list = [],
-    unhandled_error_type = 2,
+    unhandled_error_type = 0,
     all_dependency_loaded_deferred;
 
   window.addEventListener('error', function handleGlobalError(error) {
