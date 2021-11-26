@@ -99,6 +99,9 @@
     .declareMethod('triggerError', function (value) {
       throw new Error("Manually triggered embedded error");
     })
+    .declareMethod('triggerStringError', function (value) {
+      throw "Manually triggered embedded error as string";
+    })
     .declareMethod('setContent', function (value) {
       this.embedded_property = value;
     })
@@ -146,6 +149,12 @@
           );
         });
     })
+    .declareAcquiredMethod('acquiredStringError',
+                          'acquiredStringError')
+    .declareMethod('triggerAcquiredStringError',
+      function () {
+        return this.acquiredStringError();
+      })
     .declareAcquiredMethod("acquireManualCancellationError",
                            "acquireMethodRequested")
     .declareMethod('triggerAcquiredMethodToCancelManually',

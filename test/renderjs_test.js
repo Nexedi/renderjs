@@ -5665,13 +5665,16 @@
       if (method_name === "acquireCancellationError") {
         throw new RSVP.CancellationError('Explicit cancellation');
       }
+      if (method_name === "acquiredStringError") {
+        throw "String Error";
+      }
       throw new renderJS.AcquisitionError("Can not handle " + method_name);
     };
 
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(35);
+    expect(39);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5804,6 +5807,20 @@
             );
           })
 
+          .push(function () {
+            return new_gadget.triggerStringError();
+          })
+          .push(function () {
+            ok(false, "triggerStringError should fail");
+          }, function (e) {
+            ok(e instanceof renderJS.IframeSerializationError);
+            equal(
+              e.toString(),
+              "IframeSerializationError: " +
+                "Manually triggered embedded error as string"
+            );
+          })
+
           // sub_gadget_dict private property is created
           .push(function () {
             return new_gadget.isSubGadgetDictInitialize();
@@ -5915,6 +5932,15 @@
           })
           .push(function (result) {
             ok(result, 'Embedded acquired method not cancelled ' + result);
+          })
+          .push(function () {
+            return new_gadget.triggerAcquiredStringError();
+          })
+          .push(undefined, function (error) {
+            ok(
+              error instanceof renderJS.IframeSerializationError,
+              JSON.stringify(error)
+            );
           });
       })
       .fail(function (error) {

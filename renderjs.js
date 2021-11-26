@@ -1122,9 +1122,10 @@
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
+            var message = e instanceof Error ? e.message : e;
             trans.error({
               type: convertObjectToErrorType(e),
-              msg: e.message
+              msg: message
             });
           });
         trans.delayReturn(true);
@@ -1984,11 +1985,12 @@
             delete transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
+            var message = e instanceof Error ? e.message : e;
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
             trans.error({
               type: convertObjectToErrorType(e),
-              msg: e.message
+              msg: message
             });
           });
         trans.delayReturn(true);
