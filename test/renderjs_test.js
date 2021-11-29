@@ -5674,7 +5674,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(39);
+    expect(44);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5869,6 +5869,12 @@
               error instanceof renderJS.AcquisitionError,
               JSON.stringify(error)
             );
+            equal(
+              error.toString(),
+              "AcquisitionError: Can not handle " +
+                "acquireMethodRequestedWithAcquisitionError",
+              error
+            );
           })
 
           // cancel is correctly propagated by declareMethod
@@ -5884,6 +5890,7 @@
           })
           .push(undefined, function (error) {
             ok(error instanceof RSVP.CancellationError, error);
+            equal(error.toString(), "cancel: Default Message");
             return new_gadget.wasMethodCancelCalled();
           })
           .push(function (result) {
@@ -5896,6 +5903,7 @@
           })
           .push(undefined, function (error) {
             ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
+            equal(error.toString(), "cancel: Explicit cancellation");
             return new_gadget.wasAcquiredMethodCancelCalled();
           })
           .push(function (result) {
@@ -5928,6 +5936,7 @@
           })
           .push(undefined, function (error) {
             ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
+            equal(error.toString(), "cancel: Default Message");
             return new_gadget.wasAcquiredMethodCancelCalled();
           })
           .push(function (result) {
@@ -5940,6 +5949,10 @@
             ok(
               error instanceof renderJS.IframeSerializationError,
               JSON.stringify(error)
+            );
+            equal(
+              error.toString(),
+              "IframeSerializationError: String Error"
             );
           });
       })
