@@ -5803,10 +5803,10 @@
             ok(e instanceof renderJS.IframeSerializationError);
             equal(
               e.toString(),
-              "IframeSerializationError: Manually triggered embedded error"
+              "IframeSerializationError: Error: " +
+                "Manually triggered embedded error"
             );
           })
-
           .push(function () {
             return new_gadget.triggerStringError();
           })
@@ -6066,7 +6066,8 @@
             ok(e instanceof renderJS.IframeSerializationError);
             equal(
               e.toString(),
-              "IframeSerializationError: Manually triggered embedded error"
+              "IframeSerializationError: Error: " +
+                "Manually triggered embedded error"
             );
           })
 
@@ -6223,7 +6224,8 @@
             ok(e instanceof renderJS.IframeSerializationError);
             equal(
               e.toString(),
-              "IframeSerializationError: Manually triggered embedded error"
+              "IframeSerializationError: Error: " +
+                "Manually triggered embedded error"
             );
           })
 

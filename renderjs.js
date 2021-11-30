@@ -1985,11 +1985,21 @@
             delete transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
-            var message = e instanceof Error ? e.message : e;
+            var error_type = convertObjectToErrorType(e),
+              message;
+            if (e instanceof Error) {
+              if (error_type !== unhandled_error_type) {
+                message = e.message;
+              } else {
+                message = e.toString();
+              }
+            } else {
+              message = e;
+            }
             // drop the promise reference, to allow garbage collection
             delete transaction_dict[transaction_id];
             trans.error({
-              type: convertObjectToErrorType(e),
+              type: error_type,
               msg: message
             });
           });
