@@ -1072,7 +1072,7 @@
             channel_call_id,
             wait_promise = new RSVP.Promise(
               function handleChannelCall(resolve, reject) {
-                function error_wrap(value) {
+                function errorWrap(value) {
                   return rejectErrorType(value, reject);
                 }
 
@@ -1082,7 +1082,7 @@
                     method_name,
                     Array.prototype.slice.call(argument_list, 0)],
                   success: resolve,
-                  error: error_wrap
+                  error: errorWrap
                 });
               },
               function cancelChannelCall(msg) {
@@ -1957,7 +1957,7 @@
                                                                 time_out) {
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
-            function error_wrap(value) {
+            function errorWrap(value) {
               return rejectErrorType(value, reject);
             }
 
@@ -1968,7 +1968,7 @@
                 argument_list
               ],
               success: resolve,
-              error: error_wrap,
+              error: errorWrap,
               timeout: time_out
             });
           }
