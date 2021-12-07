@@ -1128,6 +1128,11 @@
     gadget_instance.__chan.bind("acquire",
                                 function handleChannelAcquire(trans, params,
                                                               transaction_id) {
+        function cleanUpTransactionDict(transaction_id) {
+          if (transaction_dict.hasOwnProperty(transaction_id)) {
+            delete transaction_dict[transaction_id];
+          }
+        }
         new RSVP.Queue()
           .push(function () {
             var promise = gadget_instance.__aq_parent.apply(
@@ -1137,17 +1142,17 @@
             transaction_dict[transaction_id] = promise;
             return promise;
           })
-          .then(trans.complete)
+          .then(function (result) {
+            trans.complete(result);
+            return cleanUpTransactionDict(transaction_id);
+          })
           .fail(function handleChannelAcquireError(e) {
             var message = e instanceof Error ? e.message : e;
             trans.error({
               type: convertObjectToErrorType(e),
               msg: message
             });
-
-            if (transaction_dict.hasOwnProperty(transaction_id)) {
-              delete transaction_dict[transaction_id];
-            }
+            return cleanUpTransactionDict(transaction_id);
           });
         trans.delayReturn(true);
       });
