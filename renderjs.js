@@ -1016,6 +1016,7 @@
                                       old_element) {
     var gadget_instance,
       iframe,
+      transaction_dict = {},
       iframe_loading_deferred = RSVP.defer();
     if (old_element === undefined) {
       throw new Error("DOM element is required to create Iframe Gadget " +
@@ -1115,11 +1116,26 @@
         iframe_loading_deferred.reject(params);
         return "OK";
       });
+    gadget_instance.__chan.bind("cancel",
+                                function handleChannelFail(trans,
+                                                           transaction_id) {
+        if (transaction_dict.hasOwnProperty(transaction_id)) {
+          transaction_dict[transaction_id].cancel();
+          delete transaction_dict[transaction_id];
+        }
+        return "OK";
+      });
     gadget_instance.__chan.bind("acquire",
-                                function handleChannelAcquire(trans, params) {
+                                function handleChannelAcquire(trans, params,
+                                                              transaction_id) {
         new RSVP.Queue()
           .push(function () {
-            return gadget_instance.__aq_parent.apply(gadget_instance, params);
+            var promise = gadget_instance.__aq_parent.apply(
+              gadget_instance,
+              params
+            );
+            transaction_dict[transaction_id] = promise;
+            return promise;
           })
           .then(trans.complete)
           .fail(function handleChannelAcquireError(e) {
@@ -1128,6 +1144,10 @@
               type: convertObjectToErrorType(e),
               msg: message
             });
+
+            if (transaction_dict.hasOwnProperty(transaction_id)) {
+              delete transaction_dict[transaction_id];
+            }
           });
         trans.delayReturn(true);
       });
@@ -1956,21 +1976,30 @@
       TmpConstructor.prototype.__aq_parent = function aq_parent(method_name,
                                                                 argument_list,
                                                                 time_out) {
+        var channel_call_id;
         return new RSVP.Promise(
           function waitForChannelAcquire(resolve, reject) {
             function errorWrap(value) {
               return rejectErrorType(value, reject);
             }
 
-            embedded_channel.call({
+            channel_call_id = embedded_channel.call({
               method: "acquire",
               params: [
                 method_name,
-                argument_list
+                Array.prototype.slice.call(argument_list, 0)
               ],
               success: resolve,
               error: errorWrap,
               timeout: time_out
+            });
+          },
+          function cancelChannelCall(msg) {
+            embedded_channel.notify({
+              method: "cancel",
+              params: [
+                channel_call_id
+              ]
             });
           }
         );
@@ -2011,6 +2040,8 @@
                           function cancelMethodCall(trans, v) {
         if (transaction_dict.hasOwnProperty(v[0])) {
           transaction_dict[v[0]].cancel(v[1]);
+          // drop the promise reference, to allow garbage collection
+          delete transaction_dict[v[0]];
         }
       });
 
