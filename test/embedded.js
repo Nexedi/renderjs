@@ -149,29 +149,25 @@
           );
         });
     })
+    .declareMethod('wasAcquiredMethodCancelCalled', function () {
+      return acquired_method_cancel_called;
+    })
     .declareAcquiredMethod('acquiredStringError',
                           'acquiredStringError')
     .declareMethod('triggerAcquiredStringError',
       function () {
         return this.acquiredStringError();
       })
-    .declareAcquiredMethod("acquireManualCancellationError",
-                           "acquireMethodRequested")
-    .declareMethod('triggerAcquiredMethodToCancelManually',
-      function (param1, param2) {
-        var gadget = this;
-        return new RSVP.Promise(function () {
-          return gadget.acquireManualCancellationError(param1, param2);
-        }, function () {
-          acquired_method_cancel_called = true;
-        });
+    .declareAcquiredMethod("acquiredManualCancellationError",
+                           "acquiredManualCancellationError")
+    .declareMethod('acquirePromiseToCancel',
+      function () {
+        return this.acquiredManualCancellationError();
       })
-    .declareMethod('wasAcquiredMethodCancelCalled', function () {
-      return acquired_method_cancel_called;
-    })
-    .declareMethod('resetAcquiredMethodCancelCalled', function () {
-      acquired_method_cancel_called = false;
-      return "OK";
+    .declareAcquiredMethod("isAcquiredMethodCancelCalled",
+                           "isAcquiredMethodCancelCalled")
+    .declareMethod('wasAcquiredMethodCancelCalledFromParent', function () {
+      return this.isAcquiredMethodCancelCalled();
     });
 
 }(window, rJS, RSVP));

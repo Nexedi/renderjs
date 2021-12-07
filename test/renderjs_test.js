@@ -5647,6 +5647,7 @@
   test('checking working iframe gadget', function () {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
+      acquired_method_cancel_called = false,
       acquire_called = false,
       url = "./embedded.html",
       new_gadget;
@@ -5668,13 +5669,23 @@
       if (method_name === "acquiredStringError") {
         throw "String Error";
       }
+      if (method_name === "acquiredManualCancellationError") {
+        return new RSVP.Promise(function () {
+          return;
+        }, function () {
+          acquired_method_cancel_called = true;
+        });
+      }
+      if (method_name === "isAcquiredMethodCancelCalled") {
+        return acquired_method_cancel_called;
+      }
       throw new renderJS.AcquisitionError("Can not handle " + method_name);
     };
 
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(44);
+    expect(42);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5909,23 +5920,10 @@
           .push(function (result) {
             ok(result, 'Embedded acquired method not cancelled ' + result);
           })
-          .push(function () {
-            return new_gadget.resetAcquiredMethodCancelCalled();
-          })
-          .push(function (result) {
-            return new_gadget.wasAcquiredMethodCancelCalled();
-          })
-          .push(function (result) {
-            ok(!result, result);
-          })
-
           // cancellation of a acquiredMethod call
           .push(function () {
             var method_to_cancel =
-              new_gadget.triggerAcquiredMethodToCancelManually(
-                "param1",
-                "param2"
-              );
+              new_gadget.acquirePromiseToCancel();
             return new RSVP.Queue(RSVP.delay(400))
               .push(function () {
                 return RSVP.all([
@@ -5937,7 +5935,7 @@
           .push(undefined, function (error) {
             ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
             equal(error.toString(), "cancel: Default Message");
-            return new_gadget.wasAcquiredMethodCancelCalled();
+            return new_gadget.wasAcquiredMethodCancelCalledFromParent();
           })
           .push(function (result) {
             ok(result, 'Embedded acquired method not cancelled ' + result);
