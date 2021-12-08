@@ -1116,7 +1116,7 @@
         iframe_loading_deferred.reject(params);
         return "OK";
       });
-    gadget_instance.__chan.bind("cancel",
+    gadget_instance.__chan.bind("cancelAcquiredMethodCall",
                                 function handleChannelFail(trans,
                                                            transaction_id) {
         if (transaction_dict.hasOwnProperty(transaction_id)) {
@@ -2001,7 +2001,7 @@
           },
           function cancelChannelCall(msg) {
             embedded_channel.notify({
-              method: "cancel",
+              method: "cancelAcquiredMethodCall",
               params: [
                 channel_call_id
               ]
