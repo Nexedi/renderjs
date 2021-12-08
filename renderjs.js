@@ -2003,7 +2003,8 @@
             embedded_channel.notify({
               method: "cancelAcquiredMethodCall",
               params: [
-                channel_call_id
+                channel_call_id,
+                msg
               ]
             });
           }
