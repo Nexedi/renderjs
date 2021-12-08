@@ -1975,7 +1975,7 @@
 
   function finishAqParentConfiguration(TmpConstructor, root_gadget,
                                        embedded_channel) {
-    var transaction_dict = {};
+    var local_transaction_dict = {};
     // Define __aq_parent to inform parent window
     root_gadget.__aq_parent =
       TmpConstructor.prototype.__aq_parent = function aq_parent(method_name,
@@ -2013,11 +2013,11 @@
     // bind calls to renderJS method on the instance
     embedded_channel.bind("methodCall",
                           function methodCall(trans, v, transaction_id) {
-        transaction_dict[transaction_id] =
+        local_transaction_dict[transaction_id] =
           root_gadget[v[0]].apply(root_gadget, v[1])
             .push(function handleMethodCallSuccess() {
             // drop the promise reference, to allow garbage collection
-            delete transaction_dict[transaction_id];
+            delete local_transaction_dict[transaction_id];
             trans.complete.apply(trans, arguments);
           }, function handleMethodCallError(e) {
             var error_type = convertObjectToErrorType(e),
@@ -2032,7 +2032,7 @@
               message = e;
             }
             // drop the promise reference, to allow garbage collection
-            delete transaction_dict[transaction_id];
+            delete local_transaction_dict[transaction_id];
             trans.error({
               type: error_type,
               msg: message
@@ -2043,10 +2043,10 @@
 
     embedded_channel.bind("cancelMethodCall",
                           function cancelMethodCall(trans, v) {
-        if (transaction_dict.hasOwnProperty(v[0])) {
-          transaction_dict[v[0]].cancel(v[1]);
+        if (local_transaction_dict.hasOwnProperty(v[0])) {
+          local_transaction_dict[v[0]].cancel(v[1]);
           // drop the promise reference, to allow garbage collection
-          delete transaction_dict[v[0]];
+          delete local_transaction_dict[v[0]];
         }
       });
 
