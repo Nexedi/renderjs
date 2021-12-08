@@ -1142,9 +1142,9 @@
             transaction_dict[transaction_id] = promise;
             return promise;
           })
-          .then(function (result) {
-            trans.complete(result);
-            return cleanUpTransactionDict(transaction_id);
+          .then(function () {
+            cleanUpTransactionDict(transaction_id);
+            trans.complete.apply(trans, arguments);
           })
           .fail(function handleChannelAcquireError(e) {
             var message = e instanceof Error ? e.message : e;
