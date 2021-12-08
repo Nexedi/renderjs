@@ -1143,7 +1143,7 @@
             return promise;
           })
           .then(function (result) {
-            trans.complete(result);
+            trans.complete.apply(result, arguments);
             return cleanUpTransactionDict(transaction_id);
           })
           .fail(function handleChannelAcquireError(e) {
