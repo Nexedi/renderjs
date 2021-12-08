@@ -5895,13 +5895,16 @@
               .push(function () {
                 return RSVP.all([
                   method_to_cancel,
-                  method_to_cancel.cancel()
+                  method_to_cancel.cancel("cancel from triggerMethodToCancel")
                 ]);
               });
           })
           .push(undefined, function (error) {
             ok(error instanceof RSVP.CancellationError, error);
-            equal(error.toString(), "cancel: Default Message");
+            equal(
+              error.toString(),
+              "cancel: cancel from triggerMethodToCancel"
+            );
             return new_gadget.wasMethodCancelCalled();
           })
           .push(function (result) {
@@ -5914,7 +5917,10 @@
           })
           .push(undefined, function (error) {
             ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
-            equal(error.toString(), "cancel: Explicit cancellation");
+            equal(
+              error.toString(),
+              "cancel: Explicit cancellation"
+            );
             return new_gadget.wasAcquiredMethodCancelCalled();
           })
           .push(function (result) {
@@ -5928,13 +5934,16 @@
               .push(function () {
                 return RSVP.all([
                   method_to_cancel,
-                  method_to_cancel.cancel()
+                  method_to_cancel.cancel("cancel from acquirePromiseToCancel")
                 ]);
               });
           })
           .push(undefined, function (error) {
             ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
-            equal(error.toString(), "cancel: Default Message");
+            equal(
+              error.toString(),
+              "cancel: cancel from acquirePromiseToCancel"
+            );
             return new_gadget.wasAcquiredMethodCancelCalledFromParent();
           })
           .push(function (result) {
