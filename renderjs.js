@@ -1117,10 +1117,12 @@
         return "OK";
       });
     gadget_instance.__chan.bind("cancelAcquiredMethodCall",
-                                function handleChannelFail(trans,
-                                                           transaction_id) {
+                                function handleChannelCancel(trans,
+                                                           params) {
+        var transaction_id = params[0],
+          msg = params[1];
         if (transaction_dict.hasOwnProperty(transaction_id)) {
-          transaction_dict[transaction_id].cancel();
+          transaction_dict[transaction_id].cancel(msg);
           delete transaction_dict[transaction_id];
         }
         return "OK";
