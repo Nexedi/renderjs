@@ -238,7 +238,7 @@
               ok(false, 'Should not reach that code 2');
             }, function (error) {
               assertCounter(0);
-              equal(error.message, 'Default Message');
+              equal(error.message, 'cancel callback1');
               return 'handler1 result';
             }),
           mutex.lockAndRun(callback2),
@@ -375,7 +375,7 @@
               ok(false, 'Should not reach that code');
             }, function (error) {
               assertCounter(2);
-              equal(error.message, 'Default Message');
+              equal(error.message, 'cancel callback2');
               return 'handler2 result';
             }),
           defer.promise
