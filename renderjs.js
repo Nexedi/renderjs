@@ -113,18 +113,18 @@
       prevent_default = true;
     }
 
-    function cancelResolver() {
+    function cancelResolver(msg) {
       if ((callback_promise !== undefined) &&
           (typeof callback_promise.cancel === "function")) {
-        callback_promise.cancel();
+        callback_promise.cancel(msg);
       }
     }
 
-    function canceller() {
+    function canceller(msg) {
       if (handle_event_callback !== undefined) {
         target.removeEventListener(type, handle_event_callback, useCapture);
       }
-      cancelResolver();
+      cancelResolver(msg);
     }
     function itsANonResolvableTrap(resolve, reject) {
       var result;
@@ -134,7 +134,9 @@
           evt.preventDefault();
         }
 
-        cancelResolver();
+        cancelResolver(
+          "Cancelling previous event (" + evt.type + ")"
+        );
 
         try {
           result = callback(evt);
@@ -146,7 +148,7 @@
           .push(undefined, function handleEventCallbackError(error) {
             // Prevent rejecting the loop, if the result cancelled itself
             if (!(error instanceof RSVP.CancellationError)) {
-              canceller();
+              canceller(error.toString());
               reject(error);
             }
           });
@@ -442,11 +444,11 @@
       return new Monitor();
     }
 
-    function canceller() {
+    function canceller(msg) {
       var len = promise_list.length,
         i;
       for (i = 0; i < len; i += 1) {
-        promise_list[i].cancel();
+        promise_list[i].cancel(msg);
       }
       // Clean it to speed up other canceller run
       promise_list = [];
@@ -460,17 +462,17 @@
         monitor.isRejected = true;
         monitor.rejectedReason = rejectedReason;
         resolved = true;
-        canceller();
+        canceller(rejectedReason.toString());
         return fail(rejectedReason);
       };
     }, canceller);
 
-    monitor.cancel = function cancelMonitor() {
+    monitor.cancel = function cancelMonitor(msg) {
       if (resolved) {
         return;
       }
       resolved = true;
-      promise.cancel();
+      promise.cancel(msg);
       promise.fail(function rejectMonitorPromise(rejectedReason) {
         monitor.isRejected = true;
         monitor.rejectedReason = rejectedReason;
@@ -529,7 +531,11 @@
 
   function deleteGadgetMonitor(g) {
     if (g.hasOwnProperty('__monitor')) {
-      g.__monitor.cancel();
+      g.__monitor.cancel(
+        "Deleting Gadget Monitor " + "(" +
+          g.element.dataset.gadgetUrl +
+          ")"
+      );
       delete g.__monitor;
       g.__job_list = [];
     }
@@ -654,7 +660,7 @@
 
   function runJob(gadget, name, callback, argument_list) {
     if (gadget.__job_dict.hasOwnProperty(name)) {
-      gadget.__job_dict[name].cancel();
+      gadget.__job_dict[name].cancel(name + " : Cancelling previous job");
     }
     var job_promise = ensurePushableQueue(callback, argument_list, gadget);
     gadget.__job_dict[name] = job_promise;
