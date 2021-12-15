@@ -120,11 +120,11 @@
       }
     }
 
-    function canceller() {
+    function canceller(msg) {
       if (handle_event_callback !== undefined) {
         target.removeEventListener(type, handle_event_callback, useCapture);
       }
-      cancelResolver();
+      cancelResolver(msg);
     }
     function itsANonResolvableTrap(resolve, reject) {
       var result;
