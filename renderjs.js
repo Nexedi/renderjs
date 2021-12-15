@@ -113,10 +113,10 @@
       prevent_default = true;
     }
 
-    function cancelResolver() {
+    function cancelResolver(msg) {
       if ((callback_promise !== undefined) &&
           (typeof callback_promise.cancel === "function")) {
-        callback_promise.cancel();
+        callback_promise.cancel(msg);
       }
     }
 
@@ -146,7 +146,7 @@
           .push(undefined, function handleEventCallbackError(error) {
             // Prevent rejecting the loop, if the result cancelled itself
             if (!(error instanceof RSVP.CancellationError)) {
-              canceller();
+              canceller(error.toString());
               reject(error);
             }
           });
@@ -442,11 +442,11 @@
       return new Monitor();
     }
 
-    function canceller() {
+    function canceller(msg) {
       var len = promise_list.length,
         i;
       for (i = 0; i < len; i += 1) {
-        promise_list[i].cancel();
+        promise_list[i].cancel(msg);
       }
       // Clean it to speed up other canceller run
       promise_list = [];
@@ -460,7 +460,7 @@
         monitor.isRejected = true;
         monitor.rejectedReason = rejectedReason;
         resolved = true;
-        canceller();
+        canceller(rejectedReason.toString());
         return fail(rejectedReason);
       };
     }, canceller);
