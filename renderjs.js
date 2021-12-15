@@ -465,12 +465,12 @@
       };
     }, canceller);
 
-    monitor.cancel = function cancelMonitor() {
+    monitor.cancel = function cancelMonitor(msg) {
       if (resolved) {
         return;
       }
       resolved = true;
-      promise.cancel();
+      promise.cancel(msg);
       promise.fail(function rejectMonitorPromise(rejectedReason) {
         monitor.isRejected = true;
         monitor.rejectedReason = rejectedReason;
