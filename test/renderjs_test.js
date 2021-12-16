@@ -3578,6 +3578,57 @@
       });
   });
 
+  function declareJobToCheckCancel(klass, name, response) {
+    klass.declareJob(name, function (parameter) {
+      return new RSVP.Promise(function () {
+        return;
+      }, function (error) {
+        console.log(error);
+        response[parameter] = error;
+      });
+    });
+  }
+
+  test('job called twice propage error message', function () {
+    var g,
+      response = {},
+      gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test502.html';
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    expect(1);
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        declareJobToCheckCancel(Klass, 'runJob1');
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function (result) {
+        g = result;
+        g.runJob1("first", response);
+        g.runJob1("second", response);
+      })
+      .then(function () {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        console.log(response);
+        equal(response.second, "Deleting Gadget Monitor");
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   test('job triggered when gadget element added in DOM', function () {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
@@ -6934,4 +6985,3 @@
 
 }(document, renderJS, QUnit, sinon, URI, URL, Event,
   MutationObserver, RSVP));
-

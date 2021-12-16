@@ -529,7 +529,7 @@
 
   function deleteGadgetMonitor(g) {
     if (g.hasOwnProperty('__monitor')) {
-      g.__monitor.cancel();
+      g.__monitor.cancel("Deleting Gadget Monitor");
       delete g.__monitor;
       g.__job_list = [];
     }
@@ -653,8 +653,14 @@
   };
 
   function runJob(gadget, name, callback, argument_list) {
+    var msg;
     if (gadget.__job_dict.hasOwnProperty(name)) {
-      gadget.__job_dict[name].cancel();
+      if (gadget.__job_dict[name].rejectedReason) {
+        msg = gadget.__job_dict[name].rejectedReason.toString();
+      } else {
+        msg = "Cancelling previous job";
+      }
+      gadget.__job_dict[name].cancel(msg);
     }
     var job_promise = ensurePushableQueue(callback, argument_list, gadget);
     gadget.__job_dict[name] = job_promise;
