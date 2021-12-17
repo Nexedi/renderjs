@@ -653,7 +653,8 @@
   };
 
   function runJob(gadget, name, callback, argument_list) {
-    var msg;
+    var msg,
+      job_promise;
     if (gadget.__job_dict.hasOwnProperty(name)) {
       if (gadget.__job_dict[name].rejectedReason) {
         msg = gadget.__job_dict[name].rejectedReason.toString();
@@ -662,7 +663,7 @@
       }
       gadget.__job_dict[name].cancel(msg);
     }
-    var job_promise = ensurePushableQueue(callback, argument_list, gadget);
+    job_promise = ensurePushableQueue(callback, argument_list, gadget);
     gadget.__job_dict[name] = job_promise;
     // gadget.__monitor.monitor(job_promise
     gadget.__monitor.monitor(new RSVP.Queue(job_promise)

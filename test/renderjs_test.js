@@ -3583,15 +3583,19 @@
       return new RSVP.Promise(function () {
         return;
       }, function (error) {
-        console.log(error);
-        response[parameter] = error;
+        if (parameter === "first") {
+          equal(error, "Cancelling previous job");
+        } else if (parameter === "second") {
+          equal(error, "Deleting Gadget Monitor");
+        } else {
+          error("Unexpected Error: " + error);
+        }
       });
     });
   }
 
   test('job called twice propage error message', function () {
     var g,
-      response = {},
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test502.html';
     gadget.__sub_gadget_dict = {};
@@ -3603,6 +3607,7 @@
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
     stop();
     expect(1);
+
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheckCancel(Klass, 'runJob1');
@@ -3614,15 +3619,11 @@
       })
       .then(function (result) {
         g = result;
-        g.runJob1("first", response);
-        g.runJob1("second", response);
+        g.runJob1("first");
+        g.runJob1("second");
       })
       .then(function () {
         return RSVP.delay(50);
-      })
-      .then(function () {
-        console.log(response);
-        equal(response.second, "Deleting Gadget Monitor");
       })
       .always(function () {
         start();
