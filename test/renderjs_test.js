@@ -3578,22 +3578,6 @@
       });
   });
 
-  function declareJobToCheckCancel(klass, name, response) {
-    klass.declareJob(name, function (parameter) {
-      return new RSVP.Promise(function () {
-        return;
-      }, function (error) {
-        if (parameter === "first") {
-          equal(error, "Cancelling previous job");
-        } else if (parameter === "second") {
-          equal(error, "Deleting Gadget Monitor");
-        } else {
-          error("Unexpected Error: " + error);
-        }
-      });
-    });
-  }
-
   test('job called twice propage error message', function () {
     var g,
       gadget = new RenderJSGadget(),
@@ -3610,7 +3594,15 @@
 
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
-        declareJobToCheckCancel(Klass, 'runJob1');
+        Klass.declareJob("runJob1", function (parameter) {
+          return new RSVP.Promise(function () {
+            return RSVP.delay(20);
+          }, function (error) {
+            if (parameter === "first") {
+              equal(error, "runJob1 : Cancelling previous job");
+            }
+          });
+        });
         return gadget.declareGadget(
           html_url,
           {element: document.getElementById('qunit-fixture')
@@ -3622,8 +3614,49 @@
         g.runJob1("first");
         g.runJob1("second");
       })
-      .then(function () {
-        return RSVP.delay(50);
+      .always(function () {
+        start();
+      });
+  });
+
+  test('cancel jobs with custom message', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test502.html';
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    expect(2);
+
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function (result) {
+        var all,
+          msg = "Cancel RSVP.all";
+
+        all = RSVP.all([
+          RSVP.Promise(function () {
+            return;
+          }, function (error) {
+            equal(error, msg);
+          }),
+          RSVP.Promise(function () {
+            return;
+          }, function (error) {
+            equal(error, msg);
+          })
+        ]);
+        all.cancel("Cancel RSVP.all");
       })
       .always(function () {
         start();

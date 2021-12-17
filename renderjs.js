@@ -529,7 +529,11 @@
 
   function deleteGadgetMonitor(g) {
     if (g.hasOwnProperty('__monitor')) {
-      g.__monitor.cancel("Deleting Gadget Monitor");
+      g.__monitor.cancel(
+        "Deleting Gadget Monitor " + "(" +
+          g.element.dataset.gadgetUrl +
+          ")"
+      );
       delete g.__monitor;
       g.__job_list = [];
     }
@@ -653,17 +657,10 @@
   };
 
   function runJob(gadget, name, callback, argument_list) {
-    var msg,
-      job_promise;
     if (gadget.__job_dict.hasOwnProperty(name)) {
-      if (gadget.__job_dict[name].rejectedReason) {
-        msg = gadget.__job_dict[name].rejectedReason.toString();
-      } else {
-        msg = "Cancelling previous job";
-      }
-      gadget.__job_dict[name].cancel(msg);
+      gadget.__job_dict[name].cancel(name + " : Cancelling previous job");
     }
-    job_promise = ensurePushableQueue(callback, argument_list, gadget);
+    var job_promise = ensurePushableQueue(callback, argument_list, gadget);
     gadget.__job_dict[name] = job_promise;
     // gadget.__monitor.monitor(job_promise
     gadget.__monitor.monitor(new RSVP.Queue(job_promise)
