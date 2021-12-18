@@ -3268,7 +3268,7 @@
   });
 
   test('check cancellation message after trigger event twice', function () {
-    var first_call = false,
+    var called = false,
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test600.html';
     gadget.__sub_gadget_dict = {};
@@ -3286,10 +3286,10 @@
           return new RSVP.Promise(function () {
             return;
           }, function (error) {
-            if (first_call) {
+            if (called) {
               return;
             }
-            first_call = true;
+            called = true;
             equal(error, "Cancelling previous event (bar)");
           });
         });
@@ -3299,16 +3299,12 @@
                             .querySelector("div")}
         );
       })
-      .then(function (g) {
-        return RSVP.delay(50);
-      })
       .then(function () {
         var event = new Event("bar");
         document.getElementById('qunit-fixture').querySelector("div")
                                                 .dispatchEvent(event);
         document.getElementById('qunit-fixture').querySelector("div")
                                                 .dispatchEvent(event);
-        return RSVP.delay(50);
       })
       .always(function () {
         start();
