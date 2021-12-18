@@ -3267,6 +3267,49 @@
       });
   });
 
+  test('check cancellation message after trigger event twice', function () {
+    var gadget = new RenderJSGadget(),
+      html_url = 'https://example.org/files/qunittest/test600.html';
+    gadget.__sub_gadget_dict = {};
+
+    this.server.respondWith("GET", html_url, [200, {
+      "Content-Type": "text/html"
+    }, "<html><body></body></html>"]);
+
+    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+    stop();
+    expect(1);
+    renderJS.declareGadgetKlass(html_url)
+      .then(function (Klass) {
+        Klass.onEvent('bar', function () {
+          return new RSVP.Promise(function () {
+            return;
+          }, function (error) {
+            equal(error, "Cancelling previous event (bar)");
+          });
+        });
+        return gadget.declareGadget(
+          html_url,
+          {element: document.getElementById('qunit-fixture')
+                            .querySelector("div")}
+        );
+      })
+      .then(function (g) {
+        return RSVP.delay(50);
+      })
+      .then(function () {
+        var event = new Event("bar");
+        document.getElementById('qunit-fixture').querySelector("div")
+                                                .dispatchEvent(event);
+        document.getElementById('qunit-fixture').querySelector("div")
+                                                .dispatchEvent(event);
+        return RSVP.delay(50);
+      })
+      .always(function () {
+        start();
+      });
+  });
+
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.onLoop
   /////////////////////////////////////////////////////////////////

@@ -134,7 +134,9 @@
           evt.preventDefault();
         }
 
-        cancelResolver();
+        cancelResolver(
+          "Cancelling previous event (" + evt.type + ")"
+        );
 
         try {
           result = callback(evt);
