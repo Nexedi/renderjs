@@ -4,7 +4,7 @@
   "description": "RenderJs provides HTML5 gadgets",
   "main": "dist/renderjs-latest.js",
   "dependencies": {
-    "rsvp": "git+https://lab.nexedi.com/romain/rsvp.js.git#wip"
+    "rsvp": "git+https://lab.nexedi.com/nexedi/rsvp.js.git"
   },
   "devDependencies": {
     "URIjs": "~1.12.x",
