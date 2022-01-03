@@ -93,7 +93,9 @@ module.exports = function (grunt) {
       },
       test: {
         src: ['test/embedded.js', 'test/renderjs_test.js',
-              'test/embedded.js', 'test/inject_script.js',
+              'test/inject_script.js',
+              'test/embedded_crashing_service.js',
+              'test/embedded_fails.js',
               'test/mutex_test.js', 'test/not_declared_gadget.js',
               'test/trigger_rjsready_event_on_ready_gadget.js'],
         directives: {
