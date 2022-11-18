@@ -61,6 +61,38 @@
   ScopeError.prototype = new Error();
   ScopeError.prototype.constructor = ScopeError;
 
+  //////////////////////////////////////////
+  // ParserError
+  //////////////////////////////////////////
+  function DOMParserError(message) {
+    this.name = "DOMParserError";
+    if ((message !== undefined) && (typeof message !== "string")) {
+      throw new TypeError('You must pass a string for DOMParserError.');
+    }
+    this.message = message || "Default Message";
+  }
+  DOMParserError.prototype = new Error();
+  DOMParserError.prototype.constructor = DOMParserError;
+
+  //////////////////////////////////////////
+  // DOMParser
+  //////////////////////////////////////////
+  function parseDocumentStringOrFail(string, mime_type) {
+    var doc = new DOMParser().parseFromString(string, mime_type),
+      error_node = doc.querySelector('parsererror');
+    if (error_node !== null) {
+      // parsing failed
+      throw new DOMParserError(error_node.textContent);
+    }
+    return doc;
+  }
+
+  //////////////////////////////////////////
+  // export
+  //////////////////////////////////////////
+  window.DOMParserError = DOMParserError;
+  window.parseDocumentStringOrFail = parseDocumentStringOrFail;
+
   /////////////////////////////////////////////////////////////////
   // renderJS.IframeSerializationError
   /////////////////////////////////////////////////////////////////
@@ -1181,8 +1213,7 @@
       .push(function handleDataURLAjaxResponse(xhr) {
         // Insert a "base" element, in order to resolve all relative links
         // which could get broken with a data url
-        var doc = (new DOMParser()).parseFromString(xhr.responseText,
-                                                    'text/html'),
+        var doc = parseDocumentStringOrFail(xhr.responseText, 'text/html'),
           base = doc.createElement('base'),
           blob;
         base.href = url;
@@ -1480,7 +1511,7 @@
     // https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
     // https://developer.mozilla.org/en-US/docs/Code_snippets/HTML_to_DOM
     tmp_constructor.__template_element =
-      (new DOMParser()).parseFromString(xhr.responseText, "text/html");
+      parseDocumentStringOrFail(xhr.responseText, "text/html");
     parsed_html = renderJS.parseGadgetHTMLDocument(
       tmp_constructor.__template_element,
       url,
