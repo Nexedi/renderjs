@@ -87,12 +87,6 @@
     return doc;
   }
 
-  //////////////////////////////////////////
-  // export
-  //////////////////////////////////////////
-  window.DOMParserError = DOMParserError;
-  window.parseDocumentStringOrFail = parseDocumentStringOrFail;
-
   /////////////////////////////////////////////////////////////////
   // renderJS.IframeSerializationError
   /////////////////////////////////////////////////////////////////
@@ -1717,6 +1711,8 @@
   renderJS.ScopeError = ScopeError;
   renderJS.IframeSerializationError = IframeSerializationError;
   renderJS.loopEventListener = loopEventListener;
+  renderJS.DOMParserError = DOMParserError;
+  renderJS.parseDocumentStringOrFail = parseDocumentStringOrFail;
   window.rJS = window.renderJS = renderJS;
   window.__RenderJSGadget = RenderJSGadget;
   window.__RenderJSEmbeddedGadget = RenderJSEmbeddedGadget;
