@@ -341,7 +341,7 @@
       counter = 0,
       defer = RSVP.defer();
     stop();
-    expect(8);
+    expect(10);
     function assertCounter(value) {
       equal(counter, value);
       counter += 1;
@@ -364,10 +364,16 @@
           return 'callback1 result';
         });
     }
+    function callback3() {
+      // Ensure that callback3 is executed only when callback1 is finished
+      assertCounter(4);
+      return 'callback3 result';
+    }
     return new RSVP.Queue()
       .push(function () {
         var promise1 = mutex.lockAndRun(callback1),
-          promise2 = mutex.lockAndRun(callback2);
+          promise2 = mutex.lockAndRun(callback2),
+          promise3 = mutex.lockAndRun(callback3);
         return RSVP.all([
           promise1,
           promise2
@@ -378,6 +384,7 @@
               equal(error.message, 'cancel callback2');
               return 'handler2 result';
             }),
+          promise3,
           defer.promise
             .then(function () {
               assertCounter(1);
@@ -388,7 +395,8 @@
       .push(function (result_list) {
         equal(result_list[0], 'callback1 result');
         equal(result_list[1], 'handler2 result');
-        assertCounter(4);
+        equal(result_list[2], 'callback3 result');
+        assertCounter(5);
       })
       .always(function () {
         start();
