@@ -2065,10 +2065,11 @@
         local_transaction_dict[transaction_id] =
           root_gadget[v[0]].apply(root_gadget, v[1])
             .push(function handleMethodCallSuccess() {
+            trans.complete.apply(trans, arguments);
             // drop the promise reference, to allow garbage collection
             delete local_transaction_dict[transaction_id];
-            trans.complete.apply(trans, arguments);
-          }, function handleMethodCallError(e) {
+          })
+          .push(undefined, function handleMethodCallError(e) {
             var error_type = convertObjectToErrorType(e),
               message;
             if (e instanceof Error) {
@@ -2080,12 +2081,19 @@
             } else {
               message = e;
             }
+            try {
+              trans.error({
+                type: error_type,
+                msg: message
+              });
+            } catch (new_error) {
+              trans.error({
+                type: convertObjectToErrorType(new_error),
+                msg: new_error.toString()
+              });
+            }
             // drop the promise reference, to allow garbage collection
             delete local_transaction_dict[transaction_id];
-            trans.error({
-              type: error_type,
-              msg: message
-            });
           });
         trans.delayReturn(true);
       });
