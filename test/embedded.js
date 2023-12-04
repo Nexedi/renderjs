@@ -168,6 +168,17 @@
                            "isAcquiredMethodCancelCalled")
     .declareMethod('wasAcquiredMethodCancelCalledFromParent', function () {
       return this.isAcquiredMethodCancelCalled();
+    })
+
+    .declareMethod('returnNotTransferrable', function () {
+      var a = {};
+      a.a = a;
+      return a;
+    })
+    .declareMethod('throwNotTransferrable', function () {
+      var a = {};
+      a.a = a;
+      throw a;
     });
 
 }(window, rJS, RSVP));

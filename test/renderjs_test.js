@@ -5872,7 +5872,7 @@
     gadget.__sub_gadget_dict = {};
 
     stop();
-    expect(42);
+    expect(46);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -6147,6 +6147,36 @@
             equal(
               error.toString(),
               "IframeSerializationError: String Error"
+            );
+          })
+
+          // returning not transferrable object fails
+          .push(function () {
+            return new_gadget.returnNotTransferrable();
+          })
+          .push(undefined, function (error) {
+            ok(
+              error instanceof renderJS.IframeSerializationError,
+              JSON.stringify(error)
+            );
+            equal(
+              error.toString(),
+              "IframeSerializationError: TypeError: cyclic object value"
+            );
+          })
+
+          // throw not transferrable object fails
+          .push(function () {
+            return new_gadget.throwNotTransferrable();
+          })
+          .push(undefined, function (error) {
+            ok(
+              error instanceof renderJS.IframeSerializationError,
+              JSON.stringify(error)
+            );
+            equal(
+              error.toString(),
+              "IframeSerializationError: TypeError: cyclic object value"
             );
           });
       })
