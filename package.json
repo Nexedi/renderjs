@@ -7,7 +7,7 @@
     "rsvp": "git+https://lab.nexedi.com/nexedi/rsvp.js.git"
   },
   "devDependencies": {
-    "URIjs": "~1.12.x",
+    "urijs": "~1.19.11",
     "grunt": "~1.6.3",
     "grunt-cli": "~1.5.0",
     "grunt-contrib-concat": "~2.1.0",
