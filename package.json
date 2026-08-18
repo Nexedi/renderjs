@@ -8,17 +8,13 @@
   },
   "devDependencies": {
     "URIjs": "~1.12.x",
-    "connect-livereload": "~0.3.0",
     "grunt": "~0.4.1",
     "grunt-cli": "~0.1.11",
     "grunt-contrib-concat": "~0.3.0",
-    "grunt-contrib-connect": "~0.5.0",
     "grunt-contrib-copy": "~0.4.1",
-    "grunt-contrib-qunit": "~0.3.0",
-    "grunt-contrib-watch": "~0.5.3",
+    "qunit": "~2.26.0",
     "grunt-curl": "~1.2.1",
     "grunt-jslint": "1.1.14",
-    "grunt-open": "~0.2.2",
     "sinon": "~1.7.3"
   },
   "scripts": {
