@@ -24,6 +24,7 @@
   "use strict";
   var test = QUnit.test,
     module = QUnit.module,
+    start,
     root_gadget_klass = renderJS(window),
     root_gadget_defer = RSVP.defer(),
     RenderJSGadget = __RenderJSGadget,
@@ -147,7 +148,7 @@
     assert.equal(settings.title, 'Great title', 'First title extracted');
   });
 
-//   test('Extract title only from head', function () {
+//   test('Extract title only from head', function (assert) {
 //     // Check that parseGadgetHTML only extract title from head
 //     var settings,
 //       html = "<html>" +
@@ -156,7 +157,7 @@
 //         "</body></html>";
 //
 //     settings = parseGadgetHTML(html);
-//     equal(settings.title, '', 'Title not found');
+//     assert.equal(settings.title, '', 'Title not found');
 //   });
 
   test('Extract base url', function (assert) {
@@ -185,7 +186,7 @@
   });
 
   // XXX innerHTML is not extracted anymore
-//   test('Extract body', function () {
+//   test('Extract body', function (assert) {
 //     // Check that parseGadgetHTML correctly extract the body
 //     var settings,
 //       html = "<html>" +
@@ -194,10 +195,10 @@
 //         "</body></html>";
 //
 //     settings = renderJS.parseGadgetHTML(html);
-//     equal(settings.html, "<p>Foo</p>", "HTML extracted");
+//     assert.equal(settings.html, "<p>Foo</p>", "HTML extracted");
 //   });
 //
-//   test('Extract all body', function () {
+//   test('Extract all body', function (assert) {
 //     // Check that parseGadgetHTML correctly extracts all bodies
 //     var settings,
 //       html = "<html>" +
@@ -208,10 +209,10 @@
 //         "</body></html>";
 //
 //     settings = renderJS.parseGadgetHTML(html);
-//     equal(settings.html, '<p>Foo</p><p>Bar</p>', 'All bodies extracted');
+//     assert.equal(settings.html, '<p>Foo</p><p>Bar</p>', 'All bodies extracted');
 //   });
 //
-//   test('Extract body only from html', function () {
+//   test('Extract body only from html', function (assert) {
 //     // Check that parseGadgetHTML also extract body from head
 //     var settings,
 //       html = "<html>" +
@@ -219,10 +220,10 @@
 //         "</html>";
 //
 //     settings = renderJS.parseGadgetHTML(html);
-//     equal(settings.html, "<p>Bar</p>", "Body not found");
+//     assert.equal(settings.html, "<p>Bar</p>", "Body not found");
 //   });
 
-  test('Extract CSS', function () {
+  test('Extract CSS', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the CSS
     var settings,
       html = "<html>" +
@@ -232,12 +233,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_css_list,
+    assert.deepEqual(settings.required_css_list,
               ['http://example.org/lib/qunit/qunit.css'],
               "CSS extracted");
   });
 
-  test('Extract CSS after base tag', function () {
+  test('Extract CSS after base tag', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the CSS
     var settings,
       html = "<html>" +
@@ -248,12 +249,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_css_list,
+    assert.deepEqual(settings.required_css_list,
               ['http://example.org/foo/bar/lib/qunit/qunit.css'],
               "CSS extracted");
   });
 
-  test('Extract CSS before base tag', function () {
+  test('Extract CSS before base tag', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the CSS
     var settings,
       html = "<html>" +
@@ -264,12 +265,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_css_list,
+    assert.deepEqual(settings.required_css_list,
               ['http://example.org/lib/qunit/qunit.css'],
               "CSS extracted");
   });
 
-  test('Extract CSS order', function () {
+  test('Extract CSS order', function (assert) {
     // Check that parseGadgetHTMLDocument correctly keep CSS order
     var settings,
       html = "<html>" +
@@ -281,13 +282,13 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_css_list,
+    assert.deepEqual(settings.required_css_list,
               ['http://example.org/lib/qunit/qunit.css',
                'http://example.org/lib/qunit/qunit2.css'],
               "CSS order kept");
   });
 
-  test('Extract CSS only from head', function () {
+  test('Extract CSS only from head', function (assert) {
     // Check that parseGadgetHTMLDocument only extract css from head
     var settings,
       html = "<html>" +
@@ -297,10 +298,10 @@
         "</body></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_css_list, [], "CSS not found");
+    assert.deepEqual(settings.required_css_list, [], "CSS not found");
   });
 
-  test('Extract interface', function () {
+  test('Extract interface', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the interface
     var settings,
       html = "<html>" +
@@ -310,12 +311,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.interface_list,
+    assert.deepEqual(settings.interface_list,
               ['http://example.org/foo/interface/renderable'],
               "interface extracted");
   });
 
-  test('Extract interface after base tag', function () {
+  test('Extract interface after base tag', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the interface
     var settings,
       html = "<html>" +
@@ -326,12 +327,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.interface_list,
+    assert.deepEqual(settings.interface_list,
               ['http://example.org/foo/bar/bar2/interface/renderable'],
               "interface extracted");
   });
 
-  test('Extract interface before base tag', function () {
+  test('Extract interface before base tag', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the interface
     var settings,
       html = "<html>" +
@@ -342,12 +343,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.interface_list,
+    assert.deepEqual(settings.interface_list,
               ['http://example.org/foo/interface/renderable'],
               "interface extracted");
   });
 
-  test('Extract interface order', function () {
+  test('Extract interface order', function (assert) {
     // Check that parseGadgetHTMLDocument correctly keep interface order
     var settings,
       html = "<html>" +
@@ -359,13 +360,13 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.interface_list,
+    assert.deepEqual(settings.interface_list,
               ['http://example.org/foo/interface/renderable',
                'http://example.org/foo/interface/field'],
               "interface order kept");
   });
 
-  test('Extract interface only from head', function () {
+  test('Extract interface only from head', function (assert) {
     // Check that parseGadgetHTMLDocument only extract interface from head
     var settings,
       html = "<html>" +
@@ -375,10 +376,10 @@
         "</body></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.interface_list, [], "interface not found");
+    assert.deepEqual(settings.interface_list, [], "interface not found");
   });
 
-  test('Extract JS', function () {
+  test('Extract JS', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the JS
     var settings,
       html = "<html>" +
@@ -388,12 +389,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_js_list,
+    assert.deepEqual(settings.required_js_list,
               ['http://example.org/lib/qunit/qunit.js'],
               "JS extracted");
   });
 
-  test('Extract JS after base tag', function () {
+  test('Extract JS after base tag', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the JS
     var settings,
       html = "<html>" +
@@ -404,12 +405,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_js_list,
+    assert.deepEqual(settings.required_js_list,
               ['http://example.org/foo/bar/lib/qunit/qunit.js'],
               "JS extracted");
   });
 
-  test('Extract JS before base tag', function () {
+  test('Extract JS before base tag', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the JS
     var settings,
       html = "<html>" +
@@ -420,12 +421,12 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_js_list,
+    assert.deepEqual(settings.required_js_list,
               ['http://example.org/lib/qunit/qunit.js'],
               "JS extracted");
   });
 
-  test('Extract JS order', function () {
+  test('Extract JS order', function (assert) {
     // Check that parseGadgetHTMLDocument correctly keep JS order
     var settings,
       html = "<html>" +
@@ -437,13 +438,13 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_js_list,
+    assert.deepEqual(settings.required_js_list,
               ['http://example.org/lib/qunit/qunit.js',
                'http://example.org/lib/qunit/qunit2.js'],
               "JS order kept");
   });
 
-  test('Extract JS only from head', function () {
+  test('Extract JS only from head', function (assert) {
     // Check that parseGadgetHTMLDocument only extract js from head
     var settings,
       html = "<html>" +
@@ -453,12 +454,12 @@
         "</body></html>";
 
     settings = parseGadgetHTML(html, "http://example.org/foo/");
-    deepEqual(settings.required_js_list, [], "JS not found");
+    assert.deepEqual(settings.required_js_list, [], "JS not found");
   });
 
-  test('Non valid XML (HTML in fact...)', function () {
+  test('Non valid XML (HTML in fact...)', function (assert) {
     // Check default value returned by parseGadgetHTMLDocument
-    deepEqual(parseGadgetHTML('<!doctype html><html><head>' +
+    assert.deepEqual(parseGadgetHTML('<!doctype html><html><head>' +
       '<title>Test non valid XML</title>' +
       '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' +
       '</head><body><p>Non valid XML</p></body></html>',
@@ -472,13 +473,13 @@
     });
   });
 
-  test('Extract JS even if type="text/javascript" not set', function () {
+  test('Extract JS even if type="text/javascript" not set', function (assert) {
     var settings,
       html = "<html><head>" +
         "<script src='../lib/qunit/qunit.js'></script" +
         "</head></html>";
     settings = parseGadgetHTML(html, "http://example.org/foo");
-    deepEqual(settings.required_js_list,
+    assert.deepEqual(settings.required_js_list,
               ["http://example.org/lib/qunit/qunit.js"]);
   });
 
@@ -491,7 +492,7 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('cancel gadget initialization', function () {
+  test('cancel gadget initialization', function (assert) {
     var gadget = new RenderJSGadget(),
       url = renderJS.getAbsoluteURL('./cancel_gadget.html',
                                     window.location.href),
@@ -511,8 +512,8 @@
       characterData: true
     });
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.__sub_gadget_dict = {};
     cancel_queue = gadget.declareGadget(url);
     return new RSVP.Queue()
@@ -520,7 +521,7 @@
         return cancel_queue;
       })
       .push(undefined, function (err) {
-        ok(err instanceof RSVP.CancellationError);
+        assert.ok(err instanceof RSVP.CancellationError);
         //let cancel_gadget.js load
         return RSVP.delay(100);
       })
@@ -528,7 +529,7 @@
         return gadget.declareGadget(url);
       })
       .push(function (instance) {
-        ok(instance.render !== undefined);
+        assert.ok(instance.render !== undefined);
       })
       .always(function () {
         start();
@@ -554,7 +555,7 @@
       delete this.server;
     }
   });
-  test('Ajax error reject the promise', function () {
+  test('Ajax error reject the promise', function (assert) {
     // Check that declareGadgetKlass fails if ajax fails
     var url = 'https://example.org/files/qunittest/test';
 
@@ -562,22 +563,22 @@
       "Content-Type": "text/html"
     }, "foo"]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareGadgetKlass(url)
       .then(function () {
-        ok(false, "404 should fail");
+        assert.ok(false, "404 should fail");
       })
       .fail(function (xhr) {
-        equal(xhr.status, 404);
-        equal(xhr.url, url);
+        assert.equal(xhr.status, 404);
+        assert.equal(xhr.url, url);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Non HTML reject the promise', function () {
+  test('Non HTML reject the promise', function (assert) {
     // Check that declareGadgetKlass fails if non html is retrieved
     var url = 'https://example.org/files/qunittest/test';
 
@@ -585,22 +586,22 @@
       "Content-Type": "text/plain"
     }, "foo"]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareGadgetKlass(url)
       .then(function () {
-        ok(false, "text/plain should fail");
+        assert.ok(false, "text/plain should fail");
       })
       .fail(function (jqXHR) {
-        equal(jqXHR.status, 200);
-        equal(jqXHR.getResponseHeader("Content-Type"), "text/plain");
+        assert.equal(jqXHR.status, 200);
+        assert.equal(jqXHR.getResponseHeader("Content-Type"), "text/plain");
       })
       .always(function () {
         start();
       });
   });
 
-  test('HTML parsing failure reject the promise', function () {
+  test('HTML parsing failure reject the promise', function (assert) {
     // Check that declareGadgetKlass fails if the html can not be parsed
     var url = 'https://example.org/files/qunittest/test',
       mock;
@@ -609,19 +610,19 @@
       "Content-Type": "text/html"
     }, ""]);
 
-    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument", function () {
+    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument", function (assert) {
       throw new Error("foo");
     });
     mock.expects("parseGadgetHTMLDocument").once().throws();
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function () {
-        ok(false, "Non parsable HTML should fail");
+        assert.ok(false, "Non parsable HTML should fail");
       })
       .fail(function (e) {
-        ok(e instanceof Error);
+        assert.ok(e instanceof Error);
       })
       .always(function () {
         start();
@@ -630,7 +631,7 @@
       });
   });
 
-  test("should call parseGadgetHTMLDocument with url", function () {
+  test("should call parseGadgetHTMLDocument with url", function (assert) {
     var url = "http://example.org/foo/gadget", spy;
 
     this.server.respondWith("GET", url, [200, {
@@ -639,11 +640,11 @@
 
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function () {
-        equal(spy.args[0][1], url);
+        assert.equal(spy.args[0][1], url);
       })
       .always(function () {
         spy.restore();
@@ -651,7 +652,7 @@
       });
   });
 
-  test('Klass creation', function () {
+  test('Klass creation', function (assert) {
     // Check that declareGadgetKlass returns a subclass of RenderJSGadget
     // and contains all extracted properties on the prototype
     var url = 'https://example.org/files/qunittest/test',
@@ -666,25 +667,25 @@
       {foo: 'bar'}
     );
 
-    stop();
-    expect(8);
+    start = assert.async();
+    assert.expect(8);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var instance;
 
-        equal(Klass.prototype.__path, url);
-        deepEqual(Klass.prototype.__acquired_method_dict, {});
-        equal(Klass.prototype.__foo, 'bar');
-        equal(Klass.__template_element.nodeType, 9);
-        deepEqual(Klass.__ready_list, [], 'Ready list is empty by default');
+        assert.equal(Klass.prototype.__path, url);
+        assert.deepEqual(Klass.prototype.__acquired_method_dict, {});
+        assert.equal(Klass.prototype.__foo, 'bar');
+        assert.equal(Klass.__template_element.nodeType, 9);
+        assert.deepEqual(Klass.__ready_list, [], 'Ready list is empty by default');
 
         instance = new Klass();
-        ok(instance instanceof RenderJSGadget);
-        ok(instance instanceof Klass);
-        ok(Klass !== RenderJSGadget);
+        assert.ok(instance instanceof RenderJSGadget);
+        assert.ok(instance instanceof Klass);
+        assert.ok(Klass !== RenderJSGadget);
       })
       .fail(function (e) {
-        ok(false, JSON.stringify(e));
+        assert.ok(false, JSON.stringify(e));
       })
       .always(function () {
         start();
@@ -693,7 +694,7 @@
       });
   });
 
-  test('Convert body relative url', function () {
+  test('Convert body relative url', function (assert) {
     // Check that declareGadgetKlass converts all relative url
     var url = 'https://example.org/files/qunittest/test';
 
@@ -701,35 +702,35 @@
       "Content-Type": "text/html"
     }, "<html><body><div href='a' src='b' srcset='c'></div></body></html>"]);
 
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var div;
-        equal(Klass.__template_element.nodeType, 9);
+        assert.equal(Klass.__template_element.nodeType, 9);
         div = Klass.__template_element.body.querySelector('div');
-        equal(
+        assert.equal(
           div.getAttribute('href'),
           'https://example.org/files/qunittest/a'
         );
-        equal(
+        assert.equal(
           div.getAttribute('src'),
           'https://example.org/files/qunittest/b'
         );
-        equal(
+        assert.equal(
           div.getAttribute('srcset'),
           'https://example.org/files/qunittest/c'
         );
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Convert body relative url with base', function () {
+  test('Convert body relative url with base', function (assert) {
     // Check that declareGadgetKlass converts all relative url
     var url = 'https://example.org/files/qunittest/test';
 
@@ -738,35 +739,35 @@
     }, "<html><head><base href='../'></base></head>" +
        "<body><div href='a' src='b' srcset='c'></div></body></html>"]);
 
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var div;
-        equal(Klass.__template_element.nodeType, 9);
+        assert.equal(Klass.__template_element.nodeType, 9);
         div = Klass.__template_element.body.querySelector('div');
-        equal(
+        assert.equal(
           div.getAttribute('href'),
           'https://example.org/files/a'
         );
-        equal(
+        assert.equal(
           div.getAttribute('src'),
           'https://example.org/files/b'
         );
-        equal(
+        assert.equal(
           div.getAttribute('srcset'),
           'https://example.org/files/c'
         );
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Klass is not reloaded if called twice', function () {
+  test('Klass is not reloaded if called twice', function (assert) {
     // Check that declareGadgetKlass does not reload the gadget
     // if it has already been loaded
     var url = 'https://example.org/files/qunittest/test',
@@ -782,18 +783,18 @@
       {foo: 'bar'}
     );
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass1) {
         klass1 = Klass1;
         return renderJS.declareGadgetKlass(url);
       })
       .then(function (Klass2) {
-        equal(klass1, Klass2);
+        assert.equal(klass1, Klass2);
       })
       .fail(function (jqXHR) {
-        ok(false, "Failed to load " + jqXHR.status);
+        assert.ok(false, "Failed to load " + jqXHR.status);
       })
       .always(function () {
         start();
@@ -802,7 +803,7 @@
       });
   });
 
-  test('Content type parameter are supported', function () {
+  test('Content type parameter are supported', function (assert) {
     // Check that declareGadgetKlass does not fail if the page content type
     // contains a parameter
     var url = 'https://example.org/files/qunittest/test';
@@ -811,43 +812,43 @@
       "Content-Type": "text/html; charset=utf-8"
     }, "<html></html>"]);
 
-    stop();
-    expect(5);
+    start = assert.async();
+    assert.expect(5);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
         var instance;
 
-        equal(Klass.prototype.__path, url);
-        deepEqual(Klass.prototype.__acquired_method_dict, {});
+        assert.equal(Klass.prototype.__path, url);
+        assert.deepEqual(Klass.prototype.__acquired_method_dict, {});
 
         instance = new Klass();
-        ok(instance instanceof RenderJSGadget);
-        ok(instance instanceof Klass);
-        ok(Klass !== RenderJSGadget);
+        assert.ok(instance instanceof RenderJSGadget);
+        assert.ok(instance instanceof Klass);
+        assert.ok(Klass !== RenderJSGadget);
       })
       .fail(function (jqXHR) {
-        ok(false, "Failed to load " + jqXHR.status);
+        assert.ok(false, "Failed to load " + jqXHR.status);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Ready list length is one if HTML sub gadget', function () {
+  test('Ready list length is one if HTML sub gadget', function (assert) {
     var url = 'https://example.org/files/qunittest/test';
 
     this.server.respondWith("GET", url, [200, {
       "Content-Type": "text/html; charset=utf-8"
     }, "<html><body><div data-gadget-url='foo'></div></body></html>"]);
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass) {
-        equal(Klass.__ready_list.length, 1);
+        assert.equal(Klass.__ready_list.length, 1);
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
@@ -862,63 +863,63 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('Download error reject the promise', function () {
+  test('Download error reject the promise', function (assert) {
     // Check that declareJS fails if ajax fails
     var url = 'http://0.0.0.0/bar';
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
-        ok(false, "404 should fail");
+        assert.ok(false, "404 should fail");
       })
       .fail(function (e) {
-        equal(e.type, "error");
-        equal(e.target.getAttribute("src"), url);
+        assert.equal(e.type, "error");
+        assert.equal(e.target.getAttribute("src"), url);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Ajax error reject the promise twice', function () {
+  test('Ajax error reject the promise twice', function (assert) {
     // Check that failed declareJS is not cached
     var url = 'http://0.0.0.0/bar2';
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
         return renderJS.declareJS(url);
       })
       .then(function () {
-        ok(false, "404 should fail");
+        assert.ok(false, "404 should fail");
       })
       .fail(function (e) {
-        equal(e.type, "error");
-        equal(e.target.getAttribute("src"), url);
+        assert.equal(e.type, "error");
+        assert.equal(e.target.getAttribute("src"), url);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Non JS reject the promise', function () {
+  test('Non JS reject the promise', function (assert) {
     // Check that declareJS fails if mime type is wrong
     var url = "data:image/png;base64," +
          window.btoa("= = ="),
       previousonerror = window.onerror;
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     window.onerror = undefined;
     renderJS.declareJS(url, document.head)
       .then(function (value, textStatus, jqXHR) {
-        ok(ok, "Non JS mime type should load");
+        assert.ok(ok, "Non JS mime type should load");
       })
       .fail(function (jqXHR) {
         // Chrome does not consider this as error
-        ok(ok, jqXHR);
+        assert.ok(ok, jqXHR);
       })
       .always(function () {
         window.onerror = previousonerror;
@@ -926,44 +927,44 @@
       });
   });
 
-  test('JS cleanly loaded', function () {
+  test('JS cleanly loaded', function (assert) {
     // Check that declareJS is fetched and loaded
     var url = "data:application/javascript;base64," +
          window.btoa("document.getElementById('qunit-fixture').textContent " +
                      "= 'JS fetched and loaded';");
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareJS(url, document.head)
       .then(function () {
-        equal(
+        assert.equal(
           document.getElementById("qunit-fixture").textContent,
           "JS fetched and loaded"
         );
       })
       .fail(function (jqXHR) {
-        ok(false, "Failed to load " + jqXHR);
+        assert.ok(false, "Failed to load " + jqXHR);
       })
       .always(function () {
         start();
       });
   });
 
-  test('JS with errors cleanly loaded', function () {
+  test('JS with errors cleanly loaded', function (assert) {
     // Check that declareJS is fetched and loaded even if JS contains an error
     var url = "data:application/javascript;base64," +
          window.btoa("= var var var a a a"),
       previousonerror = window.onerror;
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     window.onerror = undefined;
     renderJS.declareJS(url, document.head)
       .then(function (aaa) {
-        ok(true, "JS with error cleanly loaded");
+        assert.ok(true, "JS with error cleanly loaded");
       })
       .fail(function (jqXHR) {
-        ok(false, jqXHR);
+        assert.ok(false, jqXHR);
       })
       .always(function () {
         window.onerror = previousonerror;
@@ -971,17 +972,17 @@
       });
   });
 
-  test('JS is not fetched twice', function () {
+  test('JS is not fetched twice', function (assert) {
     // Check that declareJS does not load the JS twice
     var url = "data:application/javascript;base64," +
          window.btoa("document.getElementById('qunit-fixture').textContent " +
                      "= 'JS not fetched twice';");
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
-        equal(
+        assert.equal(
           document.getElementById("qunit-fixture").textContent,
           "JS not fetched twice"
         );
@@ -989,10 +990,10 @@
         return renderJS.declareJS(url, document.head);
       })
       .then(function () {
-        equal(document.getElementById("qunit-fixture").textContent, "");
+        assert.equal(document.getElementById("qunit-fixture").textContent, "");
       })
       .fail(function (jqXHR) {
-        ok(false, "Failed to load " + jqXHR);
+        assert.ok(false, "Failed to load " + jqXHR);
       })
       .always(function () {
         start();
@@ -1008,58 +1009,58 @@
     }
   });
 
-  test('Ajax error resolve the promise', function () {
+  test('Ajax error resolve the promise', function (assert) {
     // Check that declareCSS is resolved if ajax fails
     var url = 'foo//://bar';
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         // IE accept the css
-        ok(true, "404 should fail");
+        assert.ok(true, "404 should fail");
       })
       .fail(function (e) {
-        equal(e.type, "error");
-        equal(e.target.getAttribute("href"), url);
+        assert.equal(e.type, "error");
+        assert.equal(e.target.getAttribute("href"), url);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Non CSS reject the promise', function () {
+  test('Non CSS reject the promise', function (assert) {
     // Check that declareCSS is resolved if mime type is wrong
     var url = "data:image/png;base64," +
          window.btoa("= = =");
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareCSS(url, document.head)
       .then(function (value, textStatus, jqXHR) {
         // Chrome accept the css
-        ok(true, "Non CSS mime type should load");
+        assert.ok(true, "Non CSS mime type should load");
       })
       .fail(function (e) {
-        equal(e.target.getAttribute("href"), url);
+        assert.equal(e.target.getAttribute("href"), url);
       })
       .always(function () {
         start();
       });
   });
 
-  test('CSS cleanly loaded', function () {
+  test('CSS cleanly loaded', function (assert) {
     // Check that declareCSS is fetched and loaded
     var url = "data:text/css;base64," +
          window.btoa("#qunit-fixture {background-color: red;}");
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         var result = document.querySelectorAll("link[href='" + url + "']");
-        ok(result.length > 0, "CSS in the head");
-        equal(
+        assert.ok(result.length > 0, "CSS in the head");
+        assert.equal(
           window.getComputedStyle(
             document.getElementById("qunit-fixture"),
             null
@@ -1068,44 +1069,44 @@
         );
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('CSS with errors cleanly loaded', function () {
+  test('CSS with errors cleanly loaded', function (assert) {
     // Check that declareCSS is fetched and
     // loaded even if CSS contains an error
     var url = "data:application/javascript;base64," +
          window.btoa("throw new Error('foo');");
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         // Chrome does not consider this as error
-        ok(true, "CSS with error cleanly loaded");
+        assert.ok(true, "CSS with error cleanly loaded");
       })
       .fail(function (jqXHR) {
-        ok(true, jqXHR);
+        assert.ok(true, jqXHR);
       })
       .always(function () {
         start();
       });
   });
 
-  test('CSS is not fetched twice', function () {
+  test('CSS is not fetched twice', function (assert) {
     // Check that declareCSS does not load the CSS twice
     var url = "data:text/css;base64," +
          window.btoa("#qunit-fixture {background-color: blue;}");
 
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     renderJS.declareCSS(url, document.head)
       .then(function () {
-        equal(
+        assert.equal(
           window.getComputedStyle(
             document.getElementById("qunit-fixture"),
             null
@@ -1114,7 +1115,7 @@
         );
         var element = document.querySelectorAll("link[href='" + url + "']")[0];
         element.parentNode.removeChild(element);
-        ok(
+        assert.ok(
           window.getComputedStyle(
             document.getElementById("qunit-fixture"),
             null
@@ -1126,8 +1127,8 @@
       .then(function () {
         var element_list =
           document.querySelectorAll("link[href='" + url + "']");
-        equal(element_list.length, 0);
-        ok(
+        assert.equal(element_list.length, 0);
+        assert.ok(
           window.getComputedStyle(
             document.getElementById("qunit-fixture"),
             null
@@ -1135,7 +1136,7 @@
         );
       })
       .fail(function (jqXHR) {
-        ok(false, "Failed to load " + jqXHR);
+        assert.ok(false, "Failed to load " + jqXHR);
       })
       .always(function () {
         start();
@@ -1159,7 +1160,7 @@
     }
   });
 
-  test('clearGadgetKlassList leads to gadget reload', function () {
+  test('clearGadgetKlassList leads to gadget reload', function (assert) {
     // Check that declareGadgetKlass reload the gadget
     // after clearGadgetKlassList is called
     var url = 'https://example.org/files/qunittest/test',
@@ -1175,8 +1176,8 @@
       {foo: 'bar'}
     );
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(url)
       .then(function (Klass1) {
         klass1 = Klass1;
@@ -1186,10 +1187,10 @@
         return renderJS.declareGadgetKlass(url);
       })
       .then(function (Klass2) {
-        ok(klass1 !== Klass2);
+        assert.ok(klass1 !== Klass2);
       })
       .fail(function (jqXHR) {
-        ok(false, jqXHR);
+        assert.ok(false, jqXHR);
       })
       .always(function () {
         start();
@@ -1198,19 +1199,19 @@
       });
   });
 
-  test('clearGadgetKlassList leads to JS reload', function () {
+  test('clearGadgetKlassList leads to JS reload', function (assert) {
     // Check that declareJS reload the JS
     // after clearGadgetKlassList is called
     var url = "data:application/javascript;base64," +
          window.btoa("document.getElementById('qunit-fixture').textContent " +
                      "= 'JS not fetched twice';");
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareJS(url, document.head)
       .then(function () {
         renderJS.clearGadgetKlassList();
-        equal(
+        assert.equal(
           document.getElementById("qunit-fixture").textContent,
           "JS not fetched twice"
         );
@@ -1218,45 +1219,45 @@
         return renderJS.declareJS(url, document.head);
       })
       .then(function () {
-        equal(
+        assert.equal(
           document.getElementById("qunit-fixture").textContent,
           "JS not fetched twice"
         );
       })
       .fail(function (jqXHR) {
-        ok(false, "Failed to load " + jqXHR);
+        assert.ok(false, "Failed to load " + jqXHR);
       })
       .always(function () {
         start();
       });
   });
 
-  test('clearGadgetKlassList leads to CSS reload', function () {
+  test('clearGadgetKlassList leads to CSS reload', function (assert) {
     // Check that declareCSS reload the CSS
     // after clearGadgetKlassList is called
     var url = "data:text/css;base64," +
          window.btoa("#qunit-fixture {background-color: blue;}"),
       count = document.querySelectorAll("link[rel=stylesheet]").length;
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareCSS(url, document.head)
       .then(function () {
         renderJS.clearGadgetKlassList();
-        equal(
+        assert.equal(
           document.querySelectorAll("link[rel=stylesheet]").length,
           count + 1
         );
         return renderJS.declareCSS(url, document.head);
       })
       .then(function () {
-        equal(
+        assert.equal(
           document.querySelectorAll("link[rel=stylesheet]").length,
           count + 2
         );
       })
       .fail(function (jqXHR) {
-        ok(false, "Failed to load " + jqXHR);
+        assert.ok(false, "Failed to load " + jqXHR);
       })
       .always(function () {
         start();
@@ -1268,33 +1269,33 @@
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget");
 
-  test('should be a constructor', function () {
+  test('should be a constructor', function (assert) {
     var gadget = new RenderJSGadget();
-    equal(
+    assert.equal(
       Object.getPrototypeOf(gadget),
       RenderJSGadget.prototype,
-      '[[Prototype]] equals RenderJSGadget.prototype'
+      '[[Prototype]] assert.equals RenderJSGadget.prototype'
     );
-    equal(
+    assert.equal(
       gadget.constructor,
       RenderJSGadget,
       'constructor property of instances is set correctly'
     );
-    equal(
+    assert.equal(
       RenderJSGadget.prototype.constructor,
       RenderJSGadget,
       'constructor property of prototype is set correctly'
     );
   });
 
-  test('should not accept parameter', function () {
-    equal(RenderJSGadget.length, 0);
+  test('should not accept parameter', function (assert) {
+    assert.equal(RenderJSGadget.length, 0);
   });
 
-  test('should work without new', function () {
+  test('should work without new', function (assert) {
     var gadgetKlass = RenderJSGadget,
       gadget = gadgetKlass();
-    equal(
+    assert.equal(
       gadget.constructor,
       RenderJSGadget,
       'constructor property of instances is set correctly'
@@ -1309,32 +1310,32 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns interface_list', function () {
+  test('returns interface_list', function (assert) {
     // Check that getInterfaceList return a Promise
     var gadget = new RenderJSGadget();
     gadget.__interface_list = "foo";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getInterfaceList()
       .then(function (result) {
-        equal(result, "foo");
+        assert.equal(result, "foo");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('default value', function () {
+  test('default value', function (assert) {
     // Check that getInterfaceList return a Promise
     var gadget = new RenderJSGadget();
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getInterfaceList()
       .then(function (result) {
-        deepEqual(result, []);
+        assert.deepEqual(result, []);
       })
       .always(function () {
         start();
@@ -1349,7 +1350,7 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns method', function () {
+  test('returns method', function (assert) {
     // Check that getMethodList return a Promise
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
@@ -1364,32 +1365,32 @@
       getBar: 'type_bar',
       getBar2: 'type_bar'
     };
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     gadget.getMethodList()
       .then(function (method_list) {
-        deepEqual(method_list, ['getFoo', 'getBar', 'getBar2']);
+        assert.deepEqual(method_list, ['getFoo', 'getBar', 'getBar2']);
       })
 
       .then(function (method_list) {
         return gadget.getMethodList('type_bar');
       })
       .then(function (method_list) {
-        deepEqual(method_list, ['getBar', 'getBar2']);
+        assert.deepEqual(method_list, ['getBar', 'getBar2']);
       })
 
       .then(function (method_list) {
         return gadget.getMethodList('type_foo');
       })
       .then(function (method_list) {
-        deepEqual(method_list, ['getFoo']);
+        assert.deepEqual(method_list, ['getFoo']);
       })
 
       .then(function (method_list) {
         return gadget.getMethodList('type_foobar');
       })
       .then(function (method_list) {
-        deepEqual(method_list, []);
+        assert.deepEqual(method_list, []);
       })
 
       .always(function () {
@@ -1397,7 +1398,7 @@
       });
   });
 
-  test('default value', function () {
+  test('default value', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -1407,11 +1408,11 @@
 
     gadget = new Klass();
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getMethodList()
       .then(function (result) {
-        deepEqual(result, []);
+        assert.deepEqual(result, []);
       })
       .always(function () {
         start();
@@ -1426,29 +1427,29 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns interface_list', function () {
+  test('returns interface_list', function (assert) {
     // Check that getRequiredCSSList return a Promise
     var gadget = new RenderJSGadget();
     gadget.__required_css_list = "foo";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getRequiredCSSList()
       .then(function (result) {
-        equal(result, "foo");
+        assert.equal(result, "foo");
       })
       .always(function () {
         start();
       });
   });
 
-  test('default value', function () {
+  test('default value', function (assert) {
     // Check that getRequiredCSSList return a Promise
     var gadget = new RenderJSGadget();
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getRequiredCSSList()
       .then(function (result) {
-        deepEqual(result, []);
+        assert.deepEqual(result, []);
       })
       .always(function () {
         start();
@@ -1463,29 +1464,29 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns interface_list', function () {
+  test('returns interface_list', function (assert) {
     // Check that getRequiredJSList return a Promise
     var gadget = new RenderJSGadget();
     gadget.__required_js_list = "foo";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getRequiredJSList()
       .then(function (result) {
-        equal(result, "foo");
+        assert.equal(result, "foo");
       })
       .always(function () {
         start();
       });
   });
 
-  test('default value', function () {
+  test('default value', function (assert) {
     // Check that getRequiredJSList return a Promise
     var gadget = new RenderJSGadget();
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getRequiredJSList()
       .then(function (result) {
-        deepEqual(result, []);
+        assert.deepEqual(result, []);
       })
       .always(function () {
         start();
@@ -1500,29 +1501,29 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns path', function () {
+  test('returns path', function (assert) {
     // Check that getPath return a Promise
     var gadget = new RenderJSGadget();
     gadget.__path = "foo";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getPath()
       .then(function (result) {
-        equal(result, "foo");
+        assert.equal(result, "foo");
       })
       .always(function () {
         start();
       });
   });
 
-  test('default value', function () {
+  test('default value', function (assert) {
     // Check that getPath return a Promise
     var gadget = new RenderJSGadget();
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getPath()
       .then(function (result) {
-        equal(result, "");
+        assert.equal(result, "");
       })
       .always(function () {
         start();
@@ -1537,29 +1538,29 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns title', function () {
+  test('returns title', function (assert) {
     // Check that getTitle return a Promise
     var gadget = new RenderJSGadget();
     gadget.__title = "foo";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getTitle()
       .then(function (result) {
-        equal(result, "foo");
+        assert.equal(result, "foo");
       })
       .always(function () {
         start();
       });
   });
 
-  test('default value', function () {
+  test('default value', function (assert) {
     // Check that getTitle return a Promise
     var gadget = new RenderJSGadget();
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getTitle()
       .then(function (result) {
-        equal(result, "");
+        assert.equal(result, "");
       })
       .always(function () {
         start();
@@ -1574,33 +1575,33 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns element property', function () {
+  test('returns element property', function (assert) {
     // Check that getElement return a Promise
     var gadget = new RenderJSGadget();
     gadget.element = "foo";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getElement()
       .then(function (result) {
-        equal(result, "foo");
+        assert.equal(result, "foo");
       })
       .always(function () {
         start();
       });
   });
 
-  test('throw an error if no element is defined', function () {
+  test('throw an error if no element is defined', function (assert) {
     // Check that getElement return a Promise
     var gadget = new RenderJSGadget();
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.getElement()
       .then(function () {
-        ok(false, "getElement should fail");
+        assert.ok(false, "getElement should fail");
       })
       .fail(function (e) {
-        ok(e instanceof Error, e);
-        equal(e.message, "No element defined");
+        assert.ok(e instanceof Error, e);
+        assert.equal(e.message, "No element defined");
       })
       .always(function () {
         start();
@@ -1615,239 +1616,239 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('update state with changed keys', function () {
+  test('update state with changed keys', function (assert) {
     var gadget = new RenderJSGadget();
     gadget.state = {foo: 'bar', bar: 'foo'};
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.changeState({bar: 'barbar'})
       .then(function () {
-        deepEqual(gadget.state, {foo: 'bar', bar: 'barbar'});
+        assert.deepEqual(gadget.state, {foo: 'bar', bar: 'barbar'});
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('trigger onStateChange if changed keys', function () {
+  test('trigger onStateChange if changed keys', function (assert) {
     var gadget = new RenderJSGadget(),
       callback_called = false;
     gadget.state = {foo: 'bar', bar: 'foo'};
     gadget.__state_change_callback = function (modification_dict) {
-      deepEqual(gadget.state, {foo: 'bar', bar: 'barbar'});
-      deepEqual(modification_dict, {bar: 'barbar'});
-      equal(this, gadget);
+      assert.deepEqual(gadget.state, {foo: 'bar', bar: 'barbar'});
+      assert.deepEqual(modification_dict, {bar: 'barbar'});
+      assert.equal(this, gadget);
       return RSVP.Queue()
         .push(function () {
           callback_called = true;
         });
     };
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     gadget.changeState({bar: 'barbar'})
       .then(function () {
-        ok(callback_called);
+        assert.ok(callback_called);
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('do not trigger onStateChange if no changed keys', function () {
+  test('do not trigger onStateChange if no changed keys', function (assert) {
     var gadget = new RenderJSGadget(),
       callback_called = false;
     gadget.state = {foo: 'bar', bar: 'foo'};
     gadget.__state_change_callback = function () {
       callback_called = true;
     };
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.changeState({bar: 'foo'})
       .then(function () {
-        ok(!callback_called);
+        assert.ok(!callback_called);
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('do not trigger onStateChange if no changed keys twice', function () {
+  test('do not trigger onStateChange if no changed keys twice', function (assert) {
     var gadget = new RenderJSGadget(),
       callback_called = false;
     gadget.state = {};
     gadget.__state_change_callback = function () {
       callback_called = true;
     };
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.changeState({})
       .then(function () {
-        ok(!callback_called);
+        assert.ok(!callback_called);
         return gadget.changeState({});
       })
       .then(function () {
-        ok(!callback_called);
+        assert.ok(!callback_called);
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('trigger onStateChange when previous is resolved', function () {
+  test('trigger onStateChange when previous is resolved', function (assert) {
     var gadget = new RenderJSGadget(),
       callback_count = 0;
     gadget.state = {};
     gadget.__state_change_callback = function (modification_dict) {
       if (callback_count === 0) {
         callback_count += 1;
-        deepEqual(modification_dict, {first: true});
+        assert.deepEqual(modification_dict, {first: true});
         return new RSVP.Queue()
           .push(function () {
             return RSVP.delay();
           })
           .push(function () {
-            deepEqual(gadget.state, {first: true});
+            assert.deepEqual(gadget.state, {first: true});
             callback_count += 1;
           });
       }
       if (callback_count === 2) {
-        deepEqual(modification_dict, {second: true});
-        deepEqual(gadget.state, {first: true, second: true});
+        assert.deepEqual(modification_dict, {second: true});
+        assert.deepEqual(gadget.state, {first: true, second: true});
         callback_count += 1;
       } else {
         throw new Error('Unexpected callback_count ' + callback_count);
       }
     };
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     return new RSVP.all([
       gadget.changeState({first: true}),
       gadget.changeState({second: true})
     ])
       .then(function () {
-        equal(callback_count, 3);
-        deepEqual(gadget.state, {first: true, second: true});
+        assert.equal(callback_count, 3);
+        assert.deepEqual(gadget.state, {first: true, second: true});
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('trigger onStateChange when previous is rejected', function () {
+  test('trigger onStateChange when previous is rejected', function (assert) {
     var gadget = new RenderJSGadget(),
       callback_count = 0;
     gadget.state = {};
     gadget.__state_change_callback = function (modification_dict) {
       if (callback_count === 0) {
         callback_count += 1;
-        deepEqual(modification_dict, {first: true});
+        assert.deepEqual(modification_dict, {first: true});
         return new RSVP.Queue()
           .push(function () {
             return RSVP.delay();
           })
           .push(function () {
-            deepEqual(gadget.state, {first: true});
+            assert.deepEqual(gadget.state, {first: true});
             callback_count += 1;
             throw new Error('manually reject first callback');
           });
       }
       if (callback_count === 2) {
-        deepEqual(modification_dict, {first: true, second: true});
-        deepEqual(gadget.state, {first: true, second: true});
+        assert.deepEqual(modification_dict, {first: true, second: true});
+        assert.deepEqual(gadget.state, {first: true, second: true});
         callback_count += 1;
       } else {
         throw new Error('Unexpected callback_count ' + callback_count);
       }
     };
-    stop();
-    expect(7);
+    start = assert.async();
+    assert.expect(7);
     return new RSVP.all([
       gadget.changeState({first: true})
         .fail(function (error) {
-          equal(error.message, 'manually reject first callback');
+          assert.equal(error.message, 'manually reject first callback');
         }),
       gadget.changeState({second: true})
     ])
       .then(function () {
-        equal(callback_count, 3);
-        deepEqual(gadget.state, {first: true, second: true});
+        assert.equal(callback_count, 3);
+        assert.deepEqual(gadget.state, {first: true, second: true});
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('accumulate modification_dict on onStateChange error', function () {
+  test('accumulate modification_dict on onStateChange error', function (assert) {
     var gadget = new RenderJSGadget();
     gadget.state = {a: 'b', foo: 'bar', bar: 'foo'};
     gadget.__state_change_callback = function (modification_dict) {
-      deepEqual(modification_dict, {bar: 'barbar'});
+      assert.deepEqual(modification_dict, {bar: 'barbar'});
       throw new Error('failure in onStateChange');
     };
-    stop();
-    expect(13);
+    start = assert.async();
+    assert.expect(13);
     gadget.changeState({bar: 'barbar'})
       .then(function () {
-        ok(false, 'Expecting an error');
+        assert.ok(false, 'Expecting an error');
       })
       .fail(function (error) {
-        equal(error.message, 'failure in onStateChange');
-        deepEqual(gadget.state, {a: 'b', foo: 'bar', bar: 'barbar'});
+        assert.equal(error.message, 'failure in onStateChange');
+        assert.deepEqual(gadget.state, {a: 'b', foo: 'bar', bar: 'barbar'});
 
         gadget.__state_change_callback = function (modification_dict) {
-          deepEqual(modification_dict, {bar: 'barbar', foo: 'foofoo'});
+          assert.deepEqual(modification_dict, {bar: 'barbar', foo: 'foofoo'});
           throw new Error('failure2 in onStateChange');
         };
         return gadget.changeState({foo: 'foofoo'});
       })
       .fail(function (error) {
-        equal(error.message, 'failure2 in onStateChange');
-        deepEqual(gadget.state, {a: 'b', foo: 'foofoo', bar: 'barbar'});
+        assert.equal(error.message, 'failure2 in onStateChange');
+        assert.deepEqual(gadget.state, {a: 'b', foo: 'foofoo', bar: 'barbar'});
 
         gadget.__state_change_callback = function (modification_dict) {
-          deepEqual(modification_dict, {bar: 'barbar', foo: 'f'});
+          assert.deepEqual(modification_dict, {bar: 'barbar', foo: 'f'});
           throw new Error('failure3 in onStateChange');
         };
         return gadget.changeState({foo: 'f'});
       })
       .fail(function (error) {
-        equal(error.message, 'failure3 in onStateChange');
-        deepEqual(gadget.state, {a: 'b', foo: 'f', bar: 'barbar'});
+        assert.equal(error.message, 'failure3 in onStateChange');
+        assert.deepEqual(gadget.state, {a: 'b', foo: 'f', bar: 'barbar'});
 
         gadget.__state_change_callback = function (modification_dict) {
-          deepEqual(modification_dict, {a: 'c', bar: 'barbar', foo: 'f'});
+          assert.deepEqual(modification_dict, {a: 'c', bar: 'barbar', foo: 'f'});
         };
         return gadget.changeState({a: 'c'});
       })
       .then(function () {
-        deepEqual(gadget.state, {a: 'c', foo: 'f', bar: 'barbar'});
+        assert.deepEqual(gadget.state, {a: 'c', foo: 'f', bar: 'barbar'});
 
 
         gadget.__state_change_callback = function (modification_dict) {
-          deepEqual(modification_dict, {a: 'd'});
+          assert.deepEqual(modification_dict, {a: 'd'});
         };
         return gadget.changeState({a: 'd'});
       })
       .then(function () {
-        deepEqual(gadget.state, {a: 'd', foo: 'f', bar: 'barbar'});
+        assert.deepEqual(gadget.state, {a: 'd', foo: 'f', bar: 'barbar'});
       })
       .always(function () {
         start();
@@ -1863,7 +1864,7 @@
     }
   });
 
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that declareAcquiredMethod is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -1875,13 +1876,13 @@
     Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
 
     gadget = new Klass();
-    equal(gadget.testFoo, undefined);
+    assert.equal(gadget.testFoo, undefined);
     result = Klass.declareAcquiredMethod('testFoo', 'testBar');
     // declareAcquiredMethod is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('creates methods on the prototype', function () {
+  test('creates methods on the prototype', function (assert) {
     // Check that declareAcquiredMethod create a callable on the prototype
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -1893,18 +1894,18 @@
     Klass.declareAcquiredMethod = RenderJSGadget.declareAcquiredMethod;
 
     gadget = new Klass();
-    equal(gadget.testFoo, undefined);
+    assert.equal(gadget.testFoo, undefined);
     Klass.declareAcquiredMethod('testFoo', 'testBar');
     // Method is added on the instance class prototype
-    equal(RenderJSGadget.prototype.testFoo, undefined);
-    ok(gadget.testFoo !== undefined);
-    ok(Klass.prototype.testFoo !== undefined);
-    equal(Klass.prototype.testFoo, gadget.testFoo);
+    assert.equal(RenderJSGadget.prototype.testFoo, undefined);
+    assert.ok(gadget.testFoo !== undefined);
+    assert.ok(Klass.prototype.testFoo !== undefined);
+    assert.equal(Klass.prototype.testFoo, gadget.testFoo);
 
   });
 
   test('returns __aq_parent result if acquired_method does not exists',
-    function () {
+    function (assert) {
       // Subclass RenderJSGadget to not pollute its namespace
       var Klass = function () {
         RenderJSGadget.call(this);
@@ -1924,27 +1925,27 @@
 
       gadget.__aq_parent = function (method_name, argument_list) {
         __aq_parent_called = true;
-        equal(this, gadget, "Context should be kept");
-        equal(method_name, original_method_name, "Method name should be kept");
-        deepEqual(argument_list, original_argument_list,
+        assert.equal(this, gadget, "Context should be kept");
+        assert.equal(method_name, original_method_name, "Method name should be kept");
+        assert.deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
         return "FOO";
       };
 
-      stop();
-      expect(5);
+      start = assert.async();
+      assert.expect(5);
       gadget.checkIfAqDynamicIsUndefined("foobar", "barfoo")
         .then(function (result) {
-          equal(result, "FOO");
-          equal(__aq_parent_called, true);
+          assert.equal(result, "FOO");
+          assert.equal(__aq_parent_called, true);
         })
         .always(function () {
           start();
         });
     });
 
-  test('fails if __aq_parent throws an error', function () {
+  test('fails if __aq_parent throws an error', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -1963,19 +1964,19 @@
       throw original_error;
     };
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.checkIfAqParentThrowsError()
       .fail(function (error) {
-        equal(error, original_error);
-        equal(error.message, "Custom error for the test");
+        assert.equal(error, original_error);
+        assert.equal(error.message, "Custom error for the test");
       })
       .always(function () {
         start();
       });
   });
 
-  test('fails if __aq_parent is not defined', function () {
+  test('fails if __aq_parent is not defined', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -1989,11 +1990,11 @@
 
     gadget = new Klass();
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.checkIfAqParentIsUndefined()
       .fail(function (error) {
-        ok(error instanceof TypeError);
+        assert.ok(error instanceof TypeError);
       })
       .always(function () {
         start();
@@ -2009,7 +2010,7 @@
     }
   });
 
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that allowPublicAcquisition is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2021,14 +2022,14 @@
     Klass.prototype.__acquired_method_dict = {};
     Klass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
 
-    result = Klass.allowPublicAcquisition('testFoo', function () {
+    result = Klass.allowPublicAcquisition('testFoo', function (assert) {
       return;
     });
     // allowPublicAcquisition is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('creates methods on the prototype', function () {
+  test('creates methods on the prototype', function (assert) {
     // Check that allowPublicAcquisition create a callable on the prototype
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2044,7 +2045,7 @@
       return "OK";
     }
     Klass.allowPublicAcquisition('testFoo', testFoo);
-    deepEqual(
+    assert.deepEqual(
       Klass.prototype.__acquired_method_dict,
       {'testFoo': testFoo}
     );
@@ -2059,9 +2060,9 @@
     }
   });
 
-  test('__aq_parent does not exist by default', function () {
+  test('__aq_parent does not exist by default', function (assert) {
     var gadget = new RenderJSGadget();
-    equal(gadget.__aq_parent, undefined);
+    assert.equal(gadget.__aq_parent, undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -2070,30 +2071,30 @@
 
   module("RenderJS.getAbsoluteURL");
 
-  test('make a relative url absolute with an absolute base url', function () {
+  test('make a relative url absolute with an absolute base url', function (assert) {
     var url = "../foo/bar",
       base_url = "http://example.org/some/path/";
 
-    equal(renderJS.getAbsoluteURL(url, base_url),
+    assert.equal(renderJS.getAbsoluteURL(url, base_url),
           "http://example.org/some/foo/bar");
   });
 
-  test('do not translate absolute url', function () {
+  test('do not translate absolute url', function (assert) {
     var url = "http://example.net/foo/bar",
       base_url = "http://example.org/some/path/";
 
-    equal(renderJS.getAbsoluteURL(url, base_url), url);
+    assert.equal(renderJS.getAbsoluteURL(url, base_url), url);
   });
 
-  test('do not translate data url', function () {
+  test('do not translate data url', function (assert) {
     var first_url = "data:application/javascript;base64,something()",
       second_url = "http://example.org/some/path/";
 
-    equal(renderJS.getAbsoluteURL(first_url, second_url), first_url);
+    assert.equal(renderJS.getAbsoluteURL(first_url, second_url), first_url);
   });
 
-  test('return undefined if relative url not passed', function () {
-    equal(renderJS.getAbsoluteURL(), undefined);
+  test('return undefined if relative url not passed', function (assert) {
+    assert.equal(renderJS.getAbsoluteURL(), undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -2104,7 +2105,7 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that declareMethod is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2116,15 +2117,15 @@
     Klass.declareMethod = RenderJSGadget.declareMethod;
 
     gadget = new Klass();
-    equal(gadget.testFoo, undefined);
-    result = Klass.declareMethod('testFoo', function () {
+    assert.equal(gadget.testFoo, undefined);
+    result = Klass.declareMethod('testFoo', function (assert) {
       return;
     });
     // declareMethod is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('creates methods on the prototype', function () {
+  test('creates methods on the prototype', function (assert) {
     // Check that declareMethod create a callable on the prototype
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2136,32 +2137,32 @@
     Klass.declareMethod = RenderJSGadget.declareMethod;
 
     gadget = new Klass();
-    equal(gadget.testFoo, undefined);
+    assert.equal(gadget.testFoo, undefined);
     Klass.declareMethod('testFoo', function (value) {
       called = value;
     });
     // Method is added on the instance class prototype
-    equal(RenderJSGadget.prototype.testFoo, undefined);
-    ok(gadget.testFoo !== undefined);
-    ok(Klass.prototype.testFoo !== undefined);
-    equal(Klass.prototype.testFoo, gadget.testFoo);
+    assert.equal(RenderJSGadget.prototype.testFoo, undefined);
+    assert.ok(gadget.testFoo !== undefined);
+    assert.ok(Klass.prototype.testFoo !== undefined);
+    assert.equal(Klass.prototype.testFoo, gadget.testFoo);
 
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     // method can be called
     gadget.testFoo("Bar")
       .then(function (param) {
-        equal(called, "Bar");
+        assert.equal(called, "Bar");
       })
       .fail(function () {
-        ok(false, "Should propagate the parameters");
+        assert.ok(false, "Should propagate the parameters");
       })
       .always(function () {
         start();
       });
   });
 
-  test('returns a promise when synchronous function', function () {
+  test('returns a promise when synchronous function', function (assert) {
     // Check that declareMethod returns a promise when defining
     // a synchronous function
 
@@ -2179,21 +2180,21 @@
     });
 
     // method can be called
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.testFoo("Bar")
       .then(function (param) {
-        equal(param, "Bar");
+        assert.equal(param, "Bar");
       })
       .fail(function () {
-        ok(false, "Should not fail when synchronous");
+        assert.ok(false, "Should not fail when synchronous");
       })
       .always(function () {
         start();
       });
   });
 
-  test('returns the callback promise if it exists', function () {
+  test('returns the callback promise if it exists', function (assert) {
     // Check that declareMethod returns the promise created by the callback
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2210,21 +2211,21 @@
     });
 
     // method can be called
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.testFoo("Bar")
       .then(function () {
-        ok(false, "Callback promise is rejected");
+        assert.ok(false, "Callback promise is rejected");
       })
       .fail(function (param) {
-        equal(param, "Bar");
+        assert.equal(param, "Bar");
       })
       .always(function () {
         start();
       });
   });
 
-  test('mutex prevent concurrent execution', function () {
+  test('mutex prevent concurrent execution', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -2237,7 +2238,7 @@
     gadget = new Klass();
 
     function assertCounter(value) {
-      equal(counter, value);
+      assert.equal(counter, value);
       counter += 1;
     }
 
@@ -2254,8 +2255,8 @@
     }, {mutex: 'foo'});
 
     // method can be called
-    stop();
-    expect(10);
+    start = assert.async();
+    assert.expect(10);
     return new RSVP.Queue()
       .push(function () {
         return RSVP.all([
@@ -2265,9 +2266,9 @@
         ]);
       })
       .push(function (result_list) {
-        equal(result_list[0], 2);
-        equal(result_list[1], 4);
-        equal(result_list[2], 6);
+        assert.equal(result_list[0], 2);
+        assert.equal(result_list[1], 4);
+        assert.equal(result_list[2], 6);
         assertCounter(6);
       })
       .always(function () {
@@ -2275,7 +2276,7 @@
       });
   });
 
-  test('mutex first cancellation stop execution', function () {
+  test('mutex first cancellation stop execution', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -2288,7 +2289,7 @@
     gadget = new Klass();
 
     function assertCounter(value) {
-      equal(counter, value);
+      assert.equal(counter, value);
       counter += 1;
     }
 
@@ -2300,13 +2301,13 @@
         })
         .push(function () {
           assertCounter(expected_counter + 1);
-          ok(false, 'Should not reach that code');
+          assert.ok(false, 'Should not reach that code');
         });
     }, {mutex: 'foo'});
 
     // method can be called
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
 
     return new RSVP.Queue()
       .push(function () {
@@ -2322,7 +2323,7 @@
       });
   });
 
-  test('not mutex first cancellation stop execution', function () {
+  test('not mutex first cancellation stop execution', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -2335,7 +2336,7 @@
     gadget = new Klass();
 
     function assertCounter(value) {
-      equal(counter, value);
+      assert.equal(counter, value);
       counter += 1;
     }
 
@@ -2347,13 +2348,13 @@
         })
         .push(function () {
           assertCounter(expected_counter + 1);
-          ok(false, 'Should not reach that code');
+          assert.ok(false, 'Should not reach that code');
         });
     });
 
     // method can be called
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
 
     return new RSVP.Queue()
       .push(function () {
@@ -2377,7 +2378,7 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that ready is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2393,10 +2394,10 @@
       return;
     });
     // ready is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('store callback in the ready_list property', function () {
+  test('store callback in the ready_list property', function (assert) {
     // Check that ready is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2411,7 +2412,7 @@
 
     Klass.ready(callback);
     // ready is chainable
-    deepEqual(Klass.__ready_list, [callback]);
+    assert.deepEqual(Klass.__ready_list, [callback]);
   });
 
 
@@ -2431,7 +2432,7 @@
       delete this.server;
     }
   });
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that setState is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2445,10 +2446,10 @@
     Klass.setState = RenderJSGadget.setState;
 
     result = Klass.setState({});
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('create __json_state property on prototype', function () {
+  test('create __json_state property on prototype', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -2460,7 +2461,7 @@
     Klass.setState = RenderJSGadget.setState;
 
     Klass.setState({foo: 'bar'});
-    equal(Klass.prototype.__json_state, JSON.stringify({foo: 'bar'}));
+    assert.equal(Klass.prototype.__json_state, JSON.stringify({foo: 'bar'}));
   });
 
   /////////////////////////////////////////////////////////////////
@@ -2479,7 +2480,7 @@
       delete this.server;
     }
   });
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that onStateChange is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2492,10 +2493,10 @@
     Klass.onStateChange = RenderJSGadget.onStateChange;
 
     result = Klass.onStateChange();
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('create callback in the __state_change_callback property', function () {
+  test('create callback in the __state_change_callback property', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -2506,7 +2507,7 @@
     Klass.onStateChange = RenderJSGadget.onStateChange;
 
     Klass.onStateChange(callback);
-    equal(Klass.prototype.__state_change_callback, callback);
+    assert.equal(Klass.prototype.__state_change_callback, callback);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -2525,7 +2526,7 @@
       delete this.server;
     }
   });
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that declareService is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2541,10 +2542,10 @@
       return;
     });
     // declareService is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('store callback in the service_list property', function () {
+  test('store callback in the service_list property', function (assert) {
     // Check that declareService is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -2559,7 +2560,7 @@
 
     Klass.declareService(callback);
     // declareService is chainable
-    deepEqual(Klass.__service_list, [callback]);
+    assert.deepEqual(Klass.__service_list, [callback]);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -2574,14 +2575,14 @@
       return RSVP.Promise(function () {
         service_status.start_count += 1;
         service_status.status = "started";
-      }, function () {
+      }, function (assert) {
         service_status.stop_count += 1;
         service_status.status = "stopped";
       });
     });
   }
 
-  test('service untouched when gadget never in DOM', function () {
+  test('service untouched when gadget never in DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -2593,8 +2594,8 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2607,22 +2608,22 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 0);
-        equal(service1.stop_count, 0);
-        equal(service1.status, undefined);
-        equal(service2.start_count, 0);
-        equal(service2.stop_count, 0);
-        equal(service2.status, undefined);
+        assert.equal(service1.start_count, 0);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, undefined);
+        assert.equal(service2.start_count, 0);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, undefined);
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('service started when gadget created in DOM', function () {
+  test('service started when gadget created in DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -2635,8 +2636,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2651,22 +2652,22 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 0);
-        equal(service2.status, "started");
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, "started");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('service started after ready is finished', function () {
+  test('service started after ready is finished', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test5011.html',
@@ -2678,8 +2679,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         Klass.declareService(function () {
@@ -2701,17 +2702,17 @@
         return defer.promise;
       })
       .then(function (result) {
-        equal(result, 'Triggered before service');
+        assert.equal(result, 'Triggered before service');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('service started when gadget element added in DOM', function () {
+  test('service started when gadget element added in DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -2724,8 +2725,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2742,22 +2743,22 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 0);
-        equal(service2.status, "started");
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, "started");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('service started when gadget parent element added in DOM', function () {
+  test('service started when gadget parent element added in DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -2771,8 +2772,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "";
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2789,22 +2790,22 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 0);
-        equal(service2.status, "started");
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, "started");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('service stopped when gadget element removed from DOM', function () {
+  test('service stopped when gadget element removed from DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -2817,8 +2818,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2839,15 +2840,15 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "stopped");
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 1);
-        equal(service2.status, "stopped");
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "stopped");
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 1);
+        assert.equal(service2.status, "stopped");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -2869,8 +2870,8 @@
       }, "<html><body></body></html>"]);
 
       document.getElementById('qunit-fixture').innerHTML = "";
-      stop();
-      expect(6);
+      start = assert.async();
+      assert.expect(6);
       renderJS.declareGadgetKlass(html_url)
         .then(function (Klass) {
           declareServiceToCheck(Klass, service1);
@@ -2893,22 +2894,22 @@
           return RSVP.delay(50);
         })
         .then(function () {
-          equal(service1.start_count, 1);
-          equal(service1.stop_count, 1);
-          equal(service1.status, "stopped");
-          equal(service2.start_count, 1);
-          equal(service2.stop_count, 1);
-          equal(service2.status, "stopped");
+          assert.equal(service1.start_count, 1);
+          assert.equal(service1.stop_count, 1);
+          assert.equal(service1.status, "stopped");
+          assert.equal(service2.start_count, 1);
+          assert.equal(service2.stop_count, 1);
+          assert.equal(service2.status, "stopped");
         })
         .fail(function (e) {
-          ok(false, e);
+          assert.ok(false, e);
         })
         .always(function () {
           start();
         });
     });
 
-  test('service can be restarted', function () {
+  test('service can be restarted', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -2922,8 +2923,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareServiceToCheck(Klass, service1);
@@ -2949,15 +2950,15 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 2);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "started");
-        equal(service2.start_count, 2);
-        equal(service2.stop_count, 1);
-        equal(service2.status, "started");
+        assert.equal(service1.start_count, 2);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "started");
+        assert.equal(service2.start_count, 2);
+        assert.equal(service2.stop_count, 1);
+        assert.equal(service2.status, "started");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -2967,7 +2968,7 @@
   /////////////////////////////////////////////////////////////////
   // Service error handling
   /////////////////////////////////////////////////////////////////
-  test('Service error are reported to parent gadget', function () {
+  test('Service error are reported to parent gadget', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
       RenderJSGadget.call(this);
@@ -2996,8 +2997,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
@@ -3015,21 +3016,21 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        ok(catched_error instanceof Error);
-        equal(
+        assert.ok(catched_error instanceof Error);
+        assert.equal(
           catched_error.message,
           "My service crashed!"
         );
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Service error from iframe are reported to parent gadget', function () {
+  test('Service error from iframe are reported to parent gadget', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
       RenderJSGadget.call(this);
@@ -3050,8 +3051,8 @@
     gadget.__sub_gadget_dict = {};
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
 
     return gadget.declareGadget(
       'embedded_crashing_service.html',
@@ -3063,22 +3064,22 @@
         return defer.promise;
       })
       .then(function (catched_error) {
-        ok(catched_error instanceof Object);
-        ok(!(catched_error instanceof Error));
-        equal(
+        assert.ok(catched_error instanceof Object);
+        assert.ok(!(catched_error instanceof Error));
+        assert.equal(
           catched_error.message,
           "Cannot read property 'bar' of undefined"
         );
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Service error stops the other services', function () {
+  test('Service error stops the other services', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
       RenderJSGadget.call(this);
@@ -3104,8 +3105,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
@@ -3124,12 +3125,12 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 1);
-        equal(service2.status, "stopped");
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 1);
+        assert.equal(service2.status, "stopped");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -3153,7 +3154,7 @@
       delete this.server;
     }
   });
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that declareService is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -3169,10 +3170,10 @@
       return;
     });
     // onEvent is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('create callback in the service_list property', function () {
+  test('create callback in the service_list property', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -3184,7 +3185,7 @@
     Klass.onEvent = RenderJSGadget.onEvent;
 
     Klass.onEvent('foo', callback);
-    equal(Klass.__service_list.length, 1);
+    assert.equal(Klass.__service_list.length, 1);
   });
 
   function declareEventToCheck(klass, service_status) {
@@ -3192,18 +3193,18 @@
     service_status.stop_count = 0;
     service_status.status = undefined;
 
-    klass.onEvent('bar', function () {
+    klass.onEvent('bar', function (assert) {
       return new RSVP.Promise(function () {
         service_status.start_count += 1;
         service_status.status = "started";
-      }, function () {
+      }, function (assert) {
         service_status.stop_count += 1;
         service_status.status = "stopped";
       });
     });
   }
 
-  test('callback is triggered on event', function () {
+  test('callback is triggered on event', function (assert) {
     var service1 = {},
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test599.html';
@@ -3214,8 +3215,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(9);
+    start = assert.async();
+    assert.expect(9);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareEventToCheck(Klass, service1);
@@ -3229,9 +3230,9 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 0);
-        equal(service1.stop_count, 0);
-        equal(service1.status, undefined);
+        assert.equal(service1.start_count, 0);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, undefined);
 
         var event = new Event("bar");
         document.getElementById('qunit-fixture').querySelector("div")
@@ -3239,9 +3240,9 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
 
         var event = new Event("bar");
         document.getElementById('qunit-fixture').querySelector("div")
@@ -3249,19 +3250,19 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 2);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "started");
+        assert.equal(service1.start_count, 2);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "started");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('check cancellation message after trigger event twice', function () {
+  test('check cancellation message after trigger event twice', function (assert) {
     var called = false,
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test600.html';
@@ -3272,11 +3273,11 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
-        Klass.onEvent('bar', function () {
+        Klass.onEvent('bar', function (assert) {
           return new RSVP.Promise(function () {
             return;
           }, function (error) {
@@ -3284,7 +3285,7 @@
               return;
             }
             called = true;
-            equal(error, "Cancelling previous event (bar)");
+            assert.equal(error, "Cancelling previous event (bar)");
           });
         });
         return gadget.declareGadget(
@@ -3305,7 +3306,7 @@
       });
   });
 
-  test('check message after delete gadget', function () {
+  test('check message after delete gadget', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test601.html';
     gadget.__sub_gadget_dict = {};
@@ -3315,26 +3316,26 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
-        Klass.declareJob("runJob1", function () {
+        Klass.declareJob("runJob1", function (assert) {
           return new RSVP.Promise(function () {
             return RSVP.delay(20);
           }, function (error) {
-            equal(
+            assert.equal(
               error,
               "Deleting Gadget Monitor " +
                 "(https://example.org/files/qunittest/test601.html)"
             );
           });
         });
-        Klass.onEvent('bar', function () {
+        Klass.onEvent('bar', function (assert) {
           return new RSVP.Promise(function () {
             return;
           }, function (error) {
-            equal(
+            assert.equal(
               error,
               "Deleting Gadget Monitor " +
                 "(https://example.org/files/qunittest/test601.html)"
@@ -3379,7 +3380,7 @@
       delete this.server;
     }
   });
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that onLoop is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -3395,10 +3396,10 @@
       return;
     });
     // onLoop is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
-  test('create callback in the service_list property', function () {
+  test('create callback in the service_list property', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var Klass = function () {
       RenderJSGadget.call(this);
@@ -3410,7 +3411,7 @@
     Klass.onLoop = RenderJSGadget.onLoop;
 
     Klass.onLoop(callback);
-    equal(Klass.__service_list.length, 1);
+    assert.equal(Klass.__service_list.length, 1);
   });
 
   function declareTimeoutToCheck(klass, service_status) {
@@ -3434,7 +3435,7 @@
     });
   }
 
-  test('callback is triggered on timeout', function () {
+  test('callback is triggered on timeout', function (assert) {
     var service1 = {},
       gadget = new RenderJSGadget(),
       sub_gadget,
@@ -3446,8 +3447,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(11);
+    start = assert.async();
+    assert.expect(11);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareTimeoutToCheck(Klass, service1);
@@ -3462,27 +3463,27 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
-        equal(service1.this, sub_gadget);
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
+        assert.equal(service1.this, sub_gadget);
         service1.defer.resolve();
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 2);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "started");
-        equal(service1.this, sub_gadget);
+        assert.equal(service1.start_count, 2);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "started");
+        assert.equal(service1.this, sub_gadget);
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 2);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "started");
+        assert.equal(service1.start_count, 2);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "started");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -3506,7 +3507,7 @@
     }
   });
 
-  test('is chainable', function () {
+  test('is chainable', function (assert) {
     // Check that declareJob is chainable
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -3518,15 +3519,15 @@
     Klass.__service_list = [];
     Klass.declareJob = RenderJSGadget.declareJob;
 
-    result = Klass.declareJob('runServiceMethod', function () {
+    result = Klass.declareJob('runServiceMethod', function (assert) {
       return;
     });
     // onEvent is chainable
-    equal(result, Klass);
+    assert.equal(result, Klass);
   });
 
 
-  test('creates methods on the prototype', function () {
+  test('creates methods on the prototype', function (assert) {
     // Check that declareMethod create a callable on the prototype
 
     // Subclass RenderJSGadget to not pollute its namespace
@@ -3538,15 +3539,15 @@
     Klass.declareJob = RenderJSGadget.declareJob;
 
     gadget = new Klass();
-    equal(gadget.testFoo, undefined);
-    Klass.declareJob('testFoo', function () {
+    assert.equal(gadget.testFoo, undefined);
+    Klass.declareJob('testFoo', function (assert) {
       return;
     });
     // Method is added on the instance class prototype
-    equal(RenderJSGadget.prototype.testFoo, undefined);
-    ok(gadget.testFoo !== undefined);
-    ok(Klass.prototype.testFoo !== undefined);
-    equal(Klass.prototype.testFoo, gadget.testFoo);
+    assert.equal(RenderJSGadget.prototype.testFoo, undefined);
+    assert.ok(gadget.testFoo !== undefined);
+    assert.ok(Klass.prototype.testFoo !== undefined);
+    assert.equal(Klass.prototype.testFoo, gadget.testFoo);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -3562,14 +3563,14 @@
         service_status.start_count += 1;
         service_status.parameter = parameter;
         service_status.status = "started";
-      }, function () {
+      }, function (assert) {
         service_status.stop_count += 1;
         service_status.status = "stopped";
       });
     });
   }
 
-  test('job untouched when gadget not in DOM', function () {
+  test('job untouched when gadget not in DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -3582,8 +3583,8 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(8);
+    start = assert.async();
+    assert.expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3603,24 +3604,24 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 0);
-        equal(service1.stop_count, 0);
-        equal(service1.status, undefined);
-        equal(service1.parameter, undefined);
-        equal(service2.start_count, 0);
-        equal(service2.stop_count, 0);
-        equal(service2.status, undefined);
-        equal(service2.parameter, undefined);
+        assert.equal(service1.start_count, 0);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, undefined);
+        assert.equal(service1.parameter, undefined);
+        assert.equal(service2.start_count, 0);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, undefined);
+        assert.equal(service2.parameter, undefined);
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('job triggered when gadget in DOM', function () {
+  test('job triggered when gadget in DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -3634,8 +3635,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(8);
+    start = assert.async();
+    assert.expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3657,24 +3658,24 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
-        equal(service1.parameter, 'foo');
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 0);
-        equal(service2.status, "started");
-        equal(service2.parameter, 'bar');
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
+        assert.equal(service1.parameter, 'foo');
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, "started");
+        assert.equal(service2.parameter, 'bar');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('job called twice propage error message', function () {
+  test('job called twice propage error message', function (assert) {
     var g,
       gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test502.html';
@@ -3685,8 +3686,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
 
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
@@ -3695,7 +3696,7 @@
             return RSVP.delay(20);
           }, function (error) {
             if (parameter === "first") {
-              equal(error, "runJob1 : Cancelling previous job");
+              assert.equal(error, "runJob1 : Cancelling previous job");
             }
           });
         });
@@ -3715,7 +3716,7 @@
       });
   });
 
-  test('cancel jobs with custom message', function () {
+  test('cancel jobs with custom message', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test502.html';
     gadget.__sub_gadget_dict = {};
@@ -3725,8 +3726,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
 
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
@@ -3744,12 +3745,12 @@
           RSVP.Promise(function () {
             return;
           }, function (error) {
-            equal(error, msg);
+            assert.equal(error, msg);
           }),
           RSVP.Promise(function () {
             return;
           }, function (error) {
-            equal(error, msg);
+            assert.equal(error, msg);
           })
         ]);
         all.cancel("Cancel RSVP.all");
@@ -3759,7 +3760,7 @@
       });
   });
 
-  test('job triggered when gadget element added in DOM', function () {
+  test('job triggered when gadget element added in DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -3773,8 +3774,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(8);
+    start = assert.async();
+    assert.expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3798,24 +3799,24 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
-        equal(service1.parameter, 'foo');
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 0);
-        equal(service2.status, "started");
-        equal(service2.parameter, 'bar');
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
+        assert.equal(service1.parameter, 'foo');
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, "started");
+        assert.equal(service2.parameter, 'bar');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('job stopped when gadget element removed from DOM', function () {
+  test('job stopped when gadget element removed from DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -3829,8 +3830,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(8);
+    start = assert.async();
+    assert.expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3858,24 +3859,24 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "stopped");
-        equal(service1.parameter, 'foo');
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 1);
-        equal(service2.status, "stopped");
-        equal(service2.parameter, 'bar');
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "stopped");
+        assert.equal(service1.parameter, 'foo');
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 1);
+        assert.equal(service2.status, "stopped");
+        assert.equal(service2.parameter, 'bar');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('job can not be restarted', function () {
+  test('job can not be restarted', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -3889,8 +3890,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(8);
+    start = assert.async();
+    assert.expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3922,24 +3923,24 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "stopped");
-        equal(service1.parameter, 'foo');
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 1);
-        equal(service2.status, "stopped");
-        equal(service2.parameter, 'bar');
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "stopped");
+        assert.equal(service1.parameter, 'foo');
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 1);
+        assert.equal(service2.status, "stopped");
+        assert.equal(service2.parameter, 'bar');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('job can be triggered multiple times', function () {
+  test('job can be triggered multiple times', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       service2 = {},
@@ -3953,8 +3954,8 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(8);
+    start = assert.async();
+    assert.expect(8);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -3981,24 +3982,24 @@
       })
       .then(function () {
         // First job should be cancelled
-        equal(service1.start_count, 2);
-        equal(service1.stop_count, 1);
-        equal(service1.status, "started");
-        equal(service1.parameter, 'foo2');
-        equal(service2.start_count, 1);
-        equal(service2.stop_count, 0);
-        equal(service2.status, "started");
-        equal(service2.parameter, 'bar');
+        assert.equal(service1.start_count, 2);
+        assert.equal(service1.stop_count, 1);
+        assert.equal(service1.status, "started");
+        assert.equal(service1.parameter, 'foo2');
+        assert.equal(service2.start_count, 1);
+        assert.equal(service2.stop_count, 0);
+        assert.equal(service2.status, "started");
+        assert.equal(service2.parameter, 'bar');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('job is local to a gadget instance', function () {
+  test('job is local to a gadget instance', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var service1 = {},
       g,
@@ -4012,8 +4013,8 @@
 
     document.getElementById('qunit-fixture').innerHTML =
       "<div></div><span></span>";
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         declareJobToCheck(Klass, 'runJob1', service1);
@@ -4038,13 +4039,13 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(service1.start_count, 1);
-        equal(service1.stop_count, 0);
-        equal(service1.status, "started");
-        equal(service1.parameter, 'foo');
+        assert.equal(service1.start_count, 1);
+        assert.equal(service1.stop_count, 0);
+        assert.equal(service1.status, "started");
+        assert.equal(service1.parameter, 'foo');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -4054,7 +4055,7 @@
   /////////////////////////////////////////////////////////////////
   // Job error handling
   /////////////////////////////////////////////////////////////////
-  test('Job error are reported to parent gadget', function () {
+  test('Job error are reported to parent gadget', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
       RenderJSGadget.call(this);
@@ -4083,12 +4084,12 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
-        Klass.declareJob('crashJob', function () {
+        Klass.declareJob('crashJob', function (assert) {
           throw new Error("My service crashed!");
         });
 
@@ -4105,21 +4106,21 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        ok(catched_error instanceof Error);
-        equal(
+        assert.ok(catched_error instanceof Error);
+        assert.equal(
           catched_error.message,
           "My service crashed!"
         );
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Job error are reported after added to the DOM', function () {
+  test('Job error are reported after added to the DOM', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
       RenderJSGadget.call(this);
@@ -4149,12 +4150,12 @@
     }, "<html><body></body></html>"]);
 
     document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
 
-        Klass.declareJob('crashJob', function () {
+        Klass.declareJob('crashJob', function (assert) {
           throw new Error("My service crashed!");
         });
 
@@ -4170,7 +4171,7 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        equal(catched_error, undefined);
+        assert.equal(catched_error, undefined);
       })
       .then(function () {
         document
@@ -4180,14 +4181,14 @@
         return RSVP.delay(50);
       })
       .then(function () {
-        ok(catched_error instanceof Error);
-        equal(
+        assert.ok(catched_error instanceof Error);
+        assert.equal(
           catched_error.message,
           "My service crashed!"
         );
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -4199,41 +4200,41 @@
   /////////////////////////////////////////////////////////////////
   module("RenderJSIframeGadget");
 
-  test('should be a constructor', function () {
+  test('should be a constructor', function (assert) {
     var gadget = new RenderJSIframeGadget();
-    equal(
+    assert.equal(
       Object.getPrototypeOf(gadget),
       RenderJSIframeGadget.prototype,
-      '[[Prototype]] equals RenderJSIframeGadget.prototype'
+      '[[Prototype]] assert.equals RenderJSIframeGadget.prototype'
     );
-    equal(
+    assert.equal(
       gadget.constructor,
       RenderJSIframeGadget,
       'constructor property of instances is set correctly'
     );
-    equal(
+    assert.equal(
       RenderJSIframeGadget.prototype.constructor,
       RenderJSIframeGadget,
       'constructor property of prototype is set correctly'
     );
   });
 
-  test('should not accept parameter', function () {
-    equal(RenderJSIframeGadget.length, 0);
+  test('should not accept parameter', function (assert) {
+    assert.equal(RenderJSIframeGadget.length, 0);
   });
 
-  test('should work without new', function () {
+  test('should work without new', function (assert) {
     var gadgetKlass = RenderJSIframeGadget,
       gadget = gadgetKlass();
-    equal(
+    assert.equal(
       gadget.constructor,
       RenderJSIframeGadget,
       'constructor property of instances is set correctly'
     );
-    ok(gadget instanceof RenderJSGadget);
-    ok(gadget instanceof RenderJSIframeGadget);
-    ok(RenderJSIframeGadget !== RenderJSGadget);
-    ok(gadget.__aq_parent === undefined);
+    assert.ok(gadget instanceof RenderJSGadget);
+    assert.ok(gadget instanceof RenderJSIframeGadget);
+    assert.ok(RenderJSIframeGadget !== RenderJSGadget);
+    assert.ok(gadget.__aq_parent === undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -4241,41 +4242,41 @@
   /////////////////////////////////////////////////////////////////
   module("RenderJSEmbeddedGadget");
 
-  test('should be a constructor', function () {
+  test('should be a constructor', function (assert) {
     var gadget = new RenderJSEmbeddedGadget();
-    equal(
+    assert.equal(
       Object.getPrototypeOf(gadget),
       RenderJSEmbeddedGadget.prototype,
-      '[[Prototype]] equals RenderJSEmbeddedGadget.prototype'
+      '[[Prototype]] assert.equals RenderJSEmbeddedGadget.prototype'
     );
-    equal(
+    assert.equal(
       gadget.constructor,
       RenderJSEmbeddedGadget,
       'constructor property of instances is set correctly'
     );
-    equal(
+    assert.equal(
       RenderJSEmbeddedGadget.prototype.constructor,
       RenderJSEmbeddedGadget,
       'constructor property of prototype is set correctly'
     );
   });
 
-  test('should not accept parameter', function () {
-    equal(RenderJSEmbeddedGadget.length, 0);
+  test('should not accept parameter', function (assert) {
+    assert.equal(RenderJSEmbeddedGadget.length, 0);
   });
 
-  test('should work without new', function () {
+  test('should work without new', function (assert) {
     var gadgetKlass = RenderJSEmbeddedGadget,
       gadget = gadgetKlass();
-    equal(
+    assert.equal(
       gadget.constructor,
       RenderJSEmbeddedGadget,
       'constructor property of instances is set correctly'
     );
-    ok(gadget instanceof RenderJSGadget);
-    ok(gadget instanceof RenderJSEmbeddedGadget);
-    ok(RenderJSEmbeddedGadget !== RenderJSGadget);
-    ok(gadget.__aq_parent === undefined);
+    assert.ok(gadget instanceof RenderJSGadget);
+    assert.ok(gadget instanceof RenderJSEmbeddedGadget);
+    assert.ok(RenderJSEmbeddedGadget !== RenderJSGadget);
+    assert.ok(gadget.__aq_parent === undefined);
   });
 
   /////////////////////////////////////////////////////////////////
@@ -4309,22 +4310,22 @@
       "Content-Type": "text/html"
     }, html]);
 
-    // stop();
+    // start = assert.async();
     qunit_async_state = assert.async();
-    expect(1);
+    assert.expect(1);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function () {
-        ok(true);
+        assert.ok(true);
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('provide a gadget instance as callback parameter', function () {
+  test('provide a gadget instance as callback parameter', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = 'https://example.org/files/qunittest/test',
@@ -4339,20 +4340,20 @@
       "Content-Type": "text/html"
     }, html]);
 
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function (new_gadget) {
-        equal(new_gadget.__path, url);
-        deepEqual(new_gadget.__acquired_method_dict, {});
-        ok(new_gadget instanceof RenderJSGadget);
+        assert.equal(new_gadget.__path, url);
+        assert.deepEqual(new_gadget.__acquired_method_dict, {});
+        assert.ok(new_gadget instanceof RenderJSGadget);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Initialize sub_gadget_dict private property', function () {
+  test('Initialize sub_gadget_dict private property', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = 'https://example.org/files/qunittest/test',
@@ -4367,33 +4368,33 @@
       "Content-Type": "text/html"
     }, html]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function (new_gadget) {
-        ok(new_gadget.hasOwnProperty("__sub_gadget_dict"));
-        deepEqual(new_gadget.__sub_gadget_dict, {});
+        assert.ok(new_gadget.hasOwnProperty("__sub_gadget_dict"));
+        assert.deepEqual(new_gadget.__sub_gadget_dict, {});
       })
       .always(function () {
         start();
       });
   });
 
-  test('no parameter', function () {
+  test('no parameter', function (assert) {
     // Check that missing url reject the declaration
     var gadget = new RenderJSGadget();
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.declareGadget()
       .fail(function () {
-        ok(true);
+        assert.ok(true);
       })
       .always(function () {
         start();
       });
   });
 
-  test('load dependency before returning gadget', function () {
+  test('load dependency before returning gadget', function (assert) {
     // Check that dependencies are loaded before gadget creation
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test2.html',
@@ -4438,31 +4439,31 @@
 
     document.getElementById('qunit-fixture').innerHTML =
       "<div></div><div>bar</div>";
-    stop();
-    expect(12);
+    start = assert.async();
+    assert.expect(12);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        equal(document.getElementById('qunit-fixture').innerHTML,
+        assert.equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou2</div><div>bar</div>");
-        equal(new_gadget.element.innerHTML,
+        assert.equal(new_gadget.element.innerHTML,
               "<p>Bar content</p>");
-        equal(new_gadget.element.tagName,
+        assert.equal(new_gadget.element.tagName,
               "DIV");
-        equal(new_gadget.element.getAttribute("data-gadget-url"),
+        assert.equal(new_gadget.element.getAttribute("data-gadget-url"),
               html_url);
-        equal(new_gadget.element.getAttribute("data-gadget-sandbox"),
+        assert.equal(new_gadget.element.getAttribute("data-gadget-sandbox"),
               "public");
-        notEqual(new_gadget.element.getAttribute("data-gadget-scope"),
+        assert.notEqual(new_gadget.element.getAttribute("data-gadget-scope"),
               null);
-        ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
-        equal(spy_js.firstCall.args[0], js1_url, "First JS call");
-        equal(spy_js.secondCall.args[0], js2_url, "Second JS call");
-        ok(spy_css.calledTwice, "CSS count " + spy_css.callCount);
-        equal(spy_css.firstCall.args[0], css1_url, "First CSS call");
-        equal(spy_css.secondCall.args[0], css2_url, "Second CSS call");
+        assert.ok(spy_js.calledTwice, "JS count " + spy_js.callCount);
+        assert.equal(spy_js.firstCall.args[0], js1_url, "First JS call");
+        assert.equal(spy_js.secondCall.args[0], js2_url, "Second JS call");
+        assert.ok(spy_css.calledTwice, "CSS count " + spy_css.callCount);
+        assert.equal(spy_css.firstCall.args[0], css1_url, "First CSS call");
+        assert.equal(spy_css.secondCall.args[0], css2_url, "Second CSS call");
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(function () {
         start();
@@ -4471,7 +4472,7 @@
       });
   });
 
-  test('load dependency in the right order', function () {
+  test('load dependency in the right order', function (assert) {
     // Check that JS dependencies are loaded in the right order
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test22.html',
@@ -4515,15 +4516,15 @@
       "Content-Type": "text/html"
     }, html]);
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        equal(window.test_js1.test_js2.test_js3.test_js4.test_js5.test_js6,
+        assert.equal(window.test_js1.test_js2.test_js3.test_js4.test_js5.test_js6,
               'foo');
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(function () {
         start();
@@ -4531,7 +4532,7 @@
 
   });
 
-  test('Fail if klass can not be loaded', function () {
+  test('Fail if klass can not be loaded', function (assert) {
     // Check that gadget is not created if klass is can not be loaded
     var gadget = new RenderJSGadget(),
       html_url = 'http://example.org/files/qunittest/test3.html';
@@ -4541,21 +4542,21 @@
       "Content-Type": "text/html"
     }, ""]);
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (jqXHR) {
-        equal(jqXHR.status, 404);
+        assert.equal(jqXHR.status, 404);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Fail if js can not be loaded', function () {
+  test('Fail if js can not be loaded', function (assert) {
     // Check that dependencies are loaded before gadget creation
     var gadget = new RenderJSGadget(),
       html_url = 'http://example.org/files/qunittest/test5.html',
@@ -4571,14 +4572,14 @@
       required_js_list: [js1_url]
     });
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (e) {
-        ok(true);
+        assert.ok(true);
       })
       .always(function () {
         start();
@@ -4587,7 +4588,7 @@
       });
   });
 
-  test('Do not load gadget dependency twice', function () {
+  test('Do not load gadget dependency twice', function (assert) {
     // Check that dependencies are not reloaded if 2 gadgets are created
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test254.html',
@@ -4608,25 +4609,25 @@
       required_js_list: [js1_url]
     });
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     document.getElementById('qunit-fixture').innerHTML =
       "<div></div><div></div>";
     gadget.declareGadget(html_url)
       .fail(function (e) {
-        ok(false, "1 + " + e.toString());
+        assert.ok(false, "1 + " + e.toString());
       })
       .then(function () {
-        equal(document.getElementById('qunit-fixture').innerHTML,
+        assert.equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou</div><div></div>");
         return gadget.declareGadget(html_url);
       })
       .then(function (new_gadget) {
-        equal(document.getElementById('qunit-fixture').innerHTML,
+        assert.equal(document.getElementById('qunit-fixture').innerHTML,
               "<div>youhou</div><div></div>");
       })
       .fail(function (e) {
-        ok(false, "2 + " + e.toString());
+        assert.ok(false, "2 + " + e.toString());
       })
       .always(function () {
         start();
@@ -4635,7 +4636,7 @@
       });
   });
 
-  test('Load 2 concurrent gadgets in parallel', function () {
+  test('Load 2 concurrent gadgets in parallel', function (assert) {
     // Check that dependencies are loaded once if 2 gadgets are created
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test987.html',
@@ -4649,14 +4650,14 @@
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
     mock.expects("parseGadgetHTMLDocument").once().returns({});
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     RSVP.all([
       gadget.declareGadget(html_url),
       gadget.declareGadget(html_url)
     ])
       .then(function () {
-        ok(true);
+        assert.ok(true);
       })
       .always(function () {
         // Check that only one request has been done.
@@ -4666,7 +4667,7 @@
       });
   });
 
-  test('One failing gadget can not be reloaded', function () {
+  test('One failing gadget can not be reloaded', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98709.html',
       error;
@@ -4676,17 +4677,17 @@
       "Content-Type": "text/html"
     }, "raw html"]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
 
     gadget.declareGadget(html_url)
       .fail(function (e) {
         error = e;
-        ok(true, 'first gadget should fail');
+        assert.ok(true, 'first gadget should fail');
         return gadget.declareGadget(html_url);
       })
       .fail(function (e) {
-        equal(e, error, 'second gadget should fail the same way');
+        assert.equal(e, error, 'second gadget should fail the same way');
       })
       .always(function () {
         // Check that only one request has been done.
@@ -4694,7 +4695,7 @@
       });
   });
 
-  test('Load 2 concurrent failing gadgets in parallel', function () {
+  test('Load 2 concurrent failing gadgets in parallel', function (assert) {
     // Check that dependencies are loaded once if 2 gadgets are created
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test9871.html',
@@ -4711,20 +4712,20 @@
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
     mock.expects("parseGadgetHTMLDocument").once().returns({});
 
-    stop();
+    start = assert.async();
     load1 = gadget.declareGadget(html_url);
     load2 = gadget.declareGadget(html_url);
 
-    expect(2);
+    assert.expect(2);
 
     load1
       .fail(function (e) {
         error = e;
-        ok(true, 'load1 should fail');
+        assert.ok(true, 'load1 should fail');
         return load2;
       })
       .fail(function (e) {
-        equal(e, error, 'load2 must fail like load1');
+        assert.equal(e, error, 'load2 must fail like load1');
       })
       .always(function () {
         // Check that only one request has been done.
@@ -4734,7 +4735,7 @@
       });
   });
 
-  test('One failing gadget does not prevent the others to load', function () {
+  test('One failing gadget does not prevent the others to load', function (assert) {
     // Check that dependencies are loaded once if 2 gadgets are created
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
@@ -4752,17 +4753,17 @@
     mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
     mock.expects("parseGadgetHTMLDocument").once().returns({});
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.declareGadget(html_url)
       .then(function () {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function () {
         return gadget.declareGadget(html_url2);
       })
       .then(function () {
-        ok(true);
+        assert.ok(true);
       })
       .always(function () {
         // Check that only one request has been done.
@@ -4772,7 +4773,7 @@
       });
   });
 
-  test('Wait for ready callback before returning', function () {
+  test('Wait for ready callback before returning', function (assert) {
 
     // Subclass RenderJSGadget to not pollute its namespace
     var called = false,
@@ -4785,37 +4786,37 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
         Klass.ready(function (g) {
-          deepEqual(gadget.__sub_gadget_dict, {});
-          equal(g, this, "Context should be the gadget instance");
+          assert.deepEqual(gadget.__sub_gadget_dict, {});
+          assert.equal(g, this, "Context should be the gadget instance");
           ready_gadget = g;
           return RSVP.delay(50).then(function () {
             // Modify the value after 50ms
             called = true;
-            deepEqual(gadget.__sub_gadget_dict, {});
+            assert.deepEqual(gadget.__sub_gadget_dict, {});
           });
         });
         return gadget.declareGadget(html_url, {scope: 'sub'});
       })
       .then(function (result) {
-        equal(result, ready_gadget, "Context should be the gadget instance");
-        ok(called);
-        deepEqual(gadget.__sub_gadget_dict, {'sub': result});
+        assert.equal(result, ready_gadget, "Context should be the gadget instance");
+        assert.ok(called);
+        assert.deepEqual(gadget.__sub_gadget_dict, {'sub': result});
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(function () {
         start();
       });
   });
 
-  test('getDeclareGadget can be called in ready', function () {
+  test('getDeclareGadget can be called in ready', function (assert) {
 
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
@@ -4830,8 +4831,8 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
@@ -4841,17 +4842,17 @@
         return gadget.declareGadget(html_url);
       })
       .then(function () {
-        ok(true);
+        assert.ok(true);
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Set a default state', function () {
+  test('Set a default state', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       gadget1,
@@ -4863,8 +4864,8 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(5);
+    start = assert.async();
+    assert.expect(5);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(html_url);
@@ -4875,22 +4876,22 @@
       })
       .then(function (result) {
         gadget2 = result;
-        ok(gadget1.hasOwnProperty('state'));
-        deepEqual(gadget1.state, {});
-        ok(gadget2.hasOwnProperty('state'));
-        deepEqual(gadget2.state, {});
+        assert.ok(gadget1.hasOwnProperty('state'));
+        assert.deepEqual(gadget1.state, {});
+        assert.ok(gadget2.hasOwnProperty('state'));
+        assert.deepEqual(gadget2.state, {});
         // Instance should have a copy of the init state
-        ok(gadget1.state !== gadget2.state);
+        assert.ok(gadget1.state !== gadget2.state);
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Set the gadget state defined by setState', function () {
+  test('Set the gadget state defined by setState', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       init_state = {foo: 'bar'},
@@ -4901,8 +4902,8 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         // Create a ready function
@@ -4910,20 +4911,20 @@
         return gadget.declareGadget(html_url);
       })
       .then(function (result) {
-        ok(result.hasOwnProperty('state'));
-        deepEqual(result.state, {foo: 'bar'});
+        assert.ok(result.hasOwnProperty('state'));
+        assert.deepEqual(result.state, {foo: 'bar'});
         // Instance should have a copy of the init state
-        ok(result.state !== init_state);
+        assert.ok(result.state !== init_state);
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Can take a DOM element options', function () {
+  test('Can take a DOM element options', function (assert) {
 
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
@@ -4936,8 +4937,8 @@
     }, "<html><body><p>foo</p></body></html>"]);
 
     previous_fixture.innerHTML = "<div>bar</div>";
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
@@ -4946,22 +4947,22 @@
         );
       })
       .then(function (g) {
-        notEqual(document.getElementById('qunit-fixture'), previous_fixture);
-        equal(document.getElementById('qunit-fixture'), g.element);
-        equal(
+        assert.notEqual(document.getElementById('qunit-fixture'), previous_fixture);
+        assert.equal(document.getElementById('qunit-fixture'), g.element);
+        assert.equal(
           document.getElementById('qunit-fixture').innerHTML,
           '<p>foo</p>'
         );
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Can take a scope options', function () {
+  test('Can take a scope options', function (assert) {
 
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
@@ -4973,8 +4974,8 @@
     }, "<html><body><p>foo</p></body></html>"]);
 
     document.getElementById('qunit-fixture').textContent = "";
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
@@ -4983,20 +4984,20 @@
         );
       })
       .then(function (child_gadget) {
-        ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
-        equal(gadget.__sub_gadget_dict.foo, child_gadget);
-        equal(child_gadget.element.getAttribute("data-gadget-scope"),
+        assert.ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
+        assert.equal(gadget.__sub_gadget_dict.foo, child_gadget);
+        assert.equal(child_gadget.element.getAttribute("data-gadget-scope"),
               "foo");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Generate a random scope if none is provided', function () {
+  test('Generate a random scope if none is provided', function (assert) {
 
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
@@ -5010,8 +5011,8 @@
     }, "<html><body><p>foo</p></body></html>"]);
 
     document.getElementById('qunit-fixture').textContent = "";
-    stop();
-    expect(9);
+    start = assert.async();
+    assert.expect(9);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(
@@ -5020,9 +5021,9 @@
       })
       .then(function (child_gadget) {
         scope1 = child_gadget.element.getAttribute("data-gadget-scope");
-        equal(scope1.indexOf('RJS_'), 0, scope1);
-        ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
-        equal(gadget.__sub_gadget_dict[scope1], child_gadget);
+        assert.equal(scope1.indexOf('RJS_'), 0, scope1);
+        assert.ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
+        assert.equal(gadget.__sub_gadget_dict[scope1], child_gadget);
       })
       .then(function () {
         // Create a gadget with a fixed scope to ensure
@@ -5040,22 +5041,22 @@
       })
       .then(function (child_gadget) {
         var scope2 = child_gadget.element.getAttribute("data-gadget-scope");
-        equal(scope2.indexOf('RJS_'), 0);
-        ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
-        ok(gadget.__sub_gadget_dict.hasOwnProperty(scope2));
-        equal(gadget.__sub_gadget_dict[scope2], child_gadget);
-        notEqual(scope1, scope2);
-        equal(scope2, 'RJS_' + (scope_index + 2));
+        assert.equal(scope2.indexOf('RJS_'), 0);
+        assert.ok(gadget.__sub_gadget_dict.hasOwnProperty(scope1));
+        assert.ok(gadget.__sub_gadget_dict.hasOwnProperty(scope2));
+        assert.equal(gadget.__sub_gadget_dict[scope2], child_gadget);
+        assert.notEqual(scope1, scope2);
+        assert.equal(scope2, 'RJS_' + (scope_index + 2));
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('__aq_parent returns acquired_method result if available', function () {
+  test('__aq_parent returns acquired_method result if available', function (assert) {
     var gadget = new RenderJSGadget(),
       aq_dynamic_called = false,
       original_method_name = "foo",
@@ -5067,11 +5068,11 @@
     gadget.__acquired_method_dict[original_method_name] =
       function (argument_list, child_scope) {
         aq_dynamic_called = true;
-        equal(this, gadget, "Context should be kept");
-        deepEqual(argument_list, original_argument_list,
+        assert.equal(this, gadget, "Context should be kept");
+        assert.deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
-        equal(child_scope.indexOf('RJS_'), 0,
+        assert.equal(child_scope.indexOf('RJS_'), 0,
               "Random child scope is generated");
         return "FOO";
       };
@@ -5080,8 +5081,8 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(5);
+    start = assert.async();
+    assert.expect(5);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         return new_gadget.__aq_parent(
@@ -5090,18 +5091,18 @@
         );
       })
       .then(function (result) {
-        equal(result, "FOO");
-        equal(aq_dynamic_called, true);
+        assert.equal(result, "FOO");
+        assert.equal(aq_dynamic_called, true);
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('__aq_parent propagate child_scope to acquired_method', function () {
+  test('__aq_parent propagate child_scope to acquired_method', function (assert) {
     var gadget = new RenderJSGadget(),
       aq_dynamic_called = false,
       original_method_name = "foo",
@@ -5113,19 +5114,19 @@
     gadget.__acquired_method_dict[original_method_name] =
       function (argument_list, child_scope) {
         aq_dynamic_called = true;
-        equal(this, gadget, "Context should be kept");
-        deepEqual(argument_list, original_argument_list,
+        assert.equal(this, gadget, "Context should be kept");
+        assert.deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
-        equal(child_scope, "bar", "Child scope should be provided");
+        assert.equal(child_scope, "bar", "Child scope should be provided");
       };
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     gadget.declareGadget(html_url, {scope: "bar"})
       .then(function (new_gadget) {
         return new_gadget.__aq_parent(
@@ -5134,17 +5135,17 @@
         );
       })
       .then(function (result) {
-        equal(aq_dynamic_called, true);
+        assert.equal(aq_dynamic_called, true);
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('__aq_parent doesnt propagate unknown gadget child_scope', function () {
+  test('__aq_parent doesnt propagate unknown gadget child_scope', function (assert) {
     var gadget = new RenderJSGadget(),
       aq_dynamic_called = false,
       original_method_name = "foo",
@@ -5157,19 +5158,19 @@
     gadget.__acquired_method_dict[original_method_name] =
       function (argument_list, child_scope) {
         aq_dynamic_called = true;
-        equal(this, gadget, "Context should be kept");
-        deepEqual(argument_list, original_argument_list,
+        assert.equal(this, gadget, "Context should be kept");
+        assert.deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
-        equal(child_scope, undefined, "Child scope should be unknown");
+        assert.equal(child_scope, undefined, "Child scope should be unknown");
       };
 
     this.server.respondWith("GET", html_url, [200, {
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     gadget.declareGadget(html_url, {scope: "bar"})
       .then(function (result) {
         new_gadget = result;
@@ -5182,17 +5183,17 @@
         );
       })
       .then(function (result) {
-        equal(aq_dynamic_called, true);
+        assert.equal(aq_dynamic_called, true);
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('__aq_parent fails if aquired_method throws an error', function () {
+  test('__aq_parent fails if aquired_method throws an error', function (assert) {
     var gadget = new RenderJSGadget(),
       original_error = new Error("Custom error for the test"),
       html_url = 'http://example.org/files/qunittest/test353.html';
@@ -5207,15 +5208,15 @@
       "Content-Type": "text/html"
     }, "<html><body></body></html>"]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
         return new_gadget.__aq_parent("foo", []);
       })
       .fail(function (error) {
-        equal(error, original_error);
-        equal(error.message, "Custom error for the test");
+        assert.equal(error, original_error);
+        assert.equal(error.message, "Custom error for the test");
       })
       .always(function () {
         start();
@@ -5241,40 +5242,40 @@
       gadget.__acquired_method_dict[original_method_name] =
         function () {
           aq_dynamic_called = true;
-          equal(i, 0, "aquired_method called first");
+          assert.equal(i, 0, "aquired_method called first");
           i += 1;
           throw new renderJS.AcquisitionError("please call __aq_parent!");
         };
 
       gadget.__aq_parent = function (method_name, argument_list) {
         __aq_parent_called = true;
-        equal(i, 1, "__aq_parent called after acquired_method");
-        equal(this, gadget, "Context should be kept");
-        equal(method_name, original_method_name, "Method name should be kept");
-        deepEqual(argument_list, original_argument_list,
+        assert.equal(i, 1, "__aq_parent called after acquired_method");
+        assert.equal(this, gadget, "Context should be kept");
+        assert.equal(method_name, original_method_name, "Method name should be kept");
+        assert.deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
         return "FOO";
       };
 
-      stop();
-      expect(8);
+      start = assert.async();
+      assert.expect(8);
       gadget.declareGadget(html_url)
         .then(function (new_gadget) {
           return new_gadget.__aq_parent(original_method_name,
                                         original_argument_list);
         })
         .then(function (result) {
-          equal(result, "FOO");
-          equal(aq_dynamic_called, true);
-          equal(__aq_parent_called, true);
+          assert.equal(result, "FOO");
+          assert.equal(aq_dynamic_called, true);
+          assert.equal(__aq_parent_called, true);
         })
         .always(function () {
           start();
         });
     });
 
-  test('path must be absolute to parent path if relative', function () {
+  test('path must be absolute to parent path if relative', function (assert) {
     var parent_gadget = new RenderJSGadget(),
       gadget_path = "./some/path/to/a/gadget",
       parent_path = "http://something.org",
@@ -5286,19 +5287,19 @@
       "Content-Type": "text/html"
     }, "raw html"]);
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     parent_gadget.declareGadget(gadget_path)
       .then(function (gadget) {
-        equal(gadget.__path, absolute_path);
+        assert.equal(gadget.__path, absolute_path);
       })
       .fail(function (e) {
-        ok(false);
+        assert.ok(false);
       })
       .always(start);
   });
 
-  test('can declareGadget without scope in HTML directly', function () {
+  test('can declareGadget without scope in HTML directly', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_url2 = 'https://example.org/files/qunittest/test12346.html',
@@ -5317,33 +5318,33 @@
 
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
-    stop();
-    expect(9);
+    start = assert.async();
+    assert.expect(9);
     gadget.declareGadget(html_url)
       .then(function (g) {
-        equal(spy.callCount, 2);
-        equal(spy.firstCall.args[1], html_url);
-        equal(spy.secondCall.args[1], html_url2);
+        assert.equal(spy.callCount, 2);
+        assert.equal(spy.firstCall.args[1], html_url);
+        assert.equal(spy.secondCall.args[1], html_url2);
 
         var key_list = Object.keys(g.__sub_gadget_dict);
-        equal(key_list.length, 1, "One child");
+        assert.equal(key_list.length, 1, "One child");
         scope = key_list[0];
-        equal(scope.indexOf('RJS_'), 0, scope);
+        assert.equal(scope.indexOf('RJS_'), 0, scope);
 
         // Second gadget is a child
         return g.getDeclaredGadget(scope);
       })
       .then(function (g2) {
-        equal(g2.__path, html_url2);
+        assert.equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.element.getAttribute("data-foo"), "bar");
-        equal(g2.element.getAttribute("data-gadget-scope"), scope);
+        assert.equal(g2.element.getAttribute("data-foo"), "bar");
+        assert.equal(g2.element.getAttribute("data-gadget-scope"), scope);
 
         // The gadget is public by default
-        equal(g2.element.innerHTML, "raw html");
+        assert.equal(g2.element.innerHTML, "raw html");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -5352,7 +5353,7 @@
   });
 
 
-  test('can declareGadget with scope in HTML directly', function () {
+  test('can declareGadget with scope in HTML directly', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_url2 = 'https://example.org/files/qunittest/test12346.html',
@@ -5370,25 +5371,25 @@
 
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     gadget.declareGadget(html_url)
       .then(function (g) {
-        equal(spy.callCount, 2);
-        equal(spy.firstCall.args[1], html_url);
-        equal(spy.secondCall.args[1], html_url2);
+        assert.equal(spy.callCount, 2);
+        assert.equal(spy.firstCall.args[1], html_url);
+        assert.equal(spy.secondCall.args[1], html_url2);
         // Second gadget is a child
         return g.getDeclaredGadget("bar");
       })
       .then(function (g2) {
-        equal(g2.__path, html_url2);
+        assert.equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.element.getAttribute("data-foo"), "bar");
+        assert.equal(g2.element.getAttribute("data-foo"), "bar");
         // The gadget is public by default
-        equal(g2.element.innerHTML, "raw html");
+        assert.equal(g2.element.innerHTML, "raw html");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -5396,7 +5397,7 @@
       });
   });
 
-  test('can declareGadget relativeurl in HTML', function () {
+  test('can declareGadget relativeurl in HTML', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_relative_url2 = 'test12346.html',
@@ -5415,25 +5416,25 @@
 
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     gadget.declareGadget(html_url)
       .then(function (g) {
-        equal(spy.callCount, 2);
-        equal(spy.firstCall.args[1], html_url);
-        equal(spy.secondCall.args[1], html_url2);
+        assert.equal(spy.callCount, 2);
+        assert.equal(spy.firstCall.args[1], html_url);
+        assert.equal(spy.secondCall.args[1], html_url2);
         // Second gadget is a child
         return g.getDeclaredGadget("bar");
       })
       .then(function (g2) {
-        equal(g2.__path, html_url2);
+        assert.equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.element.getAttribute("data-foo"), "bar");
+        assert.equal(g2.element.getAttribute("data-foo"), "bar");
         // The gadget is public by default
-        equal(g2.element.innerHTML, "raw html");
+        assert.equal(g2.element.innerHTML, "raw html");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -5441,7 +5442,7 @@
       });
   });
 
-  test('can declareGadget relativeurl in HTML with base tag', function () {
+  test('can declareGadget relativeurl in HTML with base tag', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_relative_url2 = 'test12346.html',
@@ -5460,25 +5461,25 @@
 
     spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
-    stop();
-    expect(6);
+    start = assert.async();
+    assert.expect(6);
     gadget.declareGadget(html_url)
       .then(function (g) {
-        equal(spy.callCount, 2);
-        equal(spy.firstCall.args[1], html_url);
-        equal(spy.secondCall.args[1], html_url2);
+        assert.equal(spy.callCount, 2);
+        assert.equal(spy.firstCall.args[1], html_url);
+        assert.equal(spy.secondCall.args[1], html_url2);
         // Second gadget is a child
         return g.getDeclaredGadget("bar");
       })
       .then(function (g2) {
-        equal(g2.__path, html_url2);
+        assert.equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.element.getAttribute("data-foo"), "bar");
+        assert.equal(g2.element.getAttribute("data-foo"), "bar");
         // The gadget is public by default
-        equal(g2.element.innerHTML, "raw html");
+        assert.equal(g2.element.innerHTML, "raw html");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
@@ -5486,7 +5487,7 @@
       });
   });
 
-  test('can declareGadget a sandboxed gadget in HTML directly', function () {
+  test('can declareGadget a sandboxed gadget in HTML directly', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test123456.html',
       html_url2 = renderJS.getAbsoluteURL('./embedded.html',
@@ -5506,8 +5507,8 @@
 
     document.getElementById("qunit-fixture").textContent = "";
 
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     gadget.declareGadget(html_url, {
       element: document.getElementById('qunit-fixture')
     })
@@ -5515,22 +5516,22 @@
         return g.getDeclaredGadget("bar");
       })
       .then(function (g2) {
-        equal(g2.__path, html_url2);
+        assert.equal(g2.__path, html_url2);
         // The gadget element is the one defined in HTML
-        equal(g2.element.getAttribute("data-foo"), "bar");
+        assert.equal(g2.element.getAttribute("data-foo"), "bar");
         // The gadget is inside an iframe
-        equal(g2.element.innerHTML,
+        assert.equal(g2.element.innerHTML,
               '<iframe src="' + html_url2 + '"></iframe>');
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('fail if declareGadget with scope in HTML fail', function () {
+  test('fail if declareGadget with scope in HTML fail', function (assert) {
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test12345.html',
       html_url2 = 'https://example.org/files/qunittest/test12346.html';
@@ -5548,20 +5549,20 @@
       "Content-Type": "text/html"
     }, "raw html"]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.declareGadget(html_url)
       .then(function () {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (e) {
-        equal(e.status, 403);
-        equal(e.url, html_url2);
+        assert.equal(e.status, 403);
+        assert.equal(e.url, html_url2);
       })
       .always(start);
   });
 
-  test('can catch if declareGadget with scope in HTML fail', function () {
+  test('can catch if declareGadget with scope in HTML fail', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
       RenderJSGadget.call(this);
@@ -5588,31 +5589,31 @@
       "Content-Type": "text/html"
     }, "raw html"]);
 
-    stop();
-    expect(5);
+    start = assert.async();
+    assert.expect(5);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         Klass.allowPublicAcquisition('reportGadgetDeclarationError',
                                      function (argument_list, scope) {
             var catched_error = argument_list[0];
             error_context = this;
-            equal(catched_error.status, 403);
-            equal(catched_error.url, html_url2);
-            equal(scope, 'foo');
+            assert.equal(catched_error.status, 403);
+            assert.equal(catched_error.url, html_url2);
+            assert.equal(scope, 'foo');
           });
         return gadget.declareGadget(html_url);
       })
       .then(function (result) {
-        deepEqual(result, error_context);
-        ok(true, 'Error correctly catched');
+        assert.deepEqual(result, error_context);
+        assert.ok(true, 'Error correctly catched');
       })
       .fail(function (e) {
-        ok(false, "Error should have been catched");
+        assert.ok(false, "Error should have been catched");
       })
       .always(start);
   });
 
-  test('can catch if declareGadget without scope in HTML fail', function () {
+  test('can catch if declareGadget without scope in HTML fail', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var ParentKlass = function () {
       RenderJSGadget.call(this);
@@ -5639,26 +5640,26 @@
       "Content-Type": "text/html"
     }, "raw html"]);
 
-    stop();
-    expect(5);
+    start = assert.async();
+    assert.expect(5);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         Klass.allowPublicAcquisition('reportGadgetDeclarationError',
                                      function (argument_list, scope) {
             var catched_error = argument_list[0];
             error_context = this;
-            equal(catched_error.status, 403);
-            equal(catched_error.url, html_url2);
-            equal(scope, null);
+            assert.equal(catched_error.status, 403);
+            assert.equal(catched_error.url, html_url2);
+            assert.equal(scope, null);
           });
         return gadget.declareGadget(html_url);
       })
       .then(function (result) {
-        deepEqual(result, error_context);
-        ok(true, 'Error correctly catched');
+        assert.deepEqual(result, error_context);
+        assert.ok(true, 'Error correctly catched');
       })
       .fail(function (e) {
-        ok(false, "Error should have been catched");
+        assert.ok(false, "Error should have been catched");
       })
       .always(start);
   });
@@ -5666,7 +5667,7 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget (iframe)
   /////////////////////////////////////////////////////////////////
-  test('Require the element options', function () {
+  test('Require the element options', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98.html';
@@ -5676,18 +5677,18 @@
       "Content-Type": "text/html"
     }, "<html><body><p>foo</p></body></html>"]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(html_url, {sandbox: 'iframe'});
       })
       .then(function () {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (e) {
-        ok(e instanceof Error);
-        equal(
+        assert.ok(e instanceof Error);
+        assert.equal(
           e.message,
           "DOM element is required to create Iframe Gadget " + html_url
         );
@@ -5697,7 +5698,7 @@
       });
   });
 
-  test('Require a DOM element as option', function () {
+  test('Require a DOM element as option', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       html_url = 'https://example.org/files/qunittest/test98.html',
@@ -5710,8 +5711,8 @@
       "Content-Type": "text/html"
     }, "<html><body><p>foo</p></body></html>"]);
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
         return gadget.declareGadget(html_url, {
@@ -5720,11 +5721,11 @@
         });
       })
       .then(function () {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (e) {
-        ok(e instanceof Error);
-        equal(
+        assert.ok(e instanceof Error);
+        assert.equal(
           e.message,
           "The parent element is not attached to the DOM for " + html_url
         );
@@ -5734,7 +5735,7 @@
       });
   });
 
-  test('Can take a scope options', function () {
+  test('Can take a scope options', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
     var gadget = new RenderJSGadget(),
       url = "./embedded.html";
@@ -5743,30 +5744,30 @@
 
     document.getElementById("qunit-fixture").textContent = "";
 
-    stop();
-    expect(4);
+    start = assert.async();
+    assert.expect(4);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
       scope: "foo"
     })
       .then(function (child_gadget) {
-        ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
-        equal(gadget.__sub_gadget_dict.foo, child_gadget);
-        equal(child_gadget.element.getAttribute("data-gadget-scope"),
+        assert.ok(gadget.__sub_gadget_dict.hasOwnProperty("foo"));
+        assert.equal(gadget.__sub_gadget_dict.foo, child_gadget);
+        assert.equal(child_gadget.element.getAttribute("data-gadget-scope"),
               "foo");
-        equal(child_gadget.element.getAttribute("data-gadget-sandbox"),
+        assert.equal(child_gadget.element.getAttribute("data-gadget-sandbox"),
               "iframe");
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('provide an iframed gadget as callback parameter', function () {
+  test('provide an iframed gadget as callback parameter', function (assert) {
     // Check that declare gadget returns the gadget
     var parent_gadget = new RenderJSGadget(),
       parsed = URI.parse(window.location.href),
@@ -5781,28 +5782,28 @@
     parent_gadget.__sub_gadget_dict = {};
     parent_gadget.__path = parent_path;
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     parent_gadget.declareGadget(gadget_path, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        equal(new_gadget.__path, absolute_path);
-        equal(Object.keys(new_gadget.__acquired_method_dict).length, 1);
-        ok(new_gadget instanceof RenderJSIframeGadget);
-        equal(
+        assert.equal(new_gadget.__path, absolute_path);
+        assert.equal(Object.keys(new_gadget.__acquired_method_dict).length, 1);
+        assert.ok(new_gadget instanceof RenderJSIframeGadget);
+        assert.equal(
           new_gadget.element.innerHTML,
           '<iframe src="' + absolute_path + '"></iframe>'
         );
-        ok(new_gadget.__chan !== undefined);
+        assert.ok(new_gadget.__chan !== undefined);
       })
       .always(function () {
         start();
       });
   });
 
-  test('Initialize sub_gadget_dict private property', function () {
+  test('Initialize sub_gadget_dict private property', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded.html";
@@ -5811,22 +5812,22 @@
 
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        ok(new_gadget.hasOwnProperty("__sub_gadget_dict"));
-        deepEqual(new_gadget.__sub_gadget_dict, {});
+        assert.ok(new_gadget.hasOwnProperty("__sub_gadget_dict"));
+        assert.deepEqual(new_gadget.__sub_gadget_dict, {});
       })
       .always(function () {
         start();
       });
   });
 
-  test('checking working iframe gadget', function () {
+  test('checking working iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       acquired_method_cancel_called = false,
@@ -5836,11 +5837,11 @@
 
     gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
-      equal(this, gadget, "Context should be kept");
+      assert.equal(this, gadget, "Context should be kept");
       if (method_name === "acquireMethodRequested") {
-        equal(method_name, "acquireMethodRequested",
+        assert.equal(method_name, "acquireMethodRequested",
           "Method name should be kept");
-        deepEqual(argument_list, ["param1", "param2"],
+        assert.deepEqual(argument_list, ["param1", "param2"],
               "Argument list should be kept"
           );
         return "result correctly fetched from parent";
@@ -5854,7 +5855,7 @@
       if (method_name === "acquiredManualCancellationError") {
         return new RSVP.Promise(function () {
           return;
-        }, function () {
+        }, function (assert) {
           acquired_method_cancel_called = true;
         });
       }
@@ -5866,8 +5867,8 @@
 
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(46);
+    start = assert.async();
+    assert.expect(46);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture'),
@@ -5880,7 +5881,7 @@
           // Method returns an RSVP.Queue
           .push(function () {
             var result = new_gadget.wasReadyCalled();
-            ok(
+            assert.ok(
               result instanceof RSVP.Queue,
               "iframe method should return Queue"
             );
@@ -5893,7 +5894,7 @@
           })
 */
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that state is initialized
@@ -5901,7 +5902,7 @@
             return new_gadget.wasStateInitialized();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that state handler is initialized
@@ -5909,7 +5910,7 @@
             return new_gadget.wasStateHandlerDeclared();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that state change was not triggered
@@ -5917,7 +5918,7 @@
             return new_gadget.wasStateChangeHandled();
           })
           .push(function (result) {
-            equal(result, false);
+            assert.equal(result, false);
           })
 
           // Check that change state
@@ -5928,7 +5929,7 @@
             return new_gadget.wasStateChangeHandled();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that job was not started
@@ -5936,7 +5937,7 @@
             return new_gadget.wasJobStarted();
           })
           .push(function (result) {
-            equal(result, false);
+            assert.equal(result, false);
           })
 
           // Check that job can be triggered
@@ -5947,7 +5948,7 @@
             return new_gadget.wasJobStarted();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that service are started
@@ -5955,7 +5956,7 @@
             return new_gadget.wasServiceStarted();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that event are started
@@ -5963,7 +5964,7 @@
             return new_gadget.wasEventStarted();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that service error can be reported
@@ -5971,7 +5972,7 @@
             return new_gadget.canReportServiceError();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Custom method accept parameter
@@ -5983,7 +5984,7 @@
             return new_gadget.getContent();
           })
           .push(function (result) {
-            equal(result, "foobar");
+            assert.equal(result, "foobar");
           })
 
           // Method are propagated
@@ -5991,10 +5992,10 @@
             return new_gadget.triggerError();
           })
           .push(function () {
-            ok(false, "triggerError should fail");
+            assert.ok(false, "triggerError should fail");
           }, function (e) {
-            ok(e instanceof renderJS.IframeSerializationError);
-            equal(
+            assert.ok(e instanceof renderJS.IframeSerializationError);
+            assert.equal(
               e.toString(),
               "IframeSerializationError: Error: " +
                 "Manually triggered embedded error"
@@ -6004,10 +6005,10 @@
             return new_gadget.triggerStringError();
           })
           .push(function () {
-            ok(false, "triggerStringError should fail");
+            assert.ok(false, "triggerStringError should fail");
           }, function (e) {
-            ok(e instanceof renderJS.IframeSerializationError);
-            equal(
+            assert.ok(e instanceof renderJS.IframeSerializationError);
+            assert.equal(
               e.toString(),
               "IframeSerializationError: " +
                 "Manually triggered embedded error as string"
@@ -6019,7 +6020,7 @@
             return new_gadget.isSubGadgetDictInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // acquired_method_dict is created on prototype
@@ -6027,7 +6028,7 @@
             return new_gadget.isAcquisitionDictInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // service_list is created on prototype
@@ -6035,7 +6036,7 @@
             return new_gadget.isServiceListInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // acquire check correctly returns result
@@ -6043,8 +6044,8 @@
             return new_gadget.callOKAcquire("param1", "param2");
           })
           .push(function (result) {
-            ok(acquire_called);
-            equal(result, "result correctly fetched from parent");
+            assert.ok(acquire_called);
+            assert.equal(result, "result correctly fetched from parent");
           })
 
           // acquire correctly returns error
@@ -6055,14 +6056,14 @@
             );
           })
           .push(function (result) {
-            ok(false, result);
+            assert.ok(false, result);
           })
           .push(undefined, function (error) {
-            ok(
+            assert.ok(
               error instanceof renderJS.AcquisitionError,
               JSON.stringify(error)
             );
-            equal(
+            assert.equal(
               error.toString(),
               "AcquisitionError: Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
@@ -6082,15 +6083,15 @@
               });
           })
           .push(undefined, function (error) {
-            ok(error instanceof RSVP.CancellationError, error);
-            equal(
+            assert.ok(error instanceof RSVP.CancellationError, error);
+            assert.equal(
               error.toString(),
               "cancel: cancel from triggerMethodToCancel"
             );
             return new_gadget.wasMethodCancelCalled();
           })
           .push(function (result) {
-            ok(result, 'Embedded method not cancelled ' + result);
+            assert.ok(result, 'Embedded method not cancelled ' + result);
           })
 
           // cancel is correctly propagated by acquiredMethod
@@ -6098,15 +6099,15 @@
             return new_gadget.triggerAcquiredMethodToCancel();
           })
           .push(undefined, function (error) {
-            ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
-            equal(
+            assert.ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
+            assert.equal(
               error.toString(),
               "cancel: Explicit cancellation"
             );
             return new_gadget.wasAcquiredMethodCancelCalled();
           })
           .push(function (result) {
-            ok(result, 'Embedded acquired method not cancelled ' + result);
+            assert.ok(result, 'Embedded acquired method not cancelled ' + result);
           })
           // cancellation of a acquiredMethod call
           .push(function () {
@@ -6121,25 +6122,25 @@
               });
           })
           .push(undefined, function (error) {
-            ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
-            equal(
+            assert.ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
+            assert.equal(
               error.toString(),
               "cancel: cancel from acquirePromiseToCancel"
             );
             return new_gadget.wasAcquiredMethodCancelCalledFromParent();
           })
           .push(function (result) {
-            ok(result, 'Embedded acquired method not cancelled ' + result);
+            assert.ok(result, 'Embedded acquired method not cancelled ' + result);
           })
           .push(function () {
             return new_gadget.triggerAcquiredStringError();
           })
           .push(undefined, function (error) {
-            ok(
+            assert.ok(
               error instanceof renderJS.IframeSerializationError,
               JSON.stringify(error)
             );
-            equal(
+            assert.equal(
               error.toString(),
               "IframeSerializationError: String Error"
             );
@@ -6150,11 +6151,11 @@
             return new_gadget.returnNotTransferrable();
           })
           .push(undefined, function (error) {
-            ok(
+            assert.ok(
               error instanceof renderJS.IframeSerializationError,
               JSON.stringify(error)
             );
-            equal(
+            assert.equal(
               error.toString(),
               "IframeSerializationError: TypeError: cyclic object value"
             );
@@ -6165,25 +6166,25 @@
             return new_gadget.throwNotTransferrable();
           })
           .push(undefined, function (error) {
-            ok(
+            assert.ok(
               error instanceof renderJS.IframeSerializationError,
               JSON.stringify(error)
             );
-            equal(
+            assert.equal(
               error.toString(),
               "IframeSerializationError: TypeError: cyclic object value"
             );
           });
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('checking working delayed communication iframe gadget', function () {
+  test('checking working delayed communication iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       acquire_called = false,
@@ -6207,11 +6208,11 @@
 
     gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
-      equal(this, gadget, "Context should be kept");
+      assert.equal(this, gadget, "Context should be kept");
       if (method_name === "acquireMethodRequested") {
-        equal(method_name, "acquireMethodRequested",
+        assert.equal(method_name, "acquireMethodRequested",
           "Method name should be kept");
-        deepEqual(argument_list, ["param1", "param2"],
+        assert.deepEqual(argument_list, ["param1", "param2"],
               "Argument list should be kept"
           );
         return "result correctly fetched from parent";
@@ -6221,8 +6222,8 @@
 
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(19);
+    start = assert.async();
+    assert.expect(19);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -6233,7 +6234,7 @@
           // Method returns an RSVP.Queue
           .push(function () {
             var result = new_gadget.wasReadyCalled();
-            ok(
+            assert.ok(
               result instanceof RSVP.Queue,
               "iframe method should return Queue"
             );
@@ -6244,7 +6245,7 @@
             return new_gadget.wasReadyCalled();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that service are started
@@ -6252,7 +6253,7 @@
             return new_gadget.wasServiceStarted();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that service error can be reported
@@ -6260,7 +6261,7 @@
             return new_gadget.canReportServiceError();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Custom method accept parameter
@@ -6272,7 +6273,7 @@
             return new_gadget.getContent();
           })
           .push(function (result) {
-            equal(result, "foobar");
+            assert.equal(result, "foobar");
           })
 
           // Method are propagated
@@ -6280,10 +6281,10 @@
             return new_gadget.triggerError();
           })
           .push(function () {
-            ok(false, "triggerError should fail");
+            assert.ok(false, "triggerError should fail");
           }, function (e) {
-            ok(e instanceof renderJS.IframeSerializationError);
-            equal(
+            assert.ok(e instanceof renderJS.IframeSerializationError);
+            assert.equal(
               e.toString(),
               "IframeSerializationError: Error: " +
                 "Manually triggered embedded error"
@@ -6295,7 +6296,7 @@
             return new_gadget.isSubGadgetDictInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // acquired_method_dict is created on prototype
@@ -6303,7 +6304,7 @@
             return new_gadget.isAcquisitionDictInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // service_list is created on prototype
@@ -6311,7 +6312,7 @@
             return new_gadget.isServiceListInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // acquire check correctly returns result
@@ -6319,8 +6320,8 @@
             return new_gadget.callOKAcquire("param1", "param2");
           })
           .push(function (result) {
-            ok(acquire_called);
-            equal(result, "result correctly fetched from parent");
+            assert.ok(acquire_called);
+            assert.equal(result, "result correctly fetched from parent");
           })
 
           // acquire correctly returns error
@@ -6331,17 +6332,17 @@
             );
           })
           .push(function (result) {
-            ok(false, result);
+            assert.ok(false, result);
           })
           .push(undefined, function (error) {
-            ok(error instanceof renderJS.AcquisitionError);
-            equal(
+            assert.ok(error instanceof renderJS.AcquisitionError);
+            assert.equal(
               error.toString(),
               "AcquisitionError: Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-            equal(
+            assert.equal(
               error.name,
               "AcquisitionError",
               error
@@ -6349,7 +6350,7 @@
           });
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
@@ -6357,7 +6358,7 @@
       });
   });
 
-  test('checking working heavy iframe gadget', function () {
+  test('checking working heavy iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       acquire_called = false,
@@ -6365,11 +6366,11 @@
 
     gadget.__aq_parent = function (method_name, argument_list) {
       acquire_called = true;
-      equal(this, gadget, "Context should be kept");
+      assert.equal(this, gadget, "Context should be kept");
       if (method_name === "acquireMethodRequested") {
-        equal(method_name, "acquireMethodRequested",
+        assert.equal(method_name, "acquireMethodRequested",
           "Method name should be kept");
-        deepEqual(argument_list, ["param1", "param2"],
+        assert.deepEqual(argument_list, ["param1", "param2"],
               "Argument list should be kept"
           );
         return "result correctly fetched from parent";
@@ -6379,8 +6380,8 @@
 
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(19);
+    start = assert.async();
+    assert.expect(19);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
@@ -6391,7 +6392,7 @@
           // Method returns an RSVP.Queue
           .push(function () {
             var result = new_gadget.wasReadyCalled();
-            ok(
+            assert.ok(
               result instanceof RSVP.Queue,
               "iframe method should return Queue"
             );
@@ -6402,7 +6403,7 @@
             return new_gadget.wasReadyCalled();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that service are started
@@ -6410,7 +6411,7 @@
             return new_gadget.wasServiceStarted();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Check that service error can be reported
@@ -6418,7 +6419,7 @@
             return new_gadget.canReportServiceError();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // Custom method accept parameter
@@ -6430,7 +6431,7 @@
             return new_gadget.getContent();
           })
           .push(function (result) {
-            equal(result, "foobar");
+            assert.equal(result, "foobar");
           })
 
           // Method are propagated
@@ -6438,10 +6439,10 @@
             return new_gadget.triggerError();
           })
           .push(function () {
-            ok(false, "triggerError should fail");
+            assert.ok(false, "triggerError should fail");
           }, function (e) {
-            ok(e instanceof renderJS.IframeSerializationError);
-            equal(
+            assert.ok(e instanceof renderJS.IframeSerializationError);
+            assert.equal(
               e.toString(),
               "IframeSerializationError: Error: " +
                 "Manually triggered embedded error"
@@ -6453,7 +6454,7 @@
             return new_gadget.isSubGadgetDictInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // acquired_method_dict is created on prototype
@@ -6461,7 +6462,7 @@
             return new_gadget.isAcquisitionDictInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // service_list is created on prototype
@@ -6469,7 +6470,7 @@
             return new_gadget.isServiceListInitialize();
           })
           .push(function (result) {
-            equal(result, true);
+            assert.equal(result, true);
           })
 
           // acquire check correctly returns result
@@ -6477,8 +6478,8 @@
             return new_gadget.callOKAcquire("param1", "param2");
           })
           .push(function (result) {
-            ok(acquire_called);
-            equal(result, "result correctly fetched from parent");
+            assert.ok(acquire_called);
+            assert.equal(result, "result correctly fetched from parent");
           })
 
           // acquire correctly returns error
@@ -6489,17 +6490,17 @@
             );
           })
           .push(function (result) {
-            ok(false, result);
+            assert.ok(false, result);
           })
           .push(undefined, function (error) {
-            ok(error instanceof renderJS.AcquisitionError, error);
-            equal(
+            assert.ok(error instanceof renderJS.AcquisitionError, error);
+            assert.equal(
               error.toString(),
               "AcquisitionError: Can not handle " +
                 "acquireMethodRequestedWithAcquisitionError",
               error
             );
-            equal(
+            assert.equal(
               error.name,
               "AcquisitionError",
               error
@@ -6507,78 +6508,78 @@
           });
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('checking failing iframe gadget', function () {
+  test('checking failing iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_fail.html";
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (error) {
-        equal(error, "Error: Manually rejected");
+        assert.equal(error, "Error: Manually rejected");
       })
       .always(function () {
         start();
       });
   });
 
-  test('checking wrong HTML iframe gadget', function () {
+  test('checking wrong HTML iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_empty.html";
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (error) {
-        ok(error instanceof Error);
-        equal(error.message, "Timeout while loading: ./embedded_empty.html");
+        assert.ok(error instanceof Error);
+        assert.equal(error.message, "Timeout while loading: ./embedded_empty.html");
       })
       .always(function () {
         start();
       });
   });
 
-  test('checking 404 html iframe gadget', function () {
+  test('checking 404 html iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_404.html";
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (error) {
-        ok(error instanceof Error);
-        equal(
+        assert.ok(error instanceof Error);
+        assert.equal(
           error.message,
           "Timeout while loading: ./embedded_404.html"
         );
@@ -6589,22 +6590,22 @@
   });
 
   /*
-  test('checking 404 js iframe gadget', function () {
+  test('checking 404 js iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_404_js.html";
     gadget.__sub_gadget_dict = {};
 
-    stop();
+    start = assert.async();
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (error) {
-        deepEqual(error, {});
+        assert.deepEqual(error, {});
       })
       .always(function () {
         start();
@@ -6612,24 +6613,24 @@
   });
   */
 
-  test('checking non renderjs iframe gadget', function () {
+  test('checking non renderjs iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
     var gadget = new RenderJSGadget(),
       url = "./embedded_non_renderjs.html";
     gadget.__sub_gadget_dict = {};
 
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.declareGadget(url, {
       sandbox: 'iframe',
       element: document.getElementById('qunit-fixture')
     })
       .then(function (new_gadget) {
-        ok(false);
+        assert.ok(false);
       })
       .fail(function (error) {
-        ok(error instanceof Error);
-        equal(
+        assert.ok(error instanceof Error);
+        assert.equal(
           error.message,
           "Timeout while loading: ./embedded_non_renderjs.html"
         );
@@ -6642,7 +6643,7 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget (dataurl)
   /////////////////////////////////////////////////////////////////
-  test('dataurl provide an iframed gadget as callback parameter', function () {
+  test('dataurl provide an iframed gadget as callback parameter', function (assert) {
     // Check that declare gadget returns the gadget
     var parent_gadget = new RenderJSGadget(),
       parsed = URI.parse(window.location.href),
@@ -6680,8 +6681,8 @@
     parent_gadget.__sub_gadget_dict = {};
     parent_gadget.__path = parent_path;
 
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
     return new RSVP.Queue()
       .then(function () {
         return readBlobAsDataURL(new Blob([data_url_html],
@@ -6695,15 +6696,15 @@
         });
       })
       .then(function (new_gadget) {
-        equal(new_gadget.__path, data_url);
-        ok(new_gadget instanceof RenderJSIframeGadget);
-        equal(
+        assert.equal(new_gadget.__path, data_url);
+        assert.ok(new_gadget instanceof RenderJSIframeGadget);
+        assert.equal(
           new_gadget.element.innerHTML,
           '<iframe src="' + data_url + '"></iframe>'
         );
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
@@ -6718,34 +6719,34 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns value from sub_gadget_dict attribute', function () {
+  test('returns value from sub_gadget_dict attribute', function (assert) {
     // Check that getDeclaredGadget return a Promise
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {foo: "bar"};
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
     gadget.getDeclaredGadget("foo")
       .then(function (result) {
-        equal(result, "bar");
+        assert.equal(result, "bar");
       })
       .always(function () {
         start();
       });
   });
 
-  test('throw an error if scope is unknown', function () {
+  test('throw an error if scope is unknown', function (assert) {
     // Check that getDeclaredGadget return a Promise
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {};
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.getDeclaredGadget("foo")
       .then(function () {
-        ok(false, "getDeclaredGadget should fail");
+        assert.ok(false, "getDeclaredGadget should fail");
       })
       .fail(function (e) {
-        ok(e instanceof rJS.ScopeError);
-        equal(e.message, "Gadget scope 'foo' is not known.");
+        assert.ok(e instanceof rJS.ScopeError);
+        assert.equal(e.message, "Gadget scope 'foo' is not known.");
       })
       .always(function () {
         start();
@@ -6760,35 +6761,35 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('returns value from sub_gadget_dict attribute', function () {
+  test('returns value from sub_gadget_dict attribute', function (assert) {
     // Check that dropGadget return a Promise
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {foo: "bar"};
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.dropGadget("foo")
       .then(function (result) {
-        equal(result, undefined);
-        equal(JSON.stringify(gadget.__sub_gadget_dict), "{}");
+        assert.equal(result, undefined);
+        assert.equal(JSON.stringify(gadget.__sub_gadget_dict), "{}");
       })
       .always(function () {
         start();
       });
   });
 
-  test('throw an error if scope is unknown', function () {
+  test('throw an error if scope is unknown', function (assert) {
     // Check that dropGadget return a Promise
     var gadget = new RenderJSGadget();
     gadget.__sub_gadget_dict = {};
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     gadget.dropGadget("foo")
       .then(function () {
-        ok(false, "dropGadget should fail");
+        assert.ok(false, "dropGadget should fail");
       })
       .fail(function (e) {
-        ok(e instanceof rJS.ScopeError);
-        equal(e.message, "Gadget scope 'foo' is not known.");
+        assert.ok(e instanceof rJS.ScopeError);
+        assert.equal(e.message, "Gadget scope 'foo' is not known.");
       })
       .always(function () {
         start();
@@ -6806,7 +6807,7 @@
 //     }
 //   });
 
-  test('Check that the root gadget is cleanly implemented', function () {
+  test('Check that the root gadget is cleanly implemented', function (assert) {
     var parsed = URI.parse(window.location.href),
       parent_path = URI.build({protocol: parsed.protocol,
                                hostname: parsed.hostname,
@@ -6824,24 +6825,24 @@
       root_gadget_path_without_hash = window.location.href;
     }
 
-    stop();
-    expect(28);
+    start = assert.async();
+    assert.expect(28);
     root_gadget_defer.promise
       .then(function (root_gadget_list) {
         var root_gadget = root_gadget_list[0],
           html;
         // Check instance
-        equal(root_gadget_list[0], root_gadget_list[1],
+        assert.equal(root_gadget_list[0], root_gadget_list[1],
               "Context should be the gadget instance");
-        equal(root_gadget.__path,
+        assert.equal(root_gadget.__path,
               root_gadget_path_without_hash);
-        equal(typeof root_gadget.__acquired_method_dict, 'object');
-        equal(root_gadget.__title, document.title);
-        deepEqual(root_gadget.__interface_list, []);
-        deepEqual(root_gadget.__required_css_list,
+        assert.equal(typeof root_gadget.__acquired_method_dict, 'object');
+        assert.equal(root_gadget.__title, document.title);
+        assert.deepEqual(root_gadget.__interface_list, []);
+        assert.deepEqual(root_gadget.__required_css_list,
           [URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.css")
             .absoluteTo(parent_path).toString()]);
-        deepEqual(root_gadget.__required_js_list, [
+        assert.deepEqual(root_gadget.__required_js_list, [
           URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
             .absoluteTo(parent_path).toString(),
           URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
@@ -6857,16 +6858,16 @@
           URI("mutex_test.js")
             .absoluteTo(parent_path).toString()
         ]);
-        equal(root_gadget.element.outerHTML, document.body.outerHTML);
+        assert.equal(root_gadget.element.outerHTML, document.body.outerHTML);
         // Check klass
-        equal(root_gadget.constructor.prototype.__path,
+        assert.equal(root_gadget.constructor.prototype.__path,
               root_gadget_path_without_hash);
-        equal(root_gadget.constructor.prototype.__title, document.title);
-        deepEqual(root_gadget.constructor.prototype.__interface_list, []);
-        deepEqual(root_gadget.constructor.prototype.__required_css_list,
+        assert.equal(root_gadget.constructor.prototype.__title, document.title);
+        assert.deepEqual(root_gadget.constructor.prototype.__interface_list, []);
+        assert.deepEqual(root_gadget.constructor.prototype.__required_css_list,
           [URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.css")
             .absoluteTo(parent_path).toString()]);
-        deepEqual(root_gadget.constructor.prototype.__required_js_list, [
+        assert.deepEqual(root_gadget.constructor.prototype.__required_js_list, [
           URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
             .absoluteTo(parent_path).toString(),
           URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
@@ -6883,20 +6884,20 @@
             .absoluteTo(parent_path).toString()
         ]);
         html = root_gadget.constructor.__template_element.outerHTML;
-        ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
+        assert.ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
         html = root_gadget.constructor.__template_element
                           .querySelector('#check-relative-url');
         // relative url are not modified on the root gadget
-        equal(html.getAttribute('href'), 'one');
-        equal(html.getAttribute('src'), 'two');
-        equal(html.getAttribute('srcset'), 'three');
-        ok(root_gadget instanceof RenderJSGadget);
-        ok(root_gadget_klass, root_gadget.constructor);
-        ok(root_gadget.__aq_parent !== undefined);
-        ok(root_gadget.hasOwnProperty("__sub_gadget_dict"));
-        deepEqual(root_gadget.__sub_gadget_dict, {});
-        deepEqual(root_gadget_klass.__service_list, []);
-        deepEqual(root_gadget.__job_list, []);
+        assert.equal(html.getAttribute('href'), 'one');
+        assert.equal(html.getAttribute('src'), 'two');
+        assert.equal(html.getAttribute('srcset'), 'three');
+        assert.ok(root_gadget instanceof RenderJSGadget);
+        assert.ok(root_gadget_klass, root_gadget.constructor);
+        assert.ok(root_gadget.__aq_parent !== undefined);
+        assert.ok(root_gadget.hasOwnProperty("__sub_gadget_dict"));
+        assert.deepEqual(root_gadget.__sub_gadget_dict, {});
+        assert.deepEqual(root_gadget_klass.__service_list, []);
+        assert.deepEqual(root_gadget.__job_list, []);
 
         return new RSVP.Queue()
           .push(function () {
@@ -6914,67 +6915,67 @@
             ]);
           })
           .push(function (result_list) {
-            deepEqual(result_list[0], ['fakeRootMethod1', 'fakeRootMethod2',
+            assert.deepEqual(result_list[0], ['fakeRootMethod1', 'fakeRootMethod2',
                                        'fakeRootJob1', 'fakeRootJob2',
                                        'fakeRootAcquiredMethod1']);
-            deepEqual(result_list[1], ['fakeRootMethod1', 'fakeRootMethod2']);
-            deepEqual(result_list[2], ['fakeRootJob1', 'fakeRootJob2']);
-            deepEqual(result_list[3], ['fakeRootAcquiredMethod1']);
+            assert.deepEqual(result_list[1], ['fakeRootMethod1', 'fakeRootMethod2']);
+            assert.deepEqual(result_list[2], ['fakeRootJob1', 'fakeRootJob2']);
+            assert.deepEqual(result_list[3], ['fakeRootAcquiredMethod1']);
           })
           .fail(function (e) {
-            ok(false, e);
+            assert.ok(false, e);
           });
       })
       .fail(function (e) {
-        ok(false, e);
+        assert.ok(false, e);
       })
       .always(function () {
         start();
       });
   });
 
-  test('__aq_parent fails on the root gadget', function () {
-    stop();
-    expect(2);
+  test('__aq_parent fails on the root gadget', function (assert) {
+    start = assert.async();
+    assert.expect(2);
     root_gadget_defer.promise
       .then(function (root_gadget_list) {
         return root_gadget_list[0].__aq_parent("foo", "bar");
       })
       .fail(function (error) {
-        ok(error instanceof renderJS.AcquisitionError);
-        equal(error.message, "No gadget provides foo");
+        assert.ok(error instanceof renderJS.AcquisitionError);
+        assert.equal(error.message, "No gadget provides foo");
       })
       .always(function () {
         start();
       });
   });
 
-  test('check working of parent gadget in iframe', function () {
+  test('check working of parent gadget in iframe', function (assert) {
     var fixture = document.getElementById("qunit-fixture");
     fixture.innerHTML =
       "<iframe id=renderjsIframe src='./not_declared_gadget.html'></iframe>";
-    stop();
-    expect(2);
+    start = assert.async();
+    assert.expect(2);
     return RSVP.delay(1500)
       .then(function () {
         var iframe = document.getElementById('renderjsIframe'),
           acquisition_div = iframe.contentWindow.
             document.querySelector('.acquisitionError'),
           klass_div = iframe.contentWindow.document.querySelector('.klass');
-        equal(acquisition_div.innerHTML,
+        assert.equal(acquisition_div.innerHTML,
               "AcquisitionError: No gadget provides willFail");
-        equal(klass_div.innerHTML,
+        assert.equal(klass_div.innerHTML,
               "klass = embedded");
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('check page unload', function () {
+  test('check page unload', function (assert) {
     var fixture = document.getElementById("qunit-fixture"),
       iframe,
       loop_queue;
@@ -6982,8 +6983,8 @@
     fixture.innerHTML =
       "<iframe id=renderjsIframe src='./unload_gadget.html'></iframe>";
     iframe = document.getElementById('renderjsIframe');
-    stop();
-    expect(1);
+    start = assert.async();
+    assert.expect(1);
 
     function waitForPageChanged() {
       var iframe_body = iframe.contentWindow.document.body,
@@ -7002,10 +7003,10 @@
       iframe_text = iframe_body.textContent;
       if (iframe_text.indexOf('Page changed') !== -1) {
         // Final page
-        ok(true, iframe_text);
+        assert.ok(true, iframe_text);
       } else if (iframe_text.indexOf('Next page') === -1) {
         // Not the original text content. Probably the error message.
-        ok(false, iframe_text);
+        assert.ok(false, iframe_text);
       } else {
         loop_queue
           .push(function () {
@@ -7030,22 +7031,22 @@
         return loop_queue;
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('check page error', function () {
+  test('check page error', function (assert) {
     var fixture = document.getElementById("qunit-fixture"),
       iframe;
 
     fixture.innerHTML =
       "<iframe id=renderjsIframe src='./error_gadget.html'></iframe>";
     iframe = document.getElementById('renderjsIframe');
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
 
     return new RSVP.Promise(function (resolve, reject) {
       iframe.addEventListener("load", function (evt) {
@@ -7058,19 +7059,19 @@
       .then(function () {
         var iframe_body = iframe.contentWindow.document.body,
           iframe_text = iframe_body.textContent;
-        ok(iframe_text.indexOf('SyntaxError') !== -1, iframe_text);
-        ok(iframe_text.indexOf('getFoo') !== -1, iframe_text);
-        ok(iframe_text.indexOf('error_gadget.html') !== -1, iframe_text);
+        assert.ok(iframe_text.indexOf('SyntaxError') !== -1, iframe_text);
+        assert.ok(iframe_text.indexOf('getFoo') !== -1, iframe_text);
+        assert.ok(iframe_text.indexOf('error_gadget.html') !== -1, iframe_text);
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
       });
   });
 
-  test('check manual bootstrap', function () {
+  test('check manual bootstrap', function (assert) {
     var fixture = document.getElementById("qunit-fixture"),
       iframe;
     // The iframe for an isolated renderjs-free environment
@@ -7078,8 +7079,8 @@
     fixture.innerHTML = "<iframe id=renderjsIsolatedIframe " +
       "src='./inject_script.html'></iframe>";
     iframe = document.getElementById("renderjsIsolatedIframe");
-    stop();
-    expect(3);
+    start = assert.async();
+    assert.expect(3);
 
     return new RSVP.Promise(function (resolve, reject) {
       iframe.addEventListener("load", function (e) {
@@ -7087,7 +7088,7 @@
       });
     })
       .then(function () {
-        ok(
+        assert.ok(
           !iframe.contentWindow.hasOwnProperty("renderJS"),
           "RJS NOT available before inject"
         );
@@ -7107,7 +7108,7 @@
         });
       })
       .then(function () {
-        ok(
+        assert.ok(
           iframe.contentWindow.hasOwnProperty("renderJS"),
           "RJS available after inject"
         );
@@ -7134,10 +7135,10 @@
         });
       })
       .then(function () {
-        ok(true, "RJS correctly bootstrapped and parent is ready");
+        assert.ok(true, "RJS correctly bootstrapped and parent is ready");
       })
       .fail(function (error) {
-        ok(false, error);
+        assert.ok(false, error);
       })
       .always(function () {
         start();
