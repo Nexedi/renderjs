@@ -19,24 +19,18 @@
  */
 
 /*jslint nomen: true*/
-(function (document, renderJS, QUnit, sinon, URI, URL, Event,
+(function (document, renderJS, QUnit, sinon, nise, URI, URL, Event,
            MutationObserver, RSVP) {
   "use strict";
   var test = QUnit.test,
-    stop = QUnit.stop,
-    start = QUnit.start,
-    ok = QUnit.ok,
-    expect = QUnit.expect,
-    equal = QUnit.equal,
-    throws = QUnit.throws,
-    deepEqual = QUnit.deepEqual,
     module = QUnit.module,
-    notEqual = QUnit.notEqual,
     root_gadget_klass = renderJS(window),
     root_gadget_defer = RSVP.defer(),
     RenderJSGadget = __RenderJSGadget,
     RenderJSEmbeddedGadget = __RenderJSEmbeddedGadget,
     RenderJSIframeGadget = __RenderJSIframeGadget;
+
+  sinon.fakeServer = nise.fakeServer;
 
   // Keep track of the root gadget
   renderJS(window)
@@ -79,14 +73,14 @@
   // parseGadgetHTMLDocument
   /////////////////////////////////////////////////////////////////
   module("renderJS.parseGadgetHTMLDocument", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
-  test('Not valid HTML string', function () {
+  test('Not valid HTML string', function (assert) {
     // Check that parseGadgetHTMLDocument returns the default value
     // if the string is not a valid xml
-    deepEqual(parseGadgetHTML("", "http://example.org"), {
+    assert.deepEqual(parseGadgetHTML("", "http://example.org"), {
       path: "http://example.org",
       title: "",
       interface_list: [],
@@ -95,28 +89,28 @@
     });
   });
 
-  test('Not HTML Document', function () {
+  test('Not HTML Document', function (assert) {
     // Check that parseGadgetHTMLDocument throws an error if the parameter is
     // not a HTMLDocument
-    throws(function () {
+    assert.throws(function () {
       renderJS.parseGadgetHTMLDocument({}, "http://example.org/gadget.html");
     });
   });
 
-  test("Base url not set with absolute url", function () {
+  test("Base url not set with absolute url", function (assert) {
     // Check that parseGadgetHTMLDocument throws an error if the base url is
     // not set with absolute url
-    throws(function () {
+    assert.throws(function () {
       parseGadgetHTML("");
     });
-    throws(function () {
+    assert.throws(function () {
       parseGadgetHTML("", "./path/to/a/gadget");
     });
   });
 
-  test('Default result value', function () {
+  test('Default result value', function (assert) {
     // Check default value returned by parseGadgetHTMLDocument
-    deepEqual(renderJS.parseGadgetHTMLDocument(
+    assert.deepEqual(renderJS.parseGadgetHTMLDocument(
       document.implementation.createHTMLDocument(""),
       "http://example.org"
     ), {
@@ -128,7 +122,7 @@
     });
   });
 
-  test('Extract title', function () {
+  test('Extract title', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the title
     var settings,
       html = "<html>" +
@@ -137,10 +131,10 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.title, 'Great title', 'Title extracted');
+    assert.equal(settings.title, 'Great title', 'Title extracted');
   });
 
-  test('Extract only one title', function () {
+  test('Extract only one title', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the first title
     var settings,
       html = "<html>" +
@@ -150,7 +144,7 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.title, 'Great title', 'First title extracted');
+    assert.equal(settings.title, 'Great title', 'First title extracted');
   });
 
 //   test('Extract title only from head', function () {
@@ -165,7 +159,7 @@
 //     equal(settings.title, '', 'Title not found');
 //   });
 
-  test('Extract base url', function () {
+  test('Extract base url', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the title
     var settings,
       html = "<html>" +
@@ -174,10 +168,10 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
+    assert.equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
   });
 
-  test('Extract only one base url', function () {
+  test('Extract only one base url', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the first title
     var settings,
       html = "<html>" +
@@ -187,7 +181,7 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
+    assert.equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
   });
 
   // XXX innerHTML is not extracted anymore
@@ -493,7 +487,7 @@
   /////////////////////////////////////////////////////////////////
 
   module("cancel when declare gadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -548,14 +542,14 @@
   // declareGadgetKlass
   /////////////////////////////////////////////////////////////////
   module("renderJS.declareGadgetKlass", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -864,7 +858,7 @@
   // declareJS
   /////////////////////////////////////////////////////////////////
   module("renderJS.declareJS", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1009,7 +1003,7 @@
   // declareCSS
   /////////////////////////////////////////////////////////////////
   module("renderJS.declareCSS", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1152,14 +1146,14 @@
   // clearGadgetKlassList
   /////////////////////////////////////////////////////////////////
   module("renderJS.clearGadgetKlassList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -1311,7 +1305,7 @@
   // RenderJSGadget.getInterfaceList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getInterfaceList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1351,7 +1345,7 @@
   // RenderJSGadget.getMethodList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getMethodList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1428,7 +1422,7 @@
   // RenderJSGadget.getRequiredCSSList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getRequiredCSSList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1465,7 +1459,7 @@
   // RenderJSGadget.getRequiredJSList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getRequiredJSList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1502,7 +1496,7 @@
   // RenderJSGadget.getPath
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getPath", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1539,7 +1533,7 @@
   // RenderJSGadget.getTitle
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getTitle", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1576,7 +1570,7 @@
   // RenderJSGadget.getElement
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getElement", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1617,7 +1611,7 @@
   // RenderJSGadget.changeState
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.changeState", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1864,7 +1858,7 @@
   // RenderJSGadgetKlass.declareAcquiredMethod
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareAcquiredMethod", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2010,7 +2004,7 @@
   // RenderJSGadgetKlass.allowPublicAcquisition
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.allowPublicAcquiredMethod", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2060,7 +2054,7 @@
   // RenderJSGadget.__aq_parent
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.__aq_parent", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2106,7 +2100,7 @@
   // RenderJSGadgetKlass.declareMethod
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareMethod", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2379,7 +2373,7 @@
   // RenderJSGadgetKlass.ready
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.ready", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2425,14 +2419,14 @@
   // RenderJSGadgetKlass.setState
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.setState", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -2473,14 +2467,14 @@
   // RenderJSGadgetKlass.onStateChange
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.onStateChange", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -2519,14 +2513,14 @@
   // RenderJSGadgetKlass.declareService
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareService", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -3147,14 +3141,14 @@
   // RenderJSGadgetKlass.onEvent
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.onEvent", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -3373,14 +3367,14 @@
   // RenderJSGadgetKlass.onLoop
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.onLoop", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -3499,14 +3493,14 @@
   // RenderJSGadgetKlass.declareJob
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareJob", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -4288,19 +4282,19 @@
   // RenderJSGadget.declareGadget (public)
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.declareGadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
   });
-  test('returns a Promise', function () {
+  test('returns a Promise', function (assert) {
     // Check that declareGadget return a Promise
     var gadget = new RenderJSGadget(),
       url = 'https://example.org/files/qunittest/test',
@@ -4315,7 +4309,8 @@
       "Content-Type": "text/html"
     }, html]);
 
-    stop();
+    // stop();
+    qunit_async_state = assert.async();
     expect(1);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function () {
@@ -6719,7 +6714,7 @@
   // RenderJSGadget.getDeclaredGadget
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getDeclaredGadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -6761,7 +6756,7 @@
   // RenderJSGadget.dropGadget
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.dropGadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -6806,7 +6801,7 @@
 
   module("RenderJSGadget bootstrap");
 //   module("RenderJSGadget bootstrap", {
-//     setup: function () {
+//     beforeEach: function () {
 //       renderJS.clearGadgetKlassList();
 //     }
 //   });
@@ -7149,5 +7144,5 @@
       });
   });
 
-}(document, renderJS, QUnit, sinon, URI, URL, Event,
+}(document, renderJS, QUnit, sinon, nise, URI, URL, Event,
   MutationObserver, RSVP));

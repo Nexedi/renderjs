@@ -20,11 +20,6 @@
 (function (Mutex, QUnit) {
   "use strict";
   var test = QUnit.test,
-    stop = QUnit.stop,
-    start = QUnit.start,
-    ok = QUnit.ok,
-    expect = QUnit.expect,
-    equal = QUnit.equal,
     module = QUnit.module;
 
   /////////////////////////////////////////////////////////////////
@@ -32,18 +27,21 @@
   /////////////////////////////////////////////////////////////////
   module("renderJS.Mutex");
 
-  test('constructor', function () {
-    equal(Mutex.length, 0);
-    var mutex = new Mutex();
+  test('constructor', function (assert) {
+    assert.equal(Mutex.length, 0);
+    var mutex = new Mutex(),
+      equal = assert.equal.bind(assert);
     equal(Object.getPrototypeOf(mutex), Mutex.prototype);
     equal(mutex.constructor, Mutex);
     equal(Mutex.prototype.constructor, Mutex);
   });
 
-  test('lockAndRun execute callback', function () {
+  test('lockAndRun execute callback', function (assert) {
     var mutex = new Mutex(),
-      counter = 0;
-    stop();
+      counter = 0,
+      start = assert.async(),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(6);
     function assertCounter(value) {
       equal(counter, value);
@@ -80,10 +78,13 @@
       });
   });
 
-  test('lockAndRun handle exception', function () {
+  test('lockAndRun handle exception', function (assert) {
     var mutex = new Mutex(),
-      counter = 0;
-    stop();
+      counter = 0,
+      start = assert.async(),
+      ok = assert.ok.bind(assert),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(5);
     function assertCounter(value) {
       equal(counter, value);
@@ -113,10 +114,13 @@
       });
   });
 
-  test('lockAndRun prevent concurrent execution', function () {
+  test('lockAndRun prevent concurrent execution', function (assert) {
     var mutex = new Mutex(),
-      counter = 0;
-    stop();
+      counter = 0,
+      start = assert.async(),
+      ok = assert.ok.bind(assert),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(9);
     function assertCounter(value) {
       equal(counter, value);
@@ -167,10 +171,13 @@
       });
   });
 
-  test('lockAndRun handle concurrent exception', function () {
+  test('lockAndRun handle concurrent exception', function (assert) {
     var mutex = new Mutex(),
-      counter = 0;
-    stop();
+      counter = 0,
+      start = assert.async(),
+      ok = assert.ok.bind(assert),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(4);
     function assertCounter(value) {
       equal(counter, value);
@@ -210,10 +217,13 @@
       });
   });
 
-  test('lockAndRun cancel does not prevent next execution', function () {
+  test('lockAndRun cancel does not prevent next execution', function (assert) {
     var mutex = new Mutex(),
-      counter = 0;
-    stop();
+      counter = 0,
+      start = assert.async(),
+      ok = assert.ok.bind(assert),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(6);
     function assertCounter(value) {
       equal(counter, value);
@@ -255,10 +265,13 @@
       });
   });
 
-  test('lockAndRun cancel stop first execution', function () {
+  test('lockAndRun cancel stop first execution', function (assert) {
     var mutex = new Mutex(),
-      counter = 0;
-    stop();
+      counter = 0,
+      start = assert.async(),
+      ok = assert.ok.bind(assert),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(2);
     function assertCounter(value) {
       equal(counter, value);
@@ -289,10 +302,13 @@
       });
   });
 
-  test('lockAndRun cancel stop second execution', function () {
+  test('lockAndRun cancel stop second execution', function (assert) {
     var mutex = new Mutex(),
-      counter = 0;
-    stop();
+      counter = 0,
+      start = assert.async(),
+      ok = assert.ok.bind(assert),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(3);
     function assertCounter(value) {
       equal(counter, value);
@@ -336,11 +352,14 @@
       });
   });
 
-  test('lockAndRun cancel does not cancel previous execution', function () {
+  test('lockAndRun cancel does not cancel previous execution', function (assert) {
     var mutex = new Mutex(),
       counter = 0,
-      defer = RSVP.defer();
-    stop();
+      defer = RSVP.defer(),
+      start = assert.async(),
+      ok = assert.ok.bind(assert),
+      equal = assert.equal.bind(assert),
+      expect = assert.expect.bind(assert);
     expect(10);
     function assertCounter(value) {
       equal(counter, value);
