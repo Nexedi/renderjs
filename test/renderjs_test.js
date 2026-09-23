@@ -23,15 +23,7 @@
            MutationObserver, RSVP) {
   "use strict";
   var test = QUnit.test,
-    qunit_async = QUnit.assert.async.bind(QUnit.assert),
-    qunit_async_state,
-    ok = QUnit.assert.ok,
-    expect = QUnit.assert.expect,
-    equal = QUnit.assert.equal,
-    throws = QUnit.assert.throws,
-    deepEqual = QUnit.assert.deepEqual,
     module = QUnit.module,
-    notEqual = QUnit.assert.notEqual,
     root_gadget_klass = renderJS(window),
     root_gadget_defer = RSVP.defer(),
     RenderJSGadget = __RenderJSGadget,
@@ -39,14 +31,6 @@
     RenderJSIframeGadget = __RenderJSIframeGadget;
 
   sinon.fakeServer = nise.fakeServer;
-
-  function start() {
-    qunit_async_state = qunit_async();
-  }
-
-  function stop() {
-    qunit_async_state.done();
-  }
 
   // Keep track of the root gadget
   renderJS(window)
@@ -93,10 +77,10 @@
       renderJS.clearGadgetKlassList();
     }
   });
-  test('Not valid HTML string', function () {
+  test('Not valid HTML string', function (assert) {
     // Check that parseGadgetHTMLDocument returns the default value
     // if the string is not a valid xml
-    deepEqual(parseGadgetHTML("", "http://example.org"), {
+    assert.deepEqual(parseGadgetHTML("", "http://example.org"), {
       path: "http://example.org",
       title: "",
       interface_list: [],
@@ -105,28 +89,28 @@
     });
   });
 
-  test('Not HTML Document', function () {
+  test('Not HTML Document', function (assert) {
     // Check that parseGadgetHTMLDocument throws an error if the parameter is
     // not a HTMLDocument
-    throws(function () {
+    assert.throws(function () {
       renderJS.parseGadgetHTMLDocument({}, "http://example.org/gadget.html");
     });
   });
 
-  test("Base url not set with absolute url", function () {
+  test("Base url not set with absolute url", function (assert) {
     // Check that parseGadgetHTMLDocument throws an error if the base url is
     // not set with absolute url
-    throws(function () {
+    assert.throws(function () {
       parseGadgetHTML("");
     });
-    throws(function () {
+    assert.throws(function () {
       parseGadgetHTML("", "./path/to/a/gadget");
     });
   });
 
-  test('Default result value', function () {
+  test('Default result value', function (assert) {
     // Check default value returned by parseGadgetHTMLDocument
-    deepEqual(renderJS.parseGadgetHTMLDocument(
+    assert.deepEqual(renderJS.parseGadgetHTMLDocument(
       document.implementation.createHTMLDocument(""),
       "http://example.org"
     ), {
@@ -138,7 +122,7 @@
     });
   });
 
-  test('Extract title', function () {
+  test('Extract title', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the title
     var settings,
       html = "<html>" +
@@ -147,10 +131,10 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.title, 'Great title', 'Title extracted');
+    assert.equal(settings.title, 'Great title', 'Title extracted');
   });
 
-  test('Extract only one title', function () {
+  test('Extract only one title', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the first title
     var settings,
       html = "<html>" +
@@ -160,7 +144,7 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.title, 'Great title', 'First title extracted');
+    assert.equal(settings.title, 'Great title', 'First title extracted');
   });
 
 //   test('Extract title only from head', function () {
@@ -175,7 +159,7 @@
 //     equal(settings.title, '', 'Title not found');
 //   });
 
-  test('Extract base url', function () {
+  test('Extract base url', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the title
     var settings,
       html = "<html>" +
@@ -184,10 +168,10 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
+    assert.equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
   });
 
-  test('Extract only one base url', function () {
+  test('Extract only one base url', function (assert) {
     // Check that parseGadgetHTMLDocument correctly extract the first title
     var settings,
       html = "<html>" +
@@ -197,7 +181,7 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
+    assert.equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
   });
 
   // XXX innerHTML is not extracted anymore
@@ -4300,7 +4284,6 @@
   module("RenderJSGadget.declareGadget", {
     beforeEach: function () {
       renderJS.clearGadgetKlassList();
-      console.log('xxx declare gadget ', sinon);
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
@@ -4311,7 +4294,7 @@
       delete this.server;
     }
   });
-  test('returns a Promise', function () {
+  test('returns a Promise', function (assert) {
     // Check that declareGadget return a Promise
     var gadget = new RenderJSGadget(),
       url = 'https://example.org/files/qunittest/test',
@@ -4326,7 +4309,8 @@
       "Content-Type": "text/html"
     }, html]);
 
-    stop();
+    // stop();
+    qunit_async_state = assert.async();
     expect(1);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function () {
