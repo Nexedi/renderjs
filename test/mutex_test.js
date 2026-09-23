@@ -82,7 +82,6 @@
     var mutex = new Mutex(),
       counter = 0,
       start = assert.async(),
-      ok = assert.ok.bind(assert),
       equal = assert.equal.bind(assert),
       expect = assert.expect.bind(assert);
     expect(5);
@@ -118,7 +117,6 @@
     var mutex = new Mutex(),
       counter = 0,
       start = assert.async(),
-      ok = assert.ok.bind(assert),
       equal = assert.equal.bind(assert),
       expect = assert.expect.bind(assert);
     expect(9);
@@ -175,7 +173,6 @@
     var mutex = new Mutex(),
       counter = 0,
       start = assert.async(),
-      ok = assert.ok.bind(assert),
       equal = assert.equal.bind(assert),
       expect = assert.expect.bind(assert);
     expect(4);
@@ -352,74 +349,75 @@
       });
   });
 
-  test('lockAndRun cancel does not cancel previous execution', function (assert) {
-    var mutex = new Mutex(),
-      counter = 0,
-      defer = RSVP.defer(),
-      start = assert.async(),
-      ok = assert.ok.bind(assert),
-      equal = assert.equal.bind(assert),
-      expect = assert.expect.bind(assert);
-    expect(10);
-    function assertCounter(value) {
-      equal(counter, value);
-      counter += 1;
-    }
-    function callback2() {
-      ok(false, 'Should not reach that code');
-    }
-    function callback1() {
+  test('lockAndRun cancel does not cancel previous execution',
+    function (assert) {
+      var mutex = new Mutex(),
+        counter = 0,
+        defer = RSVP.defer(),
+        start = assert.async(),
+        ok = assert.ok.bind(assert),
+        equal = assert.equal.bind(assert),
+        expect = assert.expect.bind(assert);
+      expect(10);
+      function assertCounter(value) {
+        equal(counter, value);
+        counter += 1;
+      }
+      function callback2() {
+        ok(false, 'Should not reach that code');
+      }
+      function callback1() {
+        return new RSVP.Queue()
+          .push(function () {
+            return RSVP.delay(50);
+          })
+          .push(function () {
+            assertCounter(0);
+            defer.resolve();
+            return RSVP.delay(50);
+          })
+          .push(function () {
+            assertCounter(3);
+            return 'callback1 result';
+          });
+      }
+      function callback3() {
+        // Ensure that callback3 is executed only when callback1 is finished
+        assertCounter(4);
+        return 'callback3 result';
+      }
       return new RSVP.Queue()
         .push(function () {
-          return RSVP.delay(50);
+          var promise1 = mutex.lockAndRun(callback1),
+            promise2 = mutex.lockAndRun(callback2),
+            promise3 = mutex.lockAndRun(callback3);
+          return RSVP.all([
+            promise1,
+            promise2
+              .then(function () {
+                ok(false, 'Should not reach that code');
+              }, function (error) {
+                assertCounter(2);
+                equal(error.message, 'cancel callback2');
+                return 'handler2 result';
+              }),
+            promise3,
+            defer.promise
+              .then(function () {
+                assertCounter(1);
+                promise2.cancel('cancel callback2');
+              })
+          ]);
         })
-        .push(function () {
-          assertCounter(0);
-          defer.resolve();
-          return RSVP.delay(50);
+        .push(function (result_list) {
+          equal(result_list[0], 'callback1 result');
+          equal(result_list[1], 'handler2 result');
+          equal(result_list[2], 'callback3 result');
+          assertCounter(5);
         })
-        .push(function () {
-          assertCounter(3);
-          return 'callback1 result';
+        .always(function () {
+          start();
         });
-    }
-    function callback3() {
-      // Ensure that callback3 is executed only when callback1 is finished
-      assertCounter(4);
-      return 'callback3 result';
-    }
-    return new RSVP.Queue()
-      .push(function () {
-        var promise1 = mutex.lockAndRun(callback1),
-          promise2 = mutex.lockAndRun(callback2),
-          promise3 = mutex.lockAndRun(callback3);
-        return RSVP.all([
-          promise1,
-          promise2
-            .then(function () {
-              ok(false, 'Should not reach that code');
-            }, function (error) {
-              assertCounter(2);
-              equal(error.message, 'cancel callback2');
-              return 'handler2 result';
-            }),
-          promise3,
-          defer.promise
-            .then(function () {
-              assertCounter(1);
-              promise2.cancel('cancel callback2');
-            })
-        ]);
-      })
-      .push(function (result_list) {
-        equal(result_list[0], 'callback1 result');
-        equal(result_list[1], 'handler2 result');
-        equal(result_list[2], 'callback3 result');
-        assertCounter(5);
-      })
-      .always(function () {
-        start();
-      });
-  });
+    });
 
 }(renderJS.Mutex, QUnit));
