@@ -20,12 +20,20 @@
 (function (Mutex, QUnit) {
   "use strict";
   var test = QUnit.test,
-    stop = QUnit.stop,
-    start = QUnit.start,
-    ok = QUnit.ok,
-    expect = QUnit.expect,
-    equal = QUnit.equal,
+    qunit_async = QUnit.assert.async.bind(QUnit.assert),
+    qunit_async_state,
+    ok = QUnit.assert.ok,
+    expect = QUnit.assert.expect,
+    equal = QUnit.assert.equal,
     module = QUnit.module;
+
+  function start() {
+    qunit_async_state = qunit_async();
+  }
+
+  function stop() {
+    qunit_async_state.done();
+  }
 
   /////////////////////////////////////////////////////////////////
   // parseGadgetHTMLDocument

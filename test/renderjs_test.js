@@ -23,20 +23,28 @@
            MutationObserver, RSVP) {
   "use strict";
   var test = QUnit.test,
-    stop = QUnit.stop,
-    start = QUnit.start,
-    ok = QUnit.ok,
-    expect = QUnit.expect,
-    equal = QUnit.equal,
-    throws = QUnit.throws,
-    deepEqual = QUnit.deepEqual,
+    qunit_async = QUnit.assert.async.bind(QUnit.assert),
+    qunit_async_state,
+    ok = QUnit.assert.ok,
+    expect = QUnit.assert.expect,
+    equal = QUnit.assert.equal,
+    throws = QUnit.assert.throws,
+    deepEqual = QUnit.assert.deepEqual,
     module = QUnit.module,
-    notEqual = QUnit.notEqual,
+    notEqual = QUnit.assert.notEqual,
     root_gadget_klass = renderJS(window),
     root_gadget_defer = RSVP.defer(),
     RenderJSGadget = __RenderJSGadget,
     RenderJSEmbeddedGadget = __RenderJSEmbeddedGadget,
     RenderJSIframeGadget = __RenderJSIframeGadget;
+
+  function start() {
+    qunit_async_state = qunit_async();
+  }
+
+  function stop() {
+    qunit_async_state.done();
+  }
 
   // Keep track of the root gadget
   renderJS(window)
@@ -79,7 +87,7 @@
   // parseGadgetHTMLDocument
   /////////////////////////////////////////////////////////////////
   module("renderJS.parseGadgetHTMLDocument", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -493,7 +501,7 @@
   /////////////////////////////////////////////////////////////////
 
   module("cancel when declare gadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -548,14 +556,14 @@
   // declareGadgetKlass
   /////////////////////////////////////////////////////////////////
   module("renderJS.declareGadgetKlass", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -864,7 +872,7 @@
   // declareJS
   /////////////////////////////////////////////////////////////////
   module("renderJS.declareJS", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1009,7 +1017,7 @@
   // declareCSS
   /////////////////////////////////////////////////////////////////
   module("renderJS.declareCSS", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1152,14 +1160,14 @@
   // clearGadgetKlassList
   /////////////////////////////////////////////////////////////////
   module("renderJS.clearGadgetKlassList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -1311,7 +1319,7 @@
   // RenderJSGadget.getInterfaceList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getInterfaceList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1351,7 +1359,7 @@
   // RenderJSGadget.getMethodList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getMethodList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1428,7 +1436,7 @@
   // RenderJSGadget.getRequiredCSSList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getRequiredCSSList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1465,7 +1473,7 @@
   // RenderJSGadget.getRequiredJSList
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getRequiredJSList", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1502,7 +1510,7 @@
   // RenderJSGadget.getPath
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getPath", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1539,7 +1547,7 @@
   // RenderJSGadget.getTitle
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getTitle", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1576,7 +1584,7 @@
   // RenderJSGadget.getElement
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getElement", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1617,7 +1625,7 @@
   // RenderJSGadget.changeState
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.changeState", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -1864,7 +1872,7 @@
   // RenderJSGadgetKlass.declareAcquiredMethod
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareAcquiredMethod", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2010,7 +2018,7 @@
   // RenderJSGadgetKlass.allowPublicAcquisition
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.allowPublicAcquiredMethod", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2060,7 +2068,7 @@
   // RenderJSGadget.__aq_parent
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.__aq_parent", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2106,7 +2114,7 @@
   // RenderJSGadgetKlass.declareMethod
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareMethod", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2379,7 +2387,7 @@
   // RenderJSGadgetKlass.ready
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.ready", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -2425,14 +2433,14 @@
   // RenderJSGadgetKlass.setState
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.setState", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -2473,14 +2481,14 @@
   // RenderJSGadgetKlass.onStateChange
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.onStateChange", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -2519,14 +2527,14 @@
   // RenderJSGadgetKlass.declareService
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareService", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -3147,14 +3155,14 @@
   // RenderJSGadgetKlass.onEvent
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.onEvent", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -3373,14 +3381,14 @@
   // RenderJSGadgetKlass.onLoop
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.onLoop", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -3499,14 +3507,14 @@
   // RenderJSGadgetKlass.declareJob
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadgetKlass.declareJob", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -4288,14 +4296,15 @@
   // RenderJSGadget.declareGadget (public)
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.declareGadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
+      console.log('xxx declare gadget ', sinon);
       this.server = sinon.fakeServer.create();
 
       this.server.autoRespond = true;
       this.server.autoRespondAfter = 5;
     },
-    teardown: function () {
+    afterEach: function () {
       this.server.restore();
       delete this.server;
     }
@@ -6719,7 +6728,7 @@
   // RenderJSGadget.getDeclaredGadget
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.getDeclaredGadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -6761,7 +6770,7 @@
   // RenderJSGadget.dropGadget
   /////////////////////////////////////////////////////////////////
   module("RenderJSGadget.dropGadget", {
-    setup: function () {
+    beforeEach: function () {
       renderJS.clearGadgetKlassList();
     }
   });
@@ -6806,7 +6815,7 @@
 
   module("RenderJSGadget bootstrap");
 //   module("RenderJSGadget bootstrap", {
-//     setup: function () {
+//     beforeEach: function () {
 //       renderJS.clearGadgetKlassList();
 //     }
 //   });
