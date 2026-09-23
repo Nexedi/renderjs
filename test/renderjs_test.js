@@ -19,7 +19,7 @@
  */
 
 /*jslint nomen: true*/
-(function (document, renderJS, QUnit, sinon, URI, URL, Event,
+(function (document, renderJS, QUnit, sinon, nise, URI, URL, Event,
            MutationObserver, RSVP) {
   "use strict";
   var test = QUnit.test,
@@ -37,6 +37,8 @@
     RenderJSGadget = __RenderJSGadget,
     RenderJSEmbeddedGadget = __RenderJSEmbeddedGadget,
     RenderJSIframeGadget = __RenderJSIframeGadget;
+
+  sinon.fakeServer = nise.fakeServer;
 
   function start() {
     qunit_async_state = qunit_async();
@@ -7158,5 +7160,5 @@
       });
   });
 
-}(document, renderJS, QUnit, sinon, URI, URL, Event,
+}(document, renderJS, QUnit, sinon, nise, URI, URL, Event,
   MutationObserver, RSVP));

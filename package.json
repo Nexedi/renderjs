@@ -15,7 +15,8 @@
     "qunit": "~2.26.0",
     "grunt-curl": "~2.5.1",
     "grunt-jslint": "1.1.14",
-    "sinon": "~22.1.0"
+    "sinon": "~22.1.0",
+    "nise": "~6.1.4"
   },
   "scripts": {
     "test": "./node_modules/.bin/grunt test",
