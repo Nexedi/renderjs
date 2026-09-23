@@ -169,7 +169,8 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    assert.equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
+    assert.equal(settings.path, 'http://example.org/bar/bar2/',
+                 'Base extracted');
   });
 
   test('Extract only one base url', function (assert) {
@@ -182,7 +183,8 @@
         "</head></html>";
 
     settings = parseGadgetHTML(html, "http://example.org");
-    assert.equal(settings.path, 'http://example.org/bar/bar2/', 'Base extracted');
+    assert.equal(settings.path, 'http://example.org/bar/bar2/',
+                 'Base extracted');
   });
 
   // XXX innerHTML is not extracted anymore
@@ -209,7 +211,8 @@
 //         "</body></html>";
 //
 //     settings = renderJS.parseGadgetHTML(html);
-//     assert.equal(settings.html, '<p>Foo</p><p>Bar</p>', 'All bodies extracted');
+//     assert.equal(settings.html, '<p>Foo</p><p>Bar</p>',
+//                  'All bodies extracted');
 //   });
 //
 //   test('Extract body only from html', function (assert) {
@@ -677,7 +680,8 @@
         assert.deepEqual(Klass.prototype.__acquired_method_dict, {});
         assert.equal(Klass.prototype.__foo, 'bar');
         assert.equal(Klass.__template_element.nodeType, 9);
-        assert.deepEqual(Klass.__ready_list, [], 'Ready list is empty by default');
+        assert.deepEqual(Klass.__ready_list, [],
+                         'Ready list is empty by default');
 
         instance = new Klass();
         assert.ok(instance instanceof RenderJSGadget);
@@ -915,11 +919,11 @@
     window.onerror = undefined;
     renderJS.declareJS(url, document.head)
       .then(function (value, textStatus, jqXHR) {
-        assert.ok(ok, "Non JS mime type should load");
+        assert.ok(true, "Non JS mime type should load");
       })
       .fail(function (jqXHR) {
         // Chrome does not consider this as error
-        assert.ok(ok, jqXHR);
+        assert.ok(true, jqXHR);
       })
       .always(function () {
         window.onerror = previousonerror;
@@ -1681,30 +1685,31 @@
       });
   });
 
-  test('do not trigger onStateChange if no changed keys twice', function (assert) {
-    var gadget = new RenderJSGadget(),
-      callback_called = false;
-    gadget.state = {};
-    gadget.__state_change_callback = function () {
-      callback_called = true;
-    };
-    start = assert.async();
-    assert.expect(2);
-    gadget.changeState({})
-      .then(function () {
-        assert.ok(!callback_called);
-        return gadget.changeState({});
-      })
-      .then(function () {
-        assert.ok(!callback_called);
-      })
-      .fail(function (error) {
-        assert.ok(false, error);
-      })
-      .always(function () {
-        start();
-      });
-  });
+  test('do not trigger onStateChange if no changed keys twice',
+       function (assert) {
+      var gadget = new RenderJSGadget(),
+        callback_called = false;
+      gadget.state = {};
+      gadget.__state_change_callback = function () {
+        callback_called = true;
+      };
+      start = assert.async();
+      assert.expect(2);
+      gadget.changeState({})
+        .then(function () {
+          assert.ok(!callback_called);
+          return gadget.changeState({});
+        })
+        .then(function () {
+          assert.ok(!callback_called);
+        })
+        .fail(function (error) {
+          assert.ok(false, error);
+        })
+        .always(function () {
+          start();
+        });
+    });
 
   test('trigger onStateChange when previous is resolved', function (assert) {
     var gadget = new RenderJSGadget(),
@@ -1796,64 +1801,68 @@
       });
   });
 
-  test('accumulate modification_dict on onStateChange error', function (assert) {
-    var gadget = new RenderJSGadget();
-    gadget.state = {a: 'b', foo: 'bar', bar: 'foo'};
-    gadget.__state_change_callback = function (modification_dict) {
-      assert.deepEqual(modification_dict, {bar: 'barbar'});
-      throw new Error('failure in onStateChange');
-    };
-    start = assert.async();
-    assert.expect(13);
-    gadget.changeState({bar: 'barbar'})
-      .then(function () {
-        assert.ok(false, 'Expecting an error');
-      })
-      .fail(function (error) {
-        assert.equal(error.message, 'failure in onStateChange');
-        assert.deepEqual(gadget.state, {a: 'b', foo: 'bar', bar: 'barbar'});
+  test('accumulate modification_dict on onStateChange error',
+       function (assert) {
+      var gadget = new RenderJSGadget();
+      gadget.state = {a: 'b', foo: 'bar', bar: 'foo'};
+      gadget.__state_change_callback = function (modification_dict) {
+        assert.deepEqual(modification_dict, {bar: 'barbar'});
+        throw new Error('failure in onStateChange');
+      };
+      start = assert.async();
+      assert.expect(13);
+      gadget.changeState({bar: 'barbar'})
+        .then(function () {
+          assert.ok(false, 'Expecting an error');
+        })
+        .fail(function (error) {
+          assert.equal(error.message, 'failure in onStateChange');
+          assert.deepEqual(gadget.state, {a: 'b', foo: 'bar', bar: 'barbar'});
 
-        gadget.__state_change_callback = function (modification_dict) {
-          assert.deepEqual(modification_dict, {bar: 'barbar', foo: 'foofoo'});
-          throw new Error('failure2 in onStateChange');
-        };
-        return gadget.changeState({foo: 'foofoo'});
-      })
-      .fail(function (error) {
-        assert.equal(error.message, 'failure2 in onStateChange');
-        assert.deepEqual(gadget.state, {a: 'b', foo: 'foofoo', bar: 'barbar'});
+          gadget.__state_change_callback = function (modification_dict) {
+            assert.deepEqual(modification_dict,
+                             {bar: 'barbar', foo: 'foofoo'});
+            throw new Error('failure2 in onStateChange');
+          };
+          return gadget.changeState({foo: 'foofoo'});
+        })
+        .fail(function (error) {
+          assert.equal(error.message, 'failure2 in onStateChange');
+          assert.deepEqual(gadget.state, {a: 'b', foo: 'foofoo',
+                                          bar: 'barbar'});
 
-        gadget.__state_change_callback = function (modification_dict) {
-          assert.deepEqual(modification_dict, {bar: 'barbar', foo: 'f'});
-          throw new Error('failure3 in onStateChange');
-        };
-        return gadget.changeState({foo: 'f'});
-      })
-      .fail(function (error) {
-        assert.equal(error.message, 'failure3 in onStateChange');
-        assert.deepEqual(gadget.state, {a: 'b', foo: 'f', bar: 'barbar'});
+          gadget.__state_change_callback = function (modification_dict) {
+            assert.deepEqual(modification_dict, {bar: 'barbar', foo: 'f'});
+            throw new Error('failure3 in onStateChange');
+          };
+          return gadget.changeState({foo: 'f'});
+        })
+        .fail(function (error) {
+          assert.equal(error.message, 'failure3 in onStateChange');
+          assert.deepEqual(gadget.state, {a: 'b', foo: 'f', bar: 'barbar'});
 
-        gadget.__state_change_callback = function (modification_dict) {
-          assert.deepEqual(modification_dict, {a: 'c', bar: 'barbar', foo: 'f'});
-        };
-        return gadget.changeState({a: 'c'});
-      })
-      .then(function () {
-        assert.deepEqual(gadget.state, {a: 'c', foo: 'f', bar: 'barbar'});
+          gadget.__state_change_callback = function (modification_dict) {
+            assert.deepEqual(modification_dict,
+                            {a: 'c', bar: 'barbar', foo: 'f'});
+          };
+          return gadget.changeState({a: 'c'});
+        })
+        .then(function () {
+          assert.deepEqual(gadget.state, {a: 'c', foo: 'f', bar: 'barbar'});
 
 
-        gadget.__state_change_callback = function (modification_dict) {
-          assert.deepEqual(modification_dict, {a: 'd'});
-        };
-        return gadget.changeState({a: 'd'});
-      })
-      .then(function () {
-        assert.deepEqual(gadget.state, {a: 'd', foo: 'f', bar: 'barbar'});
-      })
-      .always(function () {
-        start();
-      });
-  });
+          gadget.__state_change_callback = function (modification_dict) {
+            assert.deepEqual(modification_dict, {a: 'd'});
+          };
+          return gadget.changeState({a: 'd'});
+        })
+        .then(function () {
+          assert.deepEqual(gadget.state, {a: 'd', foo: 'f', bar: 'barbar'});
+        })
+        .always(function () {
+          start();
+        });
+    });
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.declareAcquiredMethod
@@ -1926,7 +1935,8 @@
       gadget.__aq_parent = function (method_name, argument_list) {
         __aq_parent_called = true;
         assert.equal(this, gadget, "Context should be kept");
-        assert.equal(method_name, original_method_name, "Method name should be kept");
+        assert.equal(method_name, original_method_name,
+                     "Method name should be kept");
         assert.deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
@@ -2071,13 +2081,14 @@
 
   module("RenderJS.getAbsoluteURL");
 
-  test('make a relative url absolute with an absolute base url', function (assert) {
-    var url = "../foo/bar",
-      base_url = "http://example.org/some/path/";
+  test('make a relative url absolute with an absolute base url',
+       function (assert) {
+      var url = "../foo/bar",
+        base_url = "http://example.org/some/path/";
 
-    assert.equal(renderJS.getAbsoluteURL(url, base_url),
-          "http://example.org/some/foo/bar");
-  });
+      assert.equal(renderJS.getAbsoluteURL(url, base_url),
+            "http://example.org/some/foo/bar");
+    });
 
   test('do not translate absolute url', function (assert) {
     var url = "http://example.net/foo/bar",
@@ -2496,19 +2507,20 @@
     assert.equal(result, Klass);
   });
 
-  test('create callback in the __state_change_callback property', function (assert) {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var Klass = function () {
-      RenderJSGadget.call(this);
-    },
-      callback = {};
-    Klass.prototype = new RenderJSGadget();
-    Klass.prototype.constructor = Klass;
-    Klass.onStateChange = RenderJSGadget.onStateChange;
+  test('create callback in the __state_change_callback property',
+       function (assert) {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var Klass = function () {
+        RenderJSGadget.call(this);
+      },
+        callback = {};
+      Klass.prototype = new RenderJSGadget();
+      Klass.prototype.constructor = Klass;
+      Klass.onStateChange = RenderJSGadget.onStateChange;
 
-    Klass.onStateChange(callback);
-    assert.equal(Klass.prototype.__state_change_callback, callback);
-  });
+      Klass.onStateChange(callback);
+      assert.equal(Klass.prototype.__state_change_callback, callback);
+    });
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadgetKlass.declareService
@@ -2758,105 +2770,107 @@
       });
   });
 
-  test('service started when gadget parent element added in DOM', function (assert) {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var service1 = {},
-      service2 = {},
-      gadget = new RenderJSGadget(),
-      parent_element = document.createElement("div"),
-      html_url = 'https://example.org/files/qunittest/test503.html';
-    gadget.__sub_gadget_dict = {};
+  test('service started when gadget parent element added in DOM',
+       function (assert) {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var service1 = {},
+        service2 = {},
+        gadget = new RenderJSGadget(),
+        parent_element = document.createElement("div"),
+        html_url = 'https://example.org/files/qunittest/test503.html';
+      gadget.__sub_gadget_dict = {};
 
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
 
-    document.getElementById('qunit-fixture').innerHTML = "";
-    start = assert.async();
-    assert.expect(6);
-    renderJS.declareGadgetKlass(html_url)
-      .then(function (Klass) {
-        declareServiceToCheck(Klass, service1);
-        declareServiceToCheck(Klass, service2);
-        return gadget.declareGadget(
-          html_url
-        );
-      })
-      .then(function (g) {
-        parent_element.appendChild(g.element);
-        document
-          .getElementById('qunit-fixture')
-          .appendChild(parent_element);
-        return RSVP.delay(50);
-      })
-      .then(function () {
-        assert.equal(service1.start_count, 1);
-        assert.equal(service1.stop_count, 0);
-        assert.equal(service1.status, "started");
-        assert.equal(service2.start_count, 1);
-        assert.equal(service2.stop_count, 0);
-        assert.equal(service2.status, "started");
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
+      document.getElementById('qunit-fixture').innerHTML = "";
+      start = assert.async();
+      assert.expect(6);
+      renderJS.declareGadgetKlass(html_url)
+        .then(function (Klass) {
+          declareServiceToCheck(Klass, service1);
+          declareServiceToCheck(Klass, service2);
+          return gadget.declareGadget(
+            html_url
+          );
+        })
+        .then(function (g) {
+          parent_element.appendChild(g.element);
+          document
+            .getElementById('qunit-fixture')
+            .appendChild(parent_element);
+          return RSVP.delay(50);
+        })
+        .then(function () {
+          assert.equal(service1.start_count, 1);
+          assert.equal(service1.stop_count, 0);
+          assert.equal(service1.status, "started");
+          assert.equal(service2.start_count, 1);
+          assert.equal(service2.stop_count, 0);
+          assert.equal(service2.status, "started");
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
 
-  test('service stopped when gadget element removed from DOM', function (assert) {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var service1 = {},
-      service2 = {},
-      gadget = new RenderJSGadget(),
-      html_url = 'https://example.org/files/qunittest/test504.html';
-    gadget.__sub_gadget_dict = {};
+  test('service stopped when gadget element removed from DOM',
+       function (assert) {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var service1 = {},
+        service2 = {},
+        gadget = new RenderJSGadget(),
+        html_url = 'https://example.org/files/qunittest/test504.html';
+      gadget.__sub_gadget_dict = {};
 
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
 
-    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    start = assert.async();
-    assert.expect(6);
-    renderJS.declareGadgetKlass(html_url)
-      .then(function (Klass) {
-        declareServiceToCheck(Klass, service1);
-        declareServiceToCheck(Klass, service2);
-        return gadget.declareGadget(
-          html_url,
-          {element: document.getElementById('qunit-fixture')
-                            .querySelector("div")}
-        );
-      })
-      .then(function () {
-        return RSVP.delay(50);
-      })
-      .then(function () {
-        document
-          .getElementById('qunit-fixture')
-          .innerHTML = "";
-        return RSVP.delay(50);
-      })
-      .then(function () {
-        assert.equal(service1.start_count, 1);
-        assert.equal(service1.stop_count, 1);
-        assert.equal(service1.status, "stopped");
-        assert.equal(service2.start_count, 1);
-        assert.equal(service2.stop_count, 1);
-        assert.equal(service2.status, "stopped");
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
+      document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+      start = assert.async();
+      assert.expect(6);
+      renderJS.declareGadgetKlass(html_url)
+        .then(function (Klass) {
+          declareServiceToCheck(Klass, service1);
+          declareServiceToCheck(Klass, service2);
+          return gadget.declareGadget(
+            html_url,
+            {element: document.getElementById('qunit-fixture')
+                              .querySelector("div")}
+          );
+        })
+        .then(function () {
+          return RSVP.delay(50);
+        })
+        .then(function () {
+          document
+            .getElementById('qunit-fixture')
+            .innerHTML = "";
+          return RSVP.delay(50);
+        })
+        .then(function () {
+          assert.equal(service1.start_count, 1);
+          assert.equal(service1.stop_count, 1);
+          assert.equal(service1.status, "stopped");
+          assert.equal(service2.start_count, 1);
+          assert.equal(service2.stop_count, 1);
+          assert.equal(service2.status, "stopped");
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
 
   test('service stopped when gadget parent element removed from DOM',
-      function () {
+      function (assert) {
       // Subclass RenderJSGadget to not pollute its namespace
       var service1 = {},
         service2 = {},
@@ -2968,116 +2982,120 @@
   /////////////////////////////////////////////////////////////////
   // Service error handling
   /////////////////////////////////////////////////////////////////
-  test('Service error are reported to parent gadget', function (assert) {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var ParentKlass = function () {
-      RenderJSGadget.call(this);
-    },
-      gadget,
-      catched_error,
-      html_url = 'https://example.org/files/qunittest/test508.html';
-    ParentKlass.prototype = new RenderJSGadget();
-    ParentKlass.prototype.constructor = ParentKlass;
-    ParentKlass.prototype.__acquired_method_dict = {};
-    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+  test('Service error are reported to parent gadget',
+       function (assert) {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var ParentKlass = function () {
+        RenderJSGadget.call(this);
+      },
+        gadget,
+        catched_error,
+        html_url = 'https://example.org/files/qunittest/test508.html';
+      ParentKlass.prototype = new RenderJSGadget();
+      ParentKlass.prototype.constructor = ParentKlass;
+      ParentKlass.prototype.__acquired_method_dict = {};
+      ParentKlass.allowPublicAcquisition =
+        RenderJSGadget.allowPublicAcquisition;
 
-    ParentKlass.allowPublicAcquisition('reportServiceError',
-                                       function (argument_list) {
-        catched_error = argument_list[0];
-        return;
-      });
-
-    gadget = new ParentKlass();
-    gadget.__sub_gadget_dict = {};
-
-    // Subclass RenderJSGadget to not pollute its namespace
-
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
-
-    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    start = assert.async();
-    assert.expect(2);
-    renderJS.declareGadgetKlass(html_url)
-      .then(function (Klass) {
-
-        Klass.declareService(function () {
-          throw new Error("My service crashed!");
+      ParentKlass.allowPublicAcquisition('reportServiceError',
+                                        function (argument_list) {
+          catched_error = argument_list[0];
+          return;
         });
 
-        return gadget.declareGadget(
-          html_url,
-          {element: document.getElementById('qunit-fixture')
-                            .querySelector("div")}
-        );
-      })
-      .then(function () {
-        return RSVP.delay(50);
-      })
-      .then(function () {
-        assert.ok(catched_error instanceof Error);
-        assert.equal(
-          catched_error.message,
-          "My service crashed!"
-        );
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
+      gadget = new ParentKlass();
+      gadget.__sub_gadget_dict = {};
 
-  test('Service error from iframe are reported to parent gadget', function (assert) {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var ParentKlass = function () {
-      RenderJSGadget.call(this);
-    },
-      gadget,
-      defer = RSVP.defer();
-    ParentKlass.prototype = new RenderJSGadget();
-    ParentKlass.prototype.constructor = ParentKlass;
-    ParentKlass.prototype.__acquired_method_dict = {};
-    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+      // Subclass RenderJSGadget to not pollute its namespace
 
-    ParentKlass.allowPublicAcquisition('reportServiceError',
-                                       function (argument_list) {
-        defer.resolve(argument_list[0]);
-      });
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
 
-    gadget = new ParentKlass();
-    gadget.__sub_gadget_dict = {};
+      document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+      start = assert.async();
+      assert.expect(2);
+      renderJS.declareGadgetKlass(html_url)
+        .then(function (Klass) {
 
-    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    start = assert.async();
-    assert.expect(3);
+          Klass.declareService(function () {
+            throw new Error("My service crashed!");
+          });
 
-    return gadget.declareGadget(
-      'embedded_crashing_service.html',
-      {element: document.getElementById('qunit-fixture')
-                        .querySelector("div"),
-        sandbox: 'iframe'}
-    )
-      .then(function () {
-        return defer.promise;
-      })
-      .then(function (catched_error) {
-        assert.ok(catched_error instanceof Object);
-        assert.ok(!(catched_error instanceof Error));
-        assert.equal(
-          catched_error.message,
-          "Cannot read property 'bar' of undefined"
-        );
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
+          return gadget.declareGadget(
+            html_url,
+            {element: document.getElementById('qunit-fixture')
+                              .querySelector("div")}
+          );
+        })
+        .then(function () {
+          return RSVP.delay(50);
+        })
+        .then(function () {
+          assert.ok(catched_error instanceof Error);
+          assert.equal(
+            catched_error.message,
+            "My service crashed!"
+          );
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
+
+  test('Service error from iframe are reported to parent gadget',
+       function (assert) {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var ParentKlass = function () {
+        RenderJSGadget.call(this);
+      },
+        gadget,
+        defer = RSVP.defer();
+      ParentKlass.prototype = new RenderJSGadget();
+      ParentKlass.prototype.constructor = ParentKlass;
+      ParentKlass.prototype.__acquired_method_dict = {};
+      ParentKlass.allowPublicAcquisition =
+        RenderJSGadget.allowPublicAcquisition;
+
+      ParentKlass.allowPublicAcquisition('reportServiceError',
+                                        function (argument_list) {
+          defer.resolve(argument_list[0]);
+        });
+
+      gadget = new ParentKlass();
+      gadget.__sub_gadget_dict = {};
+
+      document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+      start = assert.async();
+      assert.expect(3);
+
+      return gadget.declareGadget(
+        'embedded_crashing_service.html',
+        {element: document.getElementById('qunit-fixture')
+                          .querySelector("div"),
+          sandbox: 'iframe'}
+      )
+        .then(function () {
+          return defer.promise;
+        })
+        .then(function (catched_error) {
+          assert.ok(catched_error instanceof Object);
+          assert.ok(!(catched_error instanceof Error));
+          assert.equal(
+            catched_error.message,
+            "Cannot read property 'bar' of undefined"
+          );
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
 
   test('Service error stops the other services', function (assert) {
     // Subclass RenderJSGadget to not pollute its namespace
@@ -3262,49 +3280,50 @@
       });
   });
 
-  test('check cancellation message after trigger event twice', function (assert) {
-    var called = false,
-      gadget = new RenderJSGadget(),
-      html_url = 'https://example.org/files/qunittest/test600.html';
-    gadget.__sub_gadget_dict = {};
+  test('check cancellation message after trigger event twice',
+       function (assert) {
+      var called = false,
+        gadget = new RenderJSGadget(),
+        html_url = 'https://example.org/files/qunittest/test600.html';
+      gadget.__sub_gadget_dict = {};
 
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
 
-    document.getElementById('qunit-fixture').innerHTML = "<div></div>";
-    start = assert.async();
-    assert.expect(1);
-    renderJS.declareGadgetKlass(html_url)
-      .then(function (Klass) {
-        Klass.onEvent('bar', function (assert) {
-          return new RSVP.Promise(function () {
-            return;
-          }, function (error) {
-            if (called) {
+      document.getElementById('qunit-fixture').innerHTML = "<div></div>";
+      start = assert.async();
+      assert.expect(1);
+      renderJS.declareGadgetKlass(html_url)
+        .then(function (Klass) {
+          Klass.onEvent('bar', function (assert) {
+            return new RSVP.Promise(function () {
               return;
-            }
-            called = true;
-            assert.equal(error, "Cancelling previous event (bar)");
+            }, function (error) {
+              if (called) {
+                return;
+              }
+              called = true;
+              assert.equal(error, "Cancelling previous event (bar)");
+            });
           });
+          return gadget.declareGadget(
+            html_url,
+            {element: document.getElementById('qunit-fixture')
+                              .querySelector("div")}
+          );
+        })
+        .then(function () {
+          var event = new Event("bar");
+          document.getElementById('qunit-fixture').querySelector("div")
+                                                  .dispatchEvent(event);
+          document.getElementById('qunit-fixture').querySelector("div")
+                                                  .dispatchEvent(event);
+        })
+        .always(function () {
+          start();
         });
-        return gadget.declareGadget(
-          html_url,
-          {element: document.getElementById('qunit-fixture')
-                            .querySelector("div")}
-        );
-      })
-      .then(function () {
-        var event = new Event("bar");
-        document.getElementById('qunit-fixture').querySelector("div")
-                                                .dispatchEvent(event);
-        document.getElementById('qunit-fixture').querySelector("div")
-                                                .dispatchEvent(event);
-      })
-      .always(function () {
-        start();
-      });
-  });
+    });
 
   test('check message after delete gadget', function (assert) {
     var gadget = new RenderJSGadget(),
@@ -4310,8 +4329,7 @@
       "Content-Type": "text/html"
     }, html]);
 
-    // start = assert.async();
-    qunit_async_state = assert.async();
+    start = assert.async();
     assert.expect(1);
     gadget.declareGadget(url)//, document.getElementById('qunit-fixture'))
       .then(function () {
@@ -4520,8 +4538,10 @@
     assert.expect(1);
     gadget.declareGadget(html_url)
       .then(function (new_gadget) {
-        assert.equal(window.test_js1.test_js2.test_js3.test_js4.test_js5.test_js6,
-              'foo');
+        assert.equal(
+          window.test_js1.test_js2.test_js3.test_js4.test_js5.test_js6,
+          'foo'
+        );
       })
       .fail(function (e) {
         assert.ok(false);
@@ -4735,43 +4755,44 @@
       });
   });
 
-  test('One failing gadget does not prevent the others to load', function (assert) {
-    // Check that dependencies are loaded once if 2 gadgets are created
-    var gadget = new RenderJSGadget(),
-      html_url = 'https://example.org/files/qunittest/test12345.html',
-      html_url2 = 'https://example.org/files/qunittest/test12346.html',
-      mock;
-    gadget.__sub_gadget_dict = {};
+  test('One failing gadget does not prevent the others to load',
+       function (assert) {
+      // Check that dependencies are loaded once if 2 gadgets are created
+      var gadget = new RenderJSGadget(),
+        html_url = 'https://example.org/files/qunittest/test12345.html',
+        html_url2 = 'https://example.org/files/qunittest/test12346.html',
+        mock;
+      gadget.__sub_gadget_dict = {};
 
-    this.server.respondWith("GET", html_url, [404, {
-      "Content-Type": "text/html"
-    }, "error"]);
-    this.server.respondWith("GET", html_url2, [200, {
-      "Content-Type": "text/html"
-    }, "raw html"]);
+      this.server.respondWith("GET", html_url, [404, {
+        "Content-Type": "text/html"
+      }, "error"]);
+      this.server.respondWith("GET", html_url2, [200, {
+        "Content-Type": "text/html"
+      }, "raw html"]);
 
-    mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
-    mock.expects("parseGadgetHTMLDocument").once().returns({});
+      mock = sinon.mock(renderJS, "parseGadgetHTMLDocument");
+      mock.expects("parseGadgetHTMLDocument").once().returns({});
 
-    start = assert.async();
-    assert.expect(1);
-    gadget.declareGadget(html_url)
-      .then(function () {
-        assert.ok(false);
-      })
-      .fail(function () {
-        return gadget.declareGadget(html_url2);
-      })
-      .then(function () {
-        assert.ok(true);
-      })
-      .always(function () {
-        // Check that only one request has been done.
-        start();
-        mock.verify();
-        mock.restore();
-      });
-  });
+      start = assert.async();
+      assert.expect(1);
+      gadget.declareGadget(html_url)
+        .then(function () {
+          assert.ok(false);
+        })
+        .fail(function () {
+          return gadget.declareGadget(html_url2);
+        })
+        .then(function () {
+          assert.ok(true);
+        })
+        .always(function () {
+          // Check that only one request has been done.
+          start();
+          mock.verify();
+          mock.restore();
+        });
+    });
 
   test('Wait for ready callback before returning', function (assert) {
 
@@ -4804,7 +4825,8 @@
         return gadget.declareGadget(html_url, {scope: 'sub'});
       })
       .then(function (result) {
-        assert.equal(result, ready_gadget, "Context should be the gadget instance");
+        assert.equal(result, ready_gadget,
+                     "Context should be the gadget instance");
         assert.ok(called);
         assert.deepEqual(gadget.__sub_gadget_dict, {'sub': result});
       })
@@ -4947,7 +4969,8 @@
         );
       })
       .then(function (g) {
-        assert.notEqual(document.getElementById('qunit-fixture'), previous_fixture);
+        assert.notEqual(document.getElementById('qunit-fixture'),
+                        previous_fixture);
         assert.equal(document.getElementById('qunit-fixture'), g.element);
         assert.equal(
           document.getElementById('qunit-fixture').innerHTML,
@@ -5056,175 +5079,180 @@
       });
   });
 
-  test('__aq_parent returns acquired_method result if available', function (assert) {
-    var gadget = new RenderJSGadget(),
-      aq_dynamic_called = false,
-      original_method_name = "foo",
-      original_argument_list = ["foobar", "barfoo"],
-      html_url = 'http://example.org/files/qunittest/test353.html';
+  test('__aq_parent returns acquired_method result if available',
+       function (assert) {
+      var gadget = new RenderJSGadget(),
+        aq_dynamic_called = false,
+        original_method_name = "foo",
+        original_argument_list = ["foobar", "barfoo"],
+        html_url = 'http://example.org/files/qunittest/test353.html';
 
-    gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict = {};
-    gadget.__acquired_method_dict[original_method_name] =
-      function (argument_list, child_scope) {
-        aq_dynamic_called = true;
-        assert.equal(this, gadget, "Context should be kept");
-        assert.deepEqual(argument_list, original_argument_list,
-              "Argument list should be kept"
+      gadget.__sub_gadget_dict = {};
+      gadget.__acquired_method_dict = {};
+      gadget.__acquired_method_dict[original_method_name] =
+        function (argument_list, child_scope) {
+          aq_dynamic_called = true;
+          assert.equal(this, gadget, "Context should be kept");
+          assert.deepEqual(argument_list, original_argument_list,
+                "Argument list should be kept"
+            );
+          assert.equal(child_scope.indexOf('RJS_'), 0,
+                "Random child scope is generated");
+          return "FOO";
+        };
+
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
+
+      start = assert.async();
+      assert.expect(5);
+      gadget.declareGadget(html_url)
+        .then(function (new_gadget) {
+          return new_gadget.__aq_parent(
+            original_method_name,
+            original_argument_list
           );
-        assert.equal(child_scope.indexOf('RJS_'), 0,
-              "Random child scope is generated");
-        return "FOO";
+        })
+        .then(function (result) {
+          assert.equal(result, "FOO");
+          assert.equal(aq_dynamic_called, true);
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
+
+  test('__aq_parent propagate child_scope to acquired_method',
+       function (assert) {
+      var gadget = new RenderJSGadget(),
+        aq_dynamic_called = false,
+        original_method_name = "foo",
+        original_argument_list = ["foobar", "barfoo"],
+        html_url = 'http://example.org/files/qunittest/test353.html';
+
+      gadget.__acquired_method_dict = {};
+      gadget.__sub_gadget_dict = {};
+      gadget.__acquired_method_dict[original_method_name] =
+        function (argument_list, child_scope) {
+          aq_dynamic_called = true;
+          assert.equal(this, gadget, "Context should be kept");
+          assert.deepEqual(argument_list, original_argument_list,
+                "Argument list should be kept"
+            );
+          assert.equal(child_scope, "bar", "Child scope should be provided");
+        };
+
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
+
+      start = assert.async();
+      assert.expect(4);
+      gadget.declareGadget(html_url, {scope: "bar"})
+        .then(function (new_gadget) {
+          return new_gadget.__aq_parent(
+            original_method_name,
+            original_argument_list
+          );
+        })
+        .then(function (result) {
+          assert.equal(aq_dynamic_called, true);
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
+
+  test('__aq_parent doesnt propagate unknown gadget child_scope',
+       function (assert) {
+      var gadget = new RenderJSGadget(),
+        aq_dynamic_called = false,
+        original_method_name = "foo",
+        original_argument_list = ["foobar", "barfoo"],
+        html_url = 'http://example.org/files/qunittest/test353.html',
+        new_gadget;
+
+      gadget.__acquired_method_dict = {};
+      gadget.__sub_gadget_dict = {};
+      gadget.__acquired_method_dict[original_method_name] =
+        function (argument_list, child_scope) {
+          aq_dynamic_called = true;
+          assert.equal(this, gadget, "Context should be kept");
+          assert.deepEqual(argument_list, original_argument_list,
+                "Argument list should be kept"
+            );
+          assert.equal(child_scope, undefined,
+                       "Child scope should be unknown");
+        };
+
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
+
+      start = assert.async();
+      assert.expect(4);
+      gadget.declareGadget(html_url, {scope: "bar"})
+        .then(function (result) {
+          new_gadget = result;
+          return gadget.dropGadget("bar");
+        })
+        .then(function () {
+          return new_gadget.__aq_parent(
+            original_method_name,
+            original_argument_list
+          );
+        })
+        .then(function (result) {
+          assert.equal(aq_dynamic_called, true);
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
+
+  test('__aq_parent fails if aquired_method throws an error',
+       function (assert) {
+      var gadget = new RenderJSGadget(),
+        original_error = new Error("Custom error for the test"),
+        html_url = 'http://example.org/files/qunittest/test353.html';
+
+      gadget.__sub_gadget_dict = {};
+      gadget.__acquired_method_dict = {};
+      gadget.__acquired_method_dict.foo = function () {
+        throw original_error;
       };
 
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body></body></html>"]);
 
-    start = assert.async();
-    assert.expect(5);
-    gadget.declareGadget(html_url)
-      .then(function (new_gadget) {
-        return new_gadget.__aq_parent(
-          original_method_name,
-          original_argument_list
-        );
-      })
-      .then(function (result) {
-        assert.equal(result, "FOO");
-        assert.equal(aq_dynamic_called, true);
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
-
-  test('__aq_parent propagate child_scope to acquired_method', function (assert) {
-    var gadget = new RenderJSGadget(),
-      aq_dynamic_called = false,
-      original_method_name = "foo",
-      original_argument_list = ["foobar", "barfoo"],
-      html_url = 'http://example.org/files/qunittest/test353.html';
-
-    gadget.__acquired_method_dict = {};
-    gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict[original_method_name] =
-      function (argument_list, child_scope) {
-        aq_dynamic_called = true;
-        assert.equal(this, gadget, "Context should be kept");
-        assert.deepEqual(argument_list, original_argument_list,
-              "Argument list should be kept"
-          );
-        assert.equal(child_scope, "bar", "Child scope should be provided");
-      };
-
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
-
-    start = assert.async();
-    assert.expect(4);
-    gadget.declareGadget(html_url, {scope: "bar"})
-      .then(function (new_gadget) {
-        return new_gadget.__aq_parent(
-          original_method_name,
-          original_argument_list
-        );
-      })
-      .then(function (result) {
-        assert.equal(aq_dynamic_called, true);
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
-
-  test('__aq_parent doesnt propagate unknown gadget child_scope', function (assert) {
-    var gadget = new RenderJSGadget(),
-      aq_dynamic_called = false,
-      original_method_name = "foo",
-      original_argument_list = ["foobar", "barfoo"],
-      html_url = 'http://example.org/files/qunittest/test353.html',
-      new_gadget;
-
-    gadget.__acquired_method_dict = {};
-    gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict[original_method_name] =
-      function (argument_list, child_scope) {
-        aq_dynamic_called = true;
-        assert.equal(this, gadget, "Context should be kept");
-        assert.deepEqual(argument_list, original_argument_list,
-              "Argument list should be kept"
-          );
-        assert.equal(child_scope, undefined, "Child scope should be unknown");
-      };
-
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
-
-    start = assert.async();
-    assert.expect(4);
-    gadget.declareGadget(html_url, {scope: "bar"})
-      .then(function (result) {
-        new_gadget = result;
-        return gadget.dropGadget("bar");
-      })
-      .then(function () {
-        return new_gadget.__aq_parent(
-          original_method_name,
-          original_argument_list
-        );
-      })
-      .then(function (result) {
-        assert.equal(aq_dynamic_called, true);
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
-
-  test('__aq_parent fails if aquired_method throws an error', function (assert) {
-    var gadget = new RenderJSGadget(),
-      original_error = new Error("Custom error for the test"),
-      html_url = 'http://example.org/files/qunittest/test353.html';
-
-    gadget.__sub_gadget_dict = {};
-    gadget.__acquired_method_dict = {};
-    gadget.__acquired_method_dict.foo = function () {
-      throw original_error;
-    };
-
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body></body></html>"]);
-
-    start = assert.async();
-    assert.expect(2);
-    gadget.declareGadget(html_url)
-      .then(function (new_gadget) {
-        return new_gadget.__aq_parent("foo", []);
-      })
-      .fail(function (error) {
-        assert.equal(error, original_error);
-        assert.equal(error.message, "Custom error for the test");
-      })
-      .always(function () {
-        start();
-      });
-  });
+      start = assert.async();
+      assert.expect(2);
+      gadget.declareGadget(html_url)
+        .then(function (new_gadget) {
+          return new_gadget.__aq_parent("foo", []);
+        })
+        .fail(function (error) {
+          assert.equal(error, original_error);
+          assert.equal(error.message, "Custom error for the test");
+        })
+        .always(function () {
+          start();
+        });
+    });
 
   test('returns __aq_parent result if acquired_method raises AcquisitionError',
-    function () {
+    function (assert) {
       var gadget = new RenderJSGadget(),
         i = 0,
         aq_dynamic_called = false,
@@ -5251,7 +5279,8 @@
         __aq_parent_called = true;
         assert.equal(i, 1, "__aq_parent called after acquired_method");
         assert.equal(this, gadget, "Context should be kept");
-        assert.equal(method_name, original_method_name, "Method name should be kept");
+        assert.equal(method_name, original_method_name,
+                     "Method name should be kept");
         assert.deepEqual(argument_list, original_argument_list,
               "Argument list should be kept"
           );
@@ -5442,94 +5471,96 @@
       });
   });
 
-  test('can declareGadget relativeurl in HTML with base tag', function (assert) {
-    var gadget = new RenderJSGadget(),
-      html_url = 'https://example.org/files/qunittest/test12345.html',
-      html_relative_url2 = 'test12346.html',
-      html_url2 = 'https://example.org/files/qunittest/foo/test12346.html',
-      spy;
-    gadget.__sub_gadget_dict = {};
+  test('can declareGadget relativeurl in HTML with base tag',
+       function (assert) {
+      var gadget = new RenderJSGadget(),
+        html_url = 'https://example.org/files/qunittest/test12345.html',
+        html_relative_url2 = 'test12346.html',
+        html_url2 = 'https://example.org/files/qunittest/foo/test12346.html',
+        spy;
+      gadget.__sub_gadget_dict = {};
 
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><head><base href='./foo/'></head><body><div data-foo='bar' " +
-       "data-gadget-scope='bar' data-gadget-url='" + html_relative_url2 +
-       "'></div></body></html>"]);
-    this.server.respondWith("GET", html_url2, [200, {
-      "Content-Type": "text/html"
-    }, "raw html"]);
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><head><base href='./foo/'></head><body><div data-foo='bar' " +
+        "data-gadget-scope='bar' data-gadget-url='" + html_relative_url2 +
+        "'></div></body></html>"]);
+      this.server.respondWith("GET", html_url2, [200, {
+        "Content-Type": "text/html"
+      }, "raw html"]);
 
-    spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
+      spy = sinon.spy(renderJS, "parseGadgetHTMLDocument");
 
-    start = assert.async();
-    assert.expect(6);
-    gadget.declareGadget(html_url)
-      .then(function (g) {
-        assert.equal(spy.callCount, 2);
-        assert.equal(spy.firstCall.args[1], html_url);
-        assert.equal(spy.secondCall.args[1], html_url2);
-        // Second gadget is a child
-        return g.getDeclaredGadget("bar");
+      start = assert.async();
+      assert.expect(6);
+      gadget.declareGadget(html_url)
+        .then(function (g) {
+          assert.equal(spy.callCount, 2);
+          assert.equal(spy.firstCall.args[1], html_url);
+          assert.equal(spy.secondCall.args[1], html_url2);
+          // Second gadget is a child
+          return g.getDeclaredGadget("bar");
+        })
+        .then(function (g2) {
+          assert.equal(g2.__path, html_url2);
+          // The gadget element is the one defined in HTML
+          assert.equal(g2.element.getAttribute("data-foo"), "bar");
+          // The gadget is public by default
+          assert.equal(g2.element.innerHTML, "raw html");
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+          spy.restore();
+        });
+    });
+
+  test('can declareGadget a sandboxed gadget in HTML directly',
+       function (assert) {
+      var gadget = new RenderJSGadget(),
+        html_url = 'https://example.org/files/qunittest/test123456.html',
+        html_url2 = renderJS.getAbsoluteURL('./embedded.html',
+                                            window.location.href);
+
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body><div data-foo='bar' " +
+        "data-gadget-sandbox='iframe' " +
+        "data-gadget-scope='bar' data-gadget-url='" + html_url2 +
+        "'></div></body></html>"]);
+
+      gadget.__sub_gadget_dict = {};
+      gadget.__aq_parent = function (method_name, argument_list) {
+        throw new renderJS.AcquisitionError("Can not handle " + method_name);
+      };
+
+      document.getElementById("qunit-fixture").textContent = "";
+
+      start = assert.async();
+      assert.expect(3);
+      gadget.declareGadget(html_url, {
+        element: document.getElementById('qunit-fixture')
       })
-      .then(function (g2) {
-        assert.equal(g2.__path, html_url2);
-        // The gadget element is the one defined in HTML
-        assert.equal(g2.element.getAttribute("data-foo"), "bar");
-        // The gadget is public by default
-        assert.equal(g2.element.innerHTML, "raw html");
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-        spy.restore();
-      });
-  });
-
-  test('can declareGadget a sandboxed gadget in HTML directly', function (assert) {
-    var gadget = new RenderJSGadget(),
-      html_url = 'https://example.org/files/qunittest/test123456.html',
-      html_url2 = renderJS.getAbsoluteURL('./embedded.html',
-                                          window.location.href);
-
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body><div data-foo='bar' " +
-       "data-gadget-sandbox='iframe' " +
-       "data-gadget-scope='bar' data-gadget-url='" + html_url2 +
-       "'></div></body></html>"]);
-
-    gadget.__sub_gadget_dict = {};
-    gadget.__aq_parent = function (method_name, argument_list) {
-      throw new renderJS.AcquisitionError("Can not handle " + method_name);
-    };
-
-    document.getElementById("qunit-fixture").textContent = "";
-
-    start = assert.async();
-    assert.expect(3);
-    gadget.declareGadget(html_url, {
-      element: document.getElementById('qunit-fixture')
-    })
-      .then(function (g) {
-        return g.getDeclaredGadget("bar");
-      })
-      .then(function (g2) {
-        assert.equal(g2.__path, html_url2);
-        // The gadget element is the one defined in HTML
-        assert.equal(g2.element.getAttribute("data-foo"), "bar");
-        // The gadget is inside an iframe
-        assert.equal(g2.element.innerHTML,
-              '<iframe src="' + html_url2 + '"></iframe>');
-      })
-      .fail(function (e) {
-        assert.ok(false, e);
-      })
-      .always(function () {
-        start();
-      });
-  });
+        .then(function (g) {
+          return g.getDeclaredGadget("bar");
+        })
+        .then(function (g2) {
+          assert.equal(g2.__path, html_url2);
+          // The gadget element is the one defined in HTML
+          assert.equal(g2.element.getAttribute("data-foo"), "bar");
+          // The gadget is inside an iframe
+          assert.equal(g2.element.innerHTML,
+                '<iframe src="' + html_url2 + '"></iframe>');
+        })
+        .fail(function (e) {
+          assert.ok(false, e);
+        })
+        .always(function () {
+          start();
+        });
+    });
 
   test('fail if declareGadget with scope in HTML fail', function (assert) {
     var gadget = new RenderJSGadget(),
@@ -5562,107 +5593,111 @@
       .always(start);
   });
 
-  test('can catch if declareGadget with scope in HTML fail', function (assert) {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var ParentKlass = function () {
-      RenderJSGadget.call(this);
-    },
-      gadget,
-      error_context,
-      // catched_error,
-      html_url = 'https://example.org/files/qunittest/test12345.html',
-      html_url2 = 'https://example.org/files/qunittest/test12346.html';
-    ParentKlass.prototype = new RenderJSGadget();
-    ParentKlass.prototype.constructor = ParentKlass;
-    ParentKlass.prototype.__acquired_method_dict = {};
-    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+  test('can catch if declareGadget with scope in HTML fail',
+       function (assert) {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var ParentKlass = function () {
+        RenderJSGadget.call(this);
+      },
+        gadget,
+        error_context,
+        // catched_error,
+        html_url = 'https://example.org/files/qunittest/test12345.html',
+        html_url2 = 'https://example.org/files/qunittest/test12346.html';
+      ParentKlass.prototype = new RenderJSGadget();
+      ParentKlass.prototype.constructor = ParentKlass;
+      ParentKlass.prototype.__acquired_method_dict = {};
+      ParentKlass.allowPublicAcquisition =
+        RenderJSGadget.allowPublicAcquisition;
 
-    gadget = new ParentKlass();
-    gadget.__sub_gadget_dict = {};
+      gadget = new ParentKlass();
+      gadget.__sub_gadget_dict = {};
 
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body><div data-foo='bar' " +
-       "data-gadget-scope='foo' data-gadget-url='" + html_url2 +
-       "'></div></body></html>"]);
-    this.server.respondWith("GET", html_url2, [403, {
-      "Content-Type": "text/html"
-    }, "raw html"]);
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body><div data-foo='bar' " +
+        "data-gadget-scope='foo' data-gadget-url='" + html_url2 +
+        "'></div></body></html>"]);
+      this.server.respondWith("GET", html_url2, [403, {
+        "Content-Type": "text/html"
+      }, "raw html"]);
 
-    start = assert.async();
-    assert.expect(5);
-    renderJS.declareGadgetKlass(html_url)
-      .then(function (Klass) {
-        Klass.allowPublicAcquisition('reportGadgetDeclarationError',
-                                     function (argument_list, scope) {
-            var catched_error = argument_list[0];
-            error_context = this;
-            assert.equal(catched_error.status, 403);
-            assert.equal(catched_error.url, html_url2);
-            assert.equal(scope, 'foo');
-          });
-        return gadget.declareGadget(html_url);
-      })
-      .then(function (result) {
-        assert.deepEqual(result, error_context);
-        assert.ok(true, 'Error correctly catched');
-      })
-      .fail(function (e) {
-        assert.ok(false, "Error should have been catched");
-      })
-      .always(start);
-  });
+      start = assert.async();
+      assert.expect(5);
+      renderJS.declareGadgetKlass(html_url)
+        .then(function (Klass) {
+          Klass.allowPublicAcquisition('reportGadgetDeclarationError',
+                                      function (argument_list, scope) {
+              var catched_error = argument_list[0];
+              error_context = this;
+              assert.equal(catched_error.status, 403);
+              assert.equal(catched_error.url, html_url2);
+              assert.equal(scope, 'foo');
+            });
+          return gadget.declareGadget(html_url);
+        })
+        .then(function (result) {
+          assert.deepEqual(result, error_context);
+          assert.ok(true, 'Error correctly catched');
+        })
+        .fail(function (e) {
+          assert.ok(false, "Error should have been catched");
+        })
+        .always(start);
+    });
 
-  test('can catch if declareGadget without scope in HTML fail', function (assert) {
-    // Subclass RenderJSGadget to not pollute its namespace
-    var ParentKlass = function () {
-      RenderJSGadget.call(this);
-    },
-      gadget,
-      error_context,
-      // catched_error,
-      html_url = 'https://example.org/files/qunittest/test1234598.html',
-      html_url2 = 'https://example.org/files/qunittest/test1234698.html';
-    ParentKlass.prototype = new RenderJSGadget();
-    ParentKlass.prototype.constructor = ParentKlass;
-    ParentKlass.prototype.__acquired_method_dict = {};
-    ParentKlass.allowPublicAcquisition = RenderJSGadget.allowPublicAcquisition;
+  test('can catch if declareGadget without scope in HTML fail',
+       function (assert) {
+      // Subclass RenderJSGadget to not pollute its namespace
+      var ParentKlass = function () {
+        RenderJSGadget.call(this);
+      },
+        gadget,
+        error_context,
+        // catched_error,
+        html_url = 'https://example.org/files/qunittest/test1234598.html',
+        html_url2 = 'https://example.org/files/qunittest/test1234698.html';
+      ParentKlass.prototype = new RenderJSGadget();
+      ParentKlass.prototype.constructor = ParentKlass;
+      ParentKlass.prototype.__acquired_method_dict = {};
+      ParentKlass.allowPublicAcquisition =
+        RenderJSGadget.allowPublicAcquisition;
 
-    gadget = new ParentKlass();
-    gadget.__sub_gadget_dict = {};
+      gadget = new ParentKlass();
+      gadget.__sub_gadget_dict = {};
 
-    this.server.respondWith("GET", html_url, [200, {
-      "Content-Type": "text/html"
-    }, "<html><body><div data-foo='bar' " +
-       "data-gadget-url='" + html_url2 +
-       "'></div></body></html>"]);
-    this.server.respondWith("GET", html_url2, [403, {
-      "Content-Type": "text/html"
-    }, "raw html"]);
+      this.server.respondWith("GET", html_url, [200, {
+        "Content-Type": "text/html"
+      }, "<html><body><div data-foo='bar' " +
+        "data-gadget-url='" + html_url2 +
+        "'></div></body></html>"]);
+      this.server.respondWith("GET", html_url2, [403, {
+        "Content-Type": "text/html"
+      }, "raw html"]);
 
-    start = assert.async();
-    assert.expect(5);
-    renderJS.declareGadgetKlass(html_url)
-      .then(function (Klass) {
-        Klass.allowPublicAcquisition('reportGadgetDeclarationError',
-                                     function (argument_list, scope) {
-            var catched_error = argument_list[0];
-            error_context = this;
-            assert.equal(catched_error.status, 403);
-            assert.equal(catched_error.url, html_url2);
-            assert.equal(scope, null);
-          });
-        return gadget.declareGadget(html_url);
-      })
-      .then(function (result) {
-        assert.deepEqual(result, error_context);
-        assert.ok(true, 'Error correctly catched');
-      })
-      .fail(function (e) {
-        assert.ok(false, "Error should have been catched");
-      })
-      .always(start);
-  });
+      start = assert.async();
+      assert.expect(5);
+      renderJS.declareGadgetKlass(html_url)
+        .then(function (Klass) {
+          Klass.allowPublicAcquisition('reportGadgetDeclarationError',
+                                      function (argument_list, scope) {
+              var catched_error = argument_list[0];
+              error_context = this;
+              assert.equal(catched_error.status, 403);
+              assert.equal(catched_error.url, html_url2);
+              assert.equal(scope, null);
+            });
+          return gadget.declareGadget(html_url);
+        })
+        .then(function (result) {
+          assert.deepEqual(result, error_context);
+          assert.ok(true, 'Error correctly catched');
+        })
+        .fail(function (e) {
+          assert.ok(false, "Error should have been catched");
+        })
+        .always(start);
+    });
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget (iframe)
@@ -6099,7 +6134,8 @@
             return new_gadget.triggerAcquiredMethodToCancel();
           })
           .push(undefined, function (error) {
-            assert.ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
+            assert.ok(error instanceof RSVP.CancellationError,
+                      JSON.stringify(error));
             assert.equal(
               error.toString(),
               "cancel: Explicit cancellation"
@@ -6107,7 +6143,8 @@
             return new_gadget.wasAcquiredMethodCancelCalled();
           })
           .push(function (result) {
-            assert.ok(result, 'Embedded acquired method not cancelled ' + result);
+            assert.ok(result,
+                      'Embedded acquired method not cancelled ' + result);
           })
           // cancellation of a acquiredMethod call
           .push(function () {
@@ -6122,7 +6159,8 @@
               });
           })
           .push(undefined, function (error) {
-            assert.ok(error instanceof RSVP.CancellationError, JSON.stringify(error));
+            assert.ok(error instanceof RSVP.CancellationError,
+                      JSON.stringify(error));
             assert.equal(
               error.toString(),
               "cancel: cancel from acquirePromiseToCancel"
@@ -6130,7 +6168,8 @@
             return new_gadget.wasAcquiredMethodCancelCalledFromParent();
           })
           .push(function (result) {
-            assert.ok(result, 'Embedded acquired method not cancelled ' + result);
+            assert.ok(result,
+                      'Embedded acquired method not cancelled ' + result);
           })
           .push(function () {
             return new_gadget.triggerAcquiredStringError();
@@ -6184,179 +6223,180 @@
       });
   });
 
-  test('checking working delayed communication iframe gadget', function (assert) {
-    // Check that declare gadget returns the gadget
-    var gadget = new RenderJSGadget(),
-      acquire_called = false,
-      url = "./embedded.html";
+  test('checking working delayed communication iframe gadget',
+       function (assert) {
+      // Check that declare gadget returns the gadget
+      var gadget = new RenderJSGadget(),
+        acquire_called = false,
+        url = "./embedded.html";
 
-    function readyMessageDelay(e) {
-      var now,
-        then,
-        i = 0;
-      if (e.data.indexOf('{"method":"renderJS::__ready"') === 0) {
-        now = Date.now();
-        then = now + 150;
-        while (Date.now() < then) {
-          i += 1;
+      function readyMessageDelay(e) {
+        var now,
+          then,
+          i = 0;
+        if (e.data.indexOf('{"method":"renderJS::__ready"') === 0) {
+          now = Date.now();
+          then = now + 150;
+          while (Date.now() < then) {
+            i += 1;
+          }
         }
+        return i;
       }
-      return i;
-    }
 
-    window.addEventListener('message', readyMessageDelay, false);
+      window.addEventListener('message', readyMessageDelay, false);
 
-    gadget.__aq_parent = function (method_name, argument_list) {
-      acquire_called = true;
-      assert.equal(this, gadget, "Context should be kept");
-      if (method_name === "acquireMethodRequested") {
-        assert.equal(method_name, "acquireMethodRequested",
-          "Method name should be kept");
-        assert.deepEqual(argument_list, ["param1", "param2"],
-              "Argument list should be kept"
-          );
-        return "result correctly fetched from parent";
-      }
-      throw new renderJS.AcquisitionError("Can not handle " + method_name);
-    };
-
-    gadget.__sub_gadget_dict = {};
-
-    start = assert.async();
-    assert.expect(19);
-    gadget.declareGadget(url, {
-      sandbox: 'iframe',
-      element: document.getElementById('qunit-fixture')
-    })
-      .then(function (new_gadget) {
-        return new RSVP.Queue()
-
-          // Method returns an RSVP.Queue
-          .push(function () {
-            var result = new_gadget.wasReadyCalled();
-            assert.ok(
-              result instanceof RSVP.Queue,
-              "iframe method should return Queue"
+      gadget.__aq_parent = function (method_name, argument_list) {
+        acquire_called = true;
+        assert.equal(this, gadget, "Context should be kept");
+        if (method_name === "acquireMethodRequested") {
+          assert.equal(method_name, "acquireMethodRequested",
+            "Method name should be kept");
+          assert.deepEqual(argument_list, ["param1", "param2"],
+                "Argument list should be kept"
             );
-          })
+          return "result correctly fetched from parent";
+        }
+        throw new renderJS.AcquisitionError("Can not handle " + method_name);
+      };
 
-          // Check that ready function are called
-          .push(function () {
-            return new_gadget.wasReadyCalled();
-          })
-          .push(function (result) {
-            assert.equal(result, true);
-          })
+      gadget.__sub_gadget_dict = {};
 
-          // Check that service are started
-          .push(function () {
-            return new_gadget.wasServiceStarted();
-          })
-          .push(function (result) {
-            assert.equal(result, true);
-          })
+      start = assert.async();
+      assert.expect(19);
+      gadget.declareGadget(url, {
+        sandbox: 'iframe',
+        element: document.getElementById('qunit-fixture')
+      })
+        .then(function (new_gadget) {
+          return new RSVP.Queue()
 
-          // Check that service error can be reported
-          .push(function () {
-            return new_gadget.canReportServiceError();
-          })
-          .push(function (result) {
-            assert.equal(result, true);
-          })
+            // Method returns an RSVP.Queue
+            .push(function () {
+              var result = new_gadget.wasReadyCalled();
+              assert.ok(
+                result instanceof RSVP.Queue,
+                "iframe method should return Queue"
+              );
+            })
 
-          // Custom method accept parameter
-          // and return value
-          .push(function () {
-            return new_gadget.setContent("foobar");
-          })
-          .push(function (result) {
-            return new_gadget.getContent();
-          })
-          .push(function (result) {
-            assert.equal(result, "foobar");
-          })
+            // Check that ready function are called
+            .push(function () {
+              return new_gadget.wasReadyCalled();
+            })
+            .push(function (result) {
+              assert.equal(result, true);
+            })
 
-          // Method are propagated
-          .push(function () {
-            return new_gadget.triggerError();
-          })
-          .push(function () {
-            assert.ok(false, "triggerError should fail");
-          }, function (e) {
-            assert.ok(e instanceof renderJS.IframeSerializationError);
-            assert.equal(
-              e.toString(),
-              "IframeSerializationError: Error: " +
-                "Manually triggered embedded error"
-            );
-          })
+            // Check that service are started
+            .push(function () {
+              return new_gadget.wasServiceStarted();
+            })
+            .push(function (result) {
+              assert.equal(result, true);
+            })
 
-          // sub_gadget_dict private property is created
-          .push(function () {
-            return new_gadget.isSubGadgetDictInitialize();
-          })
-          .push(function (result) {
-            assert.equal(result, true);
-          })
+            // Check that service error can be reported
+            .push(function () {
+              return new_gadget.canReportServiceError();
+            })
+            .push(function (result) {
+              assert.equal(result, true);
+            })
 
-          // acquired_method_dict is created on prototype
-          .push(function () {
-            return new_gadget.isAcquisitionDictInitialize();
-          })
-          .push(function (result) {
-            assert.equal(result, true);
-          })
+            // Custom method accept parameter
+            // and return value
+            .push(function () {
+              return new_gadget.setContent("foobar");
+            })
+            .push(function (result) {
+              return new_gadget.getContent();
+            })
+            .push(function (result) {
+              assert.equal(result, "foobar");
+            })
 
-          // service_list is created on prototype
-          .push(function () {
-            return new_gadget.isServiceListInitialize();
-          })
-          .push(function (result) {
-            assert.equal(result, true);
-          })
+            // Method are propagated
+            .push(function () {
+              return new_gadget.triggerError();
+            })
+            .push(function () {
+              assert.ok(false, "triggerError should fail");
+            }, function (e) {
+              assert.ok(e instanceof renderJS.IframeSerializationError);
+              assert.equal(
+                e.toString(),
+                "IframeSerializationError: Error: " +
+                  "Manually triggered embedded error"
+              );
+            })
 
-          // acquire check correctly returns result
-          .push(function () {
-            return new_gadget.callOKAcquire("param1", "param2");
-          })
-          .push(function (result) {
-            assert.ok(acquire_called);
-            assert.equal(result, "result correctly fetched from parent");
-          })
+            // sub_gadget_dict private property is created
+            .push(function () {
+              return new_gadget.isSubGadgetDictInitialize();
+            })
+            .push(function (result) {
+              assert.equal(result, true);
+            })
 
-          // acquire correctly returns error
-          .push(function () {
-            return new_gadget.callErrorAcquire(
-              "acquireMethodRequestedWithAcquisitionError",
-              ["param1", "param2"]
-            );
-          })
-          .push(function (result) {
-            assert.ok(false, result);
-          })
-          .push(undefined, function (error) {
-            assert.ok(error instanceof renderJS.AcquisitionError);
-            assert.equal(
-              error.toString(),
-              "AcquisitionError: Can not handle " +
+            // acquired_method_dict is created on prototype
+            .push(function () {
+              return new_gadget.isAcquisitionDictInitialize();
+            })
+            .push(function (result) {
+              assert.equal(result, true);
+            })
+
+            // service_list is created on prototype
+            .push(function () {
+              return new_gadget.isServiceListInitialize();
+            })
+            .push(function (result) {
+              assert.equal(result, true);
+            })
+
+            // acquire check correctly returns result
+            .push(function () {
+              return new_gadget.callOKAcquire("param1", "param2");
+            })
+            .push(function (result) {
+              assert.ok(acquire_called);
+              assert.equal(result, "result correctly fetched from parent");
+            })
+
+            // acquire correctly returns error
+            .push(function () {
+              return new_gadget.callErrorAcquire(
                 "acquireMethodRequestedWithAcquisitionError",
-              error
-            );
-            assert.equal(
-              error.name,
-              "AcquisitionError",
-              error
-            );
-          });
-      })
-      .fail(function (error) {
-        assert.ok(false, error);
-      })
-      .always(function () {
-        start();
-        window.removeEventListener("message", readyMessageDelay);
-      });
-  });
+                ["param1", "param2"]
+              );
+            })
+            .push(function (result) {
+              assert.ok(false, result);
+            })
+            .push(undefined, function (error) {
+              assert.ok(error instanceof renderJS.AcquisitionError);
+              assert.equal(
+                error.toString(),
+                "AcquisitionError: Can not handle " +
+                  "acquireMethodRequestedWithAcquisitionError",
+                error
+              );
+              assert.equal(
+                error.name,
+                "AcquisitionError",
+                error
+              );
+            });
+        })
+        .fail(function (error) {
+          assert.ok(false, error);
+        })
+        .always(function () {
+          start();
+          window.removeEventListener("message", readyMessageDelay);
+        });
+    });
 
   test('checking working heavy iframe gadget', function (assert) {
     // Check that declare gadget returns the gadget
@@ -6555,7 +6595,8 @@
       })
       .fail(function (error) {
         assert.ok(error instanceof Error);
-        assert.equal(error.message, "Timeout while loading: ./embedded_empty.html");
+        assert.equal(error.message,
+                     "Timeout while loading: ./embedded_empty.html");
       })
       .always(function () {
         start();
@@ -6643,73 +6684,74 @@
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.declareGadget (dataurl)
   /////////////////////////////////////////////////////////////////
-  test('dataurl provide an iframed gadget as callback parameter', function (assert) {
-    // Check that declare gadget returns the gadget
-    var parent_gadget = new RenderJSGadget(),
-      parsed = URI.parse(window.location.href),
-      parent_path = URI.build({protocol: parsed.protocol,
-                               hostname: parsed.hostname,
-                               port: parsed.port,
-                               path: parsed.path}).toString(),
-      // absolute_path = parent_path + "mixed_embedded.html",
-      absolute_path = "https://example.org/mixed_embedded.html",
-      iframe_html_prefix = '<html><head>',
-      iframe_html_suffix = '<script src="' +
-        new URL('../node_modules/rsvp/dist/rsvp-2.0.4.js',
-                window.location).href +
-        '" ' +
-        'type="text/javascript"></script>' +
-        '<script src="' + new URL('../dist/renderjs-latest.js',
-                                  window.location).href + '" ' +
-        'type="text/javascript"></script>' +
-        '</head><body><p>my mixed foo</p></body></html>',
-      iframe_html = iframe_html_prefix + iframe_html_suffix,
-      data_url_html = iframe_html_prefix +
-        '<base href="' + absolute_path + '">' +
-        iframe_html_suffix,
-      data_url;
+  test('dataurl provide an iframed gadget as callback parameter',
+       function (assert) {
+      // Check that declare gadget returns the gadget
+      var parent_gadget = new RenderJSGadget(),
+        parsed = URI.parse(window.location.href),
+        parent_path = URI.build({protocol: parsed.protocol,
+                                hostname: parsed.hostname,
+                                port: parsed.port,
+                                path: parsed.path}).toString(),
+        // absolute_path = parent_path + "mixed_embedded.html",
+        absolute_path = "https://example.org/mixed_embedded.html",
+        iframe_html_prefix = '<html><head>',
+        iframe_html_suffix = '<script src="' +
+          new URL('../node_modules/rsvp/dist/rsvp-2.0.4.js',
+                  window.location).href +
+          '" ' +
+          'type="text/javascript"></script>' +
+          '<script src="' + new URL('../dist/renderjs-latest.js',
+                                    window.location).href + '" ' +
+          'type="text/javascript"></script>' +
+          '</head><body><p>my mixed foo</p></body></html>',
+        iframe_html = iframe_html_prefix + iframe_html_suffix,
+        data_url_html = iframe_html_prefix +
+          '<base href="' + absolute_path + '">' +
+          iframe_html_suffix,
+        data_url;
 
-    this.server.respondWith(
-      "GET",
-      absolute_path,
-      [200, {
-        "Content-Type": "text/html"
-      }, iframe_html]
-    );
+      this.server.respondWith(
+        "GET",
+        absolute_path,
+        [200, {
+          "Content-Type": "text/html"
+        }, iframe_html]
+      );
 
-    document.getElementById("qunit-fixture").textContent = "";
-    parent_gadget.__sub_gadget_dict = {};
-    parent_gadget.__path = parent_path;
+      document.getElementById("qunit-fixture").textContent = "";
+      parent_gadget.__sub_gadget_dict = {};
+      parent_gadget.__path = parent_path;
 
-    start = assert.async();
-    assert.expect(3);
-    return new RSVP.Queue()
-      .then(function () {
-        return readBlobAsDataURL(new Blob([data_url_html],
-                                 {type: "text/html;charset=UTF-8"}));
-      })
-      .then(function (result) {
-        data_url = result;
-        return parent_gadget.declareGadget(absolute_path, {
-          sandbox: 'dataurl',
-          element: document.getElementById('qunit-fixture')
+      start = assert.async();
+      assert.expect(3);
+      return new RSVP.Queue()
+        .then(function () {
+          return readBlobAsDataURL(new Blob([data_url_html],
+                                  {type: "text/html;charset=UTF-8"}));
+        })
+        .then(function (result) {
+          data_url = result;
+          return parent_gadget.declareGadget(absolute_path, {
+            sandbox: 'dataurl',
+            element: document.getElementById('qunit-fixture')
+          });
+        })
+        .then(function (new_gadget) {
+          assert.equal(new_gadget.__path, data_url);
+          assert.ok(new_gadget instanceof RenderJSIframeGadget);
+          assert.equal(
+            new_gadget.element.innerHTML,
+            '<iframe src="' + data_url + '"></iframe>'
+          );
+        })
+        .fail(function (error) {
+          assert.ok(false, error);
+        })
+        .always(function () {
+          start();
         });
-      })
-      .then(function (new_gadget) {
-        assert.equal(new_gadget.__path, data_url);
-        assert.ok(new_gadget instanceof RenderJSIframeGadget);
-        assert.equal(
-          new_gadget.element.innerHTML,
-          '<iframe src="' + data_url + '"></iframe>'
-        );
-      })
-      .fail(function (error) {
-        assert.ok(false, error);
-      })
-      .always(function () {
-        start();
-      });
-  });
+    });
 
   /////////////////////////////////////////////////////////////////
   // RenderJSGadget.getDeclaredGadget
@@ -6862,27 +6904,32 @@
         // Check klass
         assert.equal(root_gadget.constructor.prototype.__path,
               root_gadget_path_without_hash);
-        assert.equal(root_gadget.constructor.prototype.__title, document.title);
-        assert.deepEqual(root_gadget.constructor.prototype.__interface_list, []);
+        assert.equal(root_gadget.constructor.prototype.__title,
+                     document.title);
+        assert.deepEqual(root_gadget.constructor.prototype.__interface_list,
+                         []);
         assert.deepEqual(root_gadget.constructor.prototype.__required_css_list,
           [URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.css")
             .absoluteTo(parent_path).toString()]);
-        assert.deepEqual(root_gadget.constructor.prototype.__required_js_list, [
-          URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
-            .absoluteTo(parent_path).toString(),
-          URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
-            .absoluteTo(parent_path).toString(),
-          URI("../node_modules/sinon/pkg/sinon.js")
-            .absoluteTo(parent_path).toString(),
-          URI("../node_modules/URIjs/src/URI.js")
-            .absoluteTo(parent_path).toString(),
-          URI("../dist/renderjs-latest.js")
-            .absoluteTo(parent_path).toString(),
-          URI("renderjs_test.js")
-            .absoluteTo(parent_path).toString(),
-          URI("mutex_test.js")
-            .absoluteTo(parent_path).toString()
-        ]);
+        assert.deepEqual(
+          root_gadget.constructor.prototype.__required_js_list,
+          [
+            URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
+              .absoluteTo(parent_path).toString(),
+            URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
+              .absoluteTo(parent_path).toString(),
+            URI("../node_modules/sinon/pkg/sinon.js")
+              .absoluteTo(parent_path).toString(),
+            URI("../node_modules/URIjs/src/URI.js")
+              .absoluteTo(parent_path).toString(),
+            URI("../dist/renderjs-latest.js")
+              .absoluteTo(parent_path).toString(),
+            URI("renderjs_test.js")
+              .absoluteTo(parent_path).toString(),
+            URI("mutex_test.js")
+              .absoluteTo(parent_path).toString()
+          ]
+        );
         html = root_gadget.constructor.__template_element.outerHTML;
         assert.ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
         html = root_gadget.constructor.__template_element
@@ -6915,12 +6962,16 @@
             ]);
           })
           .push(function (result_list) {
-            assert.deepEqual(result_list[0], ['fakeRootMethod1', 'fakeRootMethod2',
-                                       'fakeRootJob1', 'fakeRootJob2',
-                                       'fakeRootAcquiredMethod1']);
-            assert.deepEqual(result_list[1], ['fakeRootMethod1', 'fakeRootMethod2']);
-            assert.deepEqual(result_list[2], ['fakeRootJob1', 'fakeRootJob2']);
-            assert.deepEqual(result_list[3], ['fakeRootAcquiredMethod1']);
+            assert.deepEqual(result_list[0], [
+              'fakeRootMethod1', 'fakeRootMethod2',
+              'fakeRootJob1', 'fakeRootJob2',
+              'fakeRootAcquiredMethod1']);
+            assert.deepEqual(result_list[1],
+                             ['fakeRootMethod1', 'fakeRootMethod2']);
+            assert.deepEqual(result_list[2],
+                             ['fakeRootJob1', 'fakeRootJob2']);
+            assert.deepEqual(result_list[3],
+                             ['fakeRootAcquiredMethod1']);
           })
           .fail(function (e) {
             assert.ok(false, e);
@@ -7061,7 +7112,8 @@
           iframe_text = iframe_body.textContent;
         assert.ok(iframe_text.indexOf('SyntaxError') !== -1, iframe_text);
         assert.ok(iframe_text.indexOf('getFoo') !== -1, iframe_text);
-        assert.ok(iframe_text.indexOf('error_gadget.html') !== -1, iframe_text);
+        assert.ok(iframe_text.indexOf('error_gadget.html') !== -1,
+                  iframe_text);
       })
       .fail(function (error) {
         assert.ok(false, error);

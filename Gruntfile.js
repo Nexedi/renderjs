@@ -86,6 +86,7 @@ module.exports = function (grunt) {
             'rJS',
             '__RenderJSGadget',
             'sinon',
+            'nise',
             'RSVP',
             'DOMParser',
             'URI',
