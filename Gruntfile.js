@@ -25,7 +25,7 @@ module.exports = function (grunt) {
   // grunt.loadNpmTasks("grunt-contrib-uglify");
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-curl');
+  // grunt.loadNpmTasks('grunt-curl');
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -136,6 +136,9 @@ module.exports = function (grunt) {
       }
     },
 
+    // XXX this is not executed automatically
+    // (because the plugin was badly audited)
+    // curl the urls manually if needed
     curl: {
       domparser: {
         src: 'https://gist.github.com/eligrey/1129031/raw/' +
