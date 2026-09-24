@@ -6882,16 +6882,18 @@
         assert.equal(root_gadget.__title, document.title);
         assert.deepEqual(root_gadget.__interface_list, []);
         assert.deepEqual(root_gadget.__required_css_list,
-          [URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.css")
+          [URI("../node_modules/qunit/qunit/qunit.css")
             .absoluteTo(parent_path).toString()]);
         assert.deepEqual(root_gadget.__required_js_list, [
           URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
             .absoluteTo(parent_path).toString(),
-          URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
+          URI("../node_modules/qunit/qunit/qunit.js")
             .absoluteTo(parent_path).toString(),
           URI("../node_modules/sinon/pkg/sinon.js")
             .absoluteTo(parent_path).toString(),
-          URI("../node_modules/URIjs/src/URI.js")
+          URI("../node_modules/nise/nise.js")
+            .absoluteTo(parent_path).toString(),
+          URI("../node_modules/urijs/src/URI.js")
             .absoluteTo(parent_path).toString(),
           URI("../dist/renderjs-latest.js")
             .absoluteTo(parent_path).toString(),
@@ -6909,18 +6911,20 @@
         assert.deepEqual(root_gadget.constructor.prototype.__interface_list,
                          []);
         assert.deepEqual(root_gadget.constructor.prototype.__required_css_list,
-          [URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.css")
+          [URI("../node_modules/qunit/qunit/qunit.css")
             .absoluteTo(parent_path).toString()]);
         assert.deepEqual(
           root_gadget.constructor.prototype.__required_js_list,
           [
             URI("../node_modules/rsvp/dist/rsvp-2.0.4.js")
               .absoluteTo(parent_path).toString(),
-            URI("../node_modules/grunt-contrib-qunit/test/libs/qunit.js")
+            URI("../node_modules/qunit/qunit/qunit.js")
               .absoluteTo(parent_path).toString(),
             URI("../node_modules/sinon/pkg/sinon.js")
               .absoluteTo(parent_path).toString(),
-            URI("../node_modules/URIjs/src/URI.js")
+            URI("../node_modules/nise/nise.js")
+              .absoluteTo(parent_path).toString(),
+            URI("../node_modules/urijs/src/URI.js")
               .absoluteTo(parent_path).toString(),
             URI("../dist/renderjs-latest.js")
               .absoluteTo(parent_path).toString(),
@@ -6931,7 +6935,7 @@
           ]
         );
         html = root_gadget.constructor.__template_element.outerHTML;
-        assert.ok(/^<div>\s*<h1 id="qunit-header">/.test(html), html);
+        assert.ok(/^<div>\s*<div id="qunit">/.test(html), html);
         html = root_gadget.constructor.__template_element
                           .querySelector('#check-relative-url');
         // relative url are not modified on the root gadget
