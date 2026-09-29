@@ -3296,13 +3296,14 @@
       assert.expect(1);
       renderJS.declareGadgetKlass(html_url)
         .then(function (Klass) {
-          Klass.onEvent('bar', function (assert) {
+          Klass.onEvent('bar', function () {
             return new RSVP.Promise(function () {
               return;
             }, function (error) {
               if (called) {
                 return;
               }
+
               called = true;
               assert.equal(error, "Cancelling previous event (bar)");
             });
@@ -3339,7 +3340,7 @@
     assert.expect(2);
     renderJS.declareGadgetKlass(html_url)
       .then(function (Klass) {
-        Klass.declareJob("runJob1", function (assert) {
+        Klass.declareJob("runJob1", function () {
           return new RSVP.Promise(function () {
             return RSVP.delay(20);
           }, function (error) {
@@ -3350,7 +3351,7 @@
             );
           });
         });
-        Klass.onEvent('bar', function (assert) {
+        Klass.onEvent('bar', function () {
           return new RSVP.Promise(function () {
             return;
           }, function (error) {
