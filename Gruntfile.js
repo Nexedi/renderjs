@@ -21,36 +21,11 @@
 module.exports = function (grunt) {
   "use strict";
 
-  var LIVERELOAD_PORT, lrSnippet, livereloadMiddleware;
-
-  // This is the default port that livereload listens on;
-  // change it if you configure livereload to use another port.
-  LIVERELOAD_PORT = 35729;
-  // lrSnippet is just a function.
-  // It's a piece of Connect middleware that injects
-  // a script into the static served html.
-  lrSnippet = require('connect-livereload')({ port: LIVERELOAD_PORT });
-  // All the middleware necessary to serve static files.
-  livereloadMiddleware = function (connect, options) {
-    return [
-      // Inject a livereloading script into static files.
-      lrSnippet,
-      // Serve static files.
-      connect.static(options.base),
-      // Make empty directories browsable.
-      connect.directory(options.base)
-    ];
-  };
-
   grunt.loadNpmTasks("grunt-jslint");
   // grunt.loadNpmTasks("grunt-contrib-uglify");
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-curl');
-  grunt.loadNpmTasks('grunt-open');
+  // grunt.loadNpmTasks('grunt-curl');
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -111,6 +86,7 @@ module.exports = function (grunt) {
             'rJS',
             '__RenderJSGadget',
             'sinon',
+            'nise',
             'RSVP',
             'DOMParser',
             'URI',
@@ -160,22 +136,9 @@ module.exports = function (grunt) {
       }
     },
 
-    watch: {
-      src: {
-        files: [
-          '<%= jslint.client.src %>',
-          '<%= jslint.config.src %>',
-          '<%= jslint.test.src %>',
-          ['lib/**'],
-          ['test/*.html', 'test/*.js']
-        ],
-        tasks: ['default'],
-        options: {
-          livereload: LIVERELOAD_PORT
-        }
-      }
-    },
-
+    // XXX this is not executed automatically
+    // (because the plugin was badly audited)
+    // curl the urls manually if needed
     curl: {
       domparser: {
         src: 'https://gist.github.com/eligrey/1129031/raw/' +
@@ -190,32 +153,14 @@ module.exports = function (grunt) {
 
     qunit: {
       all: ['test/index.html']
-    },
-
-    connect: {
-      client: {
-        options: {
-          port: 9000,
-          base: '.',
-          directory: '.',
-          middleware: livereloadMiddleware
-        }
-      }
-    },
-
-    open: {
-      all: {
-        // Gets the port from the connect configuration
-        path: 'http://localhost:<%= connect.client.options.port%>/test/'
-      }
     }
+
   });
 
   grunt.registerTask('default', ['all']);
   grunt.registerTask('all', ['lint', 'build']);
   grunt.registerTask('lint', ['jslint']);
   grunt.registerTask('test', ['qunit']);
-  grunt.registerTask('server', ['connect:client', 'watch']);
   grunt.registerTask('build', ['concat', 'copy']);
 
 };
